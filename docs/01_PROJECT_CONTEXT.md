@@ -7,6 +7,10 @@ actually use.**
 
 > Stars show who looked. ARP shows who used it.
 
+**In public, since 2026-11-05:** "Check before your agent installs or pays", signed "The public pulse
+for skills and autonomous agents". `docs/30` holds what may be claimed today (ADR `0142`): the line
+above describes where the product is going, and no third party has reported a result on a skill yet.
+
 The one-liner read "ARP makes money flow to the tools agents actually use" until 2026-11-03, when
 the user replaced it (ADR `0126`). That line is the kit's long-term goal, and it stays the goal
 there: today no money reaches a tool, and the one measured result is discovery, below.
@@ -39,6 +43,13 @@ in a comparison it cannot win against incumbents with more money and an audience
 What none of those 10,411 has — checked against their own pages — is a **record of which listings
 work and who stands behind them**. That gap is the lead now, and the two additions to the old line
 say it:
+
+**Narrower than it reads, 2026-11-05:** Tessl shows an Impact score per skill, from its own evals
+([registry](https://tessl.io/registry)), Anthropic says its connector directory's ranking is
+usage-based ([directory](https://claude.com/docs/connectors/directory)), and Bhived shares lessons
+between agents on its own service ([repository](https://github.com/ArtKeyAi/bhived-mcp)). This
+repository keeps no list of the pages that check read, so the sentence above cannot be extended to
+these three.
 
 - **"search by need"** — the index is keyed by what a tool is _for_, not by its name. npm returns
   25,501 rows for "payment", ranked on the string, `@types/payment` among the first.

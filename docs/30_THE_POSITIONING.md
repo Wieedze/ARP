@@ -1,7 +1,7 @@
 # 30 — The positioning
 
 **Status:** the reference for what ARP says in public, decided by the user on 2026-11-05 (ADR `0142`).
-Anything public copies it. It does not replace `docs/12`, which holds the mechanism.
+Anything public copies it. It does not replace `docs/12`, which holds the mechanism, or `docs/01`'s one-liner, which says where the product is going. The vision is refined by adding to it (the user, 2026-11-05).
 
 ## What ARP says
 
@@ -32,8 +32,6 @@ repository is public (ADR `0142`).
 
 | Site | State |
 | --- | --- |
-| `README.md`, `skills/arp/SKILL.md`, `apps/mcp/README.md`, `apps/cli/scripts/packages.ts` and what it generates | done, not merged (`docs/tasks/69`) |
-| The server's instructions, `apps/mcp/src/server.ts`: `SERVER_INSTRUCTIONS` and `READ_INSTRUCTIONS` | to do |
-| The sponsored tool's text, `apps/mcp/src/tools.ts`: "so others can see which skills get used" | to do |
-| The landing page, `apps/web/src/pages/Landing.tsx` | to do, with `ui-reviewer` |
-| `docs/01`, `docs/12` | to do, on the user's reading |
+| `README.md`, `skills/arp/SKILL.md`, `apps/mcp/README.md`, `apps/cli/scripts/packages.ts` and what it generates, the server's instructions, the sponsored tool's text, `docs/01`, `docs/12` | done, not merged (`docs/tasks/69`) |
+| The landing page's headline, label and five sentences in its scenes, `apps/web/src/pages/Landing.tsx` | done, not merged |
+| The deposit scenes ("how a reputation grows", "each agent that supports it after you pays more") | not changed: they state the deposit mechanism, and a redesign is the user's decision |

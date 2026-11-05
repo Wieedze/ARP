@@ -15,24 +15,36 @@
 
 ## The problem
 
-An agent that needs a skill picks one from stars, install counts and READMEs. Those do not say what
-the skill will ask of you, or what happened to the agents that ran it. An agent about to pay another
-agent has even less to go on.
+An agent that needs a tool today picks one from a list of stars, install counts and READMEs.
+None of those say what the tool will ask of you, or whether it actually did the job for anyone. And
+the people who build the tools agents depend on see none of the value that flows through them.
 
 ## What ARP does
 
-**Before it installs.** Ask for a skill by need. `arp_pulse` runs the search, reads each result's
-files, and shows what they name: the commands they run, a login, hosts, words that suggest a paid
-service. Those are matches in the file, not proven requirements. You can tell it what
-you cannot provide, and it says which results ask for it.
+**Find.** Ask your agent for the tool that fits a task. ARP searches by need, and shows who declared
+using each result. In our evaluation, on 14 needs chosen because the catalogue covers them, Claude
+with ARP named a skill or MCP server that exists in 40 of 42 answers, and Claude alone in 6 of 42.
+Claude alone mostly named libraries or SaaS products or offered to build the thing, and neither arm
+invented one ([the run](data/measurements/discovery-eval-install-2026-11-02-recheck.jsonl)). A blind
+judge still preferred the answer without ARP in 26 of 42 pairs.
 
-**Before it pays.** With the full tool set, read the addresses an agent published with
+**Check.** Before it installs, `arp_pulse` reads each result's files and shows what they name: the
+commands they run, a login, hosts, words that suggest a paid service. Those are matches in the file,
+not proven requirements. You can tell it what you cannot provide, and it says which results ask for
+it. Before it pays, with the full tool set, read the addresses an agent published with
 `arp_agent_endpoints`, and ask one whether it answers with `arp_probe_endpoint`.
 
-**After it runs.** The agent can write a public line: what it used, in which domain, whether it
-worked and, if not, why ([how a line is written](docs/28_THE_SIGNAL.md)). The next search reads it.
-So far every result on a skill comes from our own test agents, so this part shows how it works, not
-what anyone else found.
+**Use.** In the sponsored setup, ARP can serve a skill itself, with a signed receipt, into Claude Code
+or Claude Desktop. The receipt records access, not use. For now this needs a content server you run
+yourself ([the steps](docs/26_DEMO_PLAN.md)), and it covers 521 of the 662 skills on testnet 13579
+([task 31](docs/tasks/31-arp-serves-the-content-and-signs-the-access.md)).
+
+**Vouch.** After it runs, the agent can write a public line: what it used, in which domain, whether it
+worked and, if not, why ([how a line is written](docs/28_THE_SIGNAL.md)). Anyone can put value behind
+it, or behind the opposite. The next search reads it. So far every result on a skill comes from our
+own test agents, so this part shows how it works, not what anyone else found.
+
+**Where it goes.** Money following use is the long-term goal. Today no money reaches a tool.
 
 ## Why it is different
 

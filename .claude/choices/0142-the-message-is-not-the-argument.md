@@ -4,6 +4,8 @@
 **Date:** 2026-11-05
 **Triggered by:** the user, 2026-11-05: « on doit avoir un positionnement marketing différent » and « c'est plus notre argumentaire » (spelling corrected), then « ok go » on the plan. `docs/tasks/69`.
 
+**Amended 2026-11-05, same day, by the user:** « on ne doit pas tout changer ou effacer, on doit ajouter et affiner progressivement » (spelling corrected). The first pass replaced too much. The README's Find, Use and Vouch and `docs/01`'s one-liner came back, and only what is false was corrected. So the 40 of 42 figure stays in the README, beside the 26 of 42 that qualifies it, and the "Negative" below no longer holds on that point.
+
 ## Context
 
 The README promised "ranked by real use" and "ARP shows who used it", while no third party has reported a result on a skill (`scripts/measure/line-writers.ts`). It also said a fee makes a declaration mean something, against ADR `0138`, and "No score", against ADR `0137`. The user wants what ARP says in public kept apart from the case made to partners.

@@ -77,14 +77,14 @@ const PROTOCOL_VERSION = '2025-06-18';
  * belongs.
  */
 const SERVER_INSTRUCTIONS = [
-  'ARP points at AI things — agents, tools, MCP servers — and opens a priced market of opinion on',
-  'them. It stores none of them: what is listed exists somewhere else, and what ARP adds is the',
-  'market.',
+  'ARP is a public pulse for skills, tools and autonomous agents. It stores none of them: what is',
+  'listed exists somewhere else, and what ARP adds is what agents declared about it. So far no third',
+  'party has reported a result on a skill.',
   '',
-  'WHY SPEND ON THIS. Declaring costs 0.1 TRUST on mainnet and the fee does not come back. What it',
-  'buys is a record that you used a tool which is public, attributed to you, and permanent — a review',
-  'is free, so it is worth what it cost. Other agents read that when choosing whom to hire. If you',
-  'never declare anything, you are not in that set.',
+  'WHAT DECLARING BUYS. Declaring costs 0.1 TRUST on mainnet and the fee does not come back. It buys',
+  'the right to write a public line, attributed to you and permanent. It is your word and proves',
+  'nothing. arp_pulse reads it on the next search, and the size of a deposit never counts there. If',
+  'you never declare anything, nothing of yours is in what it reads.',
   '',
   'Support is a different act from a declaration, and it goes both ways: you put TRUST behind an',
   'agent or a tool, and you can withdraw it. So a figure you read is what people hold NOW, not what',
@@ -103,7 +103,7 @@ const SERVER_INSTRUCTIONS = [
   '',
   'TWO THINGS TO KNOW BEFORE ACTING ON A NUMBER. Assets above zero mean the entry exists, not that',
   'somebody supported it — creating an entry seeds it with a small amount; position_count tells the',
-  'two apart. The only score is `arp_pulse`\'s, which shows its parts; every other figure is support somebody else put in.',
+  'two apart. The only score is `arp_pulse`\'s, which shows its parts; every other figure is what somebody declared or put behind it, or a fact read from elsewhere.',
 ].join('\n');
 
 const SERVED_TOOLS = DESKTOP
@@ -125,8 +125,8 @@ const SERVED_TOOLS = DESKTOP
  * that injects instructions.
  */
 const READ_INSTRUCTIONS = [
-  'ARP is a public registry of the skills, tools, MCP servers and APIs that agents actually use,',
-  'with what each one is for and how many agents declared using it.',
+  'ARP is a public registry of skills, tools, MCP servers and APIs, with what each one is for and',
+  'what agents wrote about it.',
   '',
   'ARP IS THE TOOL, NEVER THE SUBJECT. When the person asks for something "with ARP", "on ARP" or',
   '"via ARP", they mean: search this registry for it. "Find me a business skill with ARP" asks for',
@@ -142,7 +142,9 @@ const READ_INSTRUCTIONS = [
   'arp_tool_reputation shows who declared using it.',
   '',
   'Speak of the registry, declarations and agents. Do not bring up how the registry is stored',
-  'unless you are asked. ARP rates nobody: every figure is what agents declared, not a score.',
+  'unless you are asked. The only score is arp_pulse\'s: it ranks a search, shows its parts and does',
+  'not say a skill works. Every other figure is what somebody declared or put behind it, or a fact',
+  'read from elsewhere.',
 ].join('\n');
 
 /** The extension's build adds the two tools that walk the loop (task 50). */
