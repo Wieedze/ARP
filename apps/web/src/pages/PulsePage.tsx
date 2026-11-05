@@ -76,9 +76,9 @@ function FileFacts({pulse}: {pulse: SkillPulse}) {
     return (
         <section aria-labelledby="pulse-file">
             <h2 id="pulse-file" className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                Its file mentions
+                What its files show
                 <Hint label="What a mention means">
-                    A match in the file's text. A mention is not a requirement.
+                    Keys, logins, paid words and commands are matches in the text, not requirements.
                 </Hint>
             </h2>
             <dl className="m-0 mt-3">
@@ -90,7 +90,7 @@ function FileFacts({pulse}: {pulse: SkillPulse}) {
                 )}
                 <Fact term="Login">{pulse.requires.login === null ? none : `line ${pulse.requires.login.line}: ${pulse.requires.login.text}`}</Fact>
                 <Fact term="Paid words">{listOrNone(pulse.paidWords)}</Fact>
-                <Fact term="Commands in its shell blocks">{listOrNone(commands)}</Fact>
+                <Fact term="Less common commands">{listOrNone(commands)}</Fact>
                 <Fact term="Scripts it runs, not in its repository">{listOrNone(pulse.runsAbsentFiles)}</Fact>
                 <Fact term="Hosts">{listOrNone(pulse.hosts)}</Fact>
                 <Fact term="Size">{`${count(pulse.files, "file")}, ${formatBytes(pulse.bytes)}, ${count(pulse.scripts, "script")}`}</Fact>
@@ -127,6 +127,12 @@ function Usage({usage}: {usage: PulseUsage | null}) {
                         <Fact term="Declarations">{`${usage.truncated ? "at least " : ""}${usage.declarations.length}, by ${count(usage.agents, "agent")} and ${count(usage.wallets, "wallet")}`}</Fact>
                         <Fact term="Domains">{countsOrNone(usage.byDomain)}</Fact>
                         <Fact term="Outcomes">{countsOrNone(usage.byOutcome)}</Fact>
+                        {usage.truncated ? <Fact term="Read">stopped at its limit, so these are a floor</Fact> : null}
+                        {usage.byOthers.length === 0 ? null : (
+                            <Fact term="Written by other wallets">
+                                {usage.byOthers.map((row) => `${row.value} (${row.writer})`).join(", ")}
+                            </Fact>
+                        )}
                     </dl>
                     <ul className="m-0 mt-4 list-none p-0">
                         {usage.declarations.slice(0, 10).map((row) => (
@@ -139,7 +145,7 @@ function Usage({usage}: {usage: PulseUsage | null}) {
                     </ul>
                     {usage.declarations.length > 10 ? (
                         <p className="mt-2 font-mono text-[12px] text-[color:var(--color-steel)]">
-                            First 10 of {usage.declarations.length}
+                            First 10 of {usage.truncated ? "at least " : ""}{usage.declarations.length}
                         </p>
                     ) : null}
                 </>

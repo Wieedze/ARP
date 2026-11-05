@@ -86,6 +86,30 @@ describe("PulsePage", () => {
         expect(screen.getByText(/agent six · failed · video/)).toBeTruthy();
     });
 
+    it("shows a line another wallet wrote apart, and says when the read is a floor", () => {
+        const declaration = {tripleId: "0x2", agent: {atomId: "0x3", label: "agent six"}, writer: "0x4", declaredAt: null, domains: [], outcomes: []};
+        read = {
+            status: "ok",
+            view: {
+                pulse,
+                atomId: "0x1",
+                usage: {
+                    declarations: [declaration],
+                    agents: 1,
+                    wallets: 1,
+                    byDomain: {},
+                    byOutcome: {},
+                    byOthers: [{tripleId: "0x5", writer: "0xOther", predicate: "outcome", value: "failed"}],
+                    truncated: true,
+                },
+            },
+        };
+        open();
+        expect(screen.getByText(/failed \(0xOther\)/)).toBeTruthy();
+        expect(screen.getByText(/so these are a floor/)).toBeTruthy();
+        expect(screen.getByText(/at least 1, by 1 agent/)).toBeTruthy();
+    });
+
     it("says what it needs is unknown when the file was not read", () => {
         read = {
             status: "ok",
