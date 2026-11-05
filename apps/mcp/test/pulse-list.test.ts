@@ -51,7 +51,7 @@ const usage = (...declarations: ReturnType<typeof line>[]) => ({
 const wallets = (count: number, outcome: 'worked' | 'failed' = 'worked') =>
   usage(...Array.from({ length: count }, (_v, at) => line(`0xw${at}`, outcome)));
 
-type Answer = { results_found: number; skills: { name: string; score: number; unconfirmed?: string }[] };
+type Answer = { results_found: number; results?: unknown[]; skills: { name: string; score: number; unconfirmed?: string }[] };
 
 async function ask(): Promise<Answer> {
   const response = await pulse(1, { search_output: 'unused', domain: 'video', limit: 5 });
@@ -83,7 +83,7 @@ describe('arp_pulse and the threshold', () => {
   it('leaves nothing when the search found nothing and no declared skill qualifies', async () => {
     mocks.results = [];
     mocks.usage = new Map([['0xdeclared', wallets(2)]]);
-    const out = (await ask()) as unknown as { results?: unknown[]; skills?: unknown[] };
+    const out = await ask();
     expect(out.results).toEqual([]);
     expect(out.skills).toBeUndefined();
   });

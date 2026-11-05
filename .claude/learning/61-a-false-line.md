@@ -2,8 +2,8 @@
 
 **Task:** `docs/tasks/71-a-false-line.md`, and `docs/tasks/70-the-local-package.md` items 1 and 3
 **Completed:** 2026-11-05
-**Commit:** `1ca3c27` (branch `feat/agent-pulse`, not pushed). The work is `d4ff324`, `ba66d0d`, `d590849`, `781f9e7`, `ced1b29`, `1ca3c27`
-**Verifier verdict:** PASS (second pass; the first failed on six blocking and five minor items, all closed). Item 1's done-when stays open: `marketplace add` and `install` have not run, and task 70 says so
+**Commit:** `973c43b` (branch `feat/agent-pulse`, not pushed). The work is `d4ff324`, `ba66d0d`, `d590849`, `781f9e7`, `ced1b29`, `1ca3c27`, and for §5 `3caf15c`, `973c43b`
+**Verifier verdict:** PASS (second pass; the first failed on six blocking and five minor items, all closed), and PASS on §5 at its second reading (the first failed on four blocking and two minor items, all closed). Item 1's done-when stays open: `marketplace add` and `install` have not run, and task 70 says so
 
 ## What shipped
 
@@ -12,6 +12,7 @@
 - `apps/mcp/src/line.ts`, `apps/cli/src/cli.ts` — `arp line` holds the agent key for one call, so the plugin's server stays read-only.
 - `packages/protocol/src/pulse-usage.ts` — `payers`, required: the service's wallet says nothing by paying.
 - `packages/protocol/src/pulse-score.ts` — `WALLETS_TO_MOVE`, 3, and `pulse-score-3`.
+- `packages/protocol/src/pulse-score.ts`, `apps/mcp/src/handlers/pulse.ts`, `apps/mcp/test/pulse-list.test.ts` — task 71 §5: `unconfirmed` beside a line that concerns this search, and `entersList`, so a skill the search did not return enters only from 3 wallets.
 - `data/measurements/signal-sim3-2026-11-05T1827.json`, `pulse-eval5-2026-11-05.jsonl` — the threshold's cost in invented worlds, and the reading test, $2.35.
 
 ## Surprises
@@ -21,13 +22,16 @@
 - **The power statement written before the runs was wrong.** It said only 0/15 could separate from 8/15, and 1/15 does. It stays, with a dated correction beside it.
 - **A rule written in advance could not hold:** the order is not fixed across runs, 5 orders in 15 runs of `S`. It was replaced 5 seconds before the treatment arms launched (session log: freeze 18:44:03 UTC, launch 18:44:08 UTC), and that is not visible in git.
 - **The first check on a line's subject passed every agent.** 36 of 36 `Agent 13579:*` atoms have a URL, on `8004scan.io`, so "has a URL" was no gate.
+- **Entering "at the floor" was true of the prior and not the score.** Three `worked` wallets take a skill the search did not return to (0.2 + 3) / 4 = 0.8, which ties the first result, so three wallets can place it second. ADR `0143` now gives the figures.
+- **What §5 costs.** No tool on 13579 has more than one wallet saying the same thing (9 `has outcome` triples, read 2026-11-05), so today no declared skill reaches an agent whose search did not return it. That is the path behind task 64's one separation.
 - **A correction landed in one place again.** §3 had two false-wallet gains right while ADR `0143` said one, and `docs/28` kept a sentence round 3 had made false.
 
 ## Decisions made
 
 - **The ranking moves from three wallets** — design 1, the user's choice, relayed by `arp-f3`. ADR: `.claude/choices/0143-the-ranking-moves-from-three-wallets.md`.
 - **A sponsored line asks no proof of use, and its key stays out of the plugin's server** — "oui aux 3", relayed by `arp-f3`. ADR: `.claude/choices/0144-a-sponsored-line-asks-no-proof.md`.
-- **Three questions stay with the user:** whether adding a skill to the candidates needs the threshold, the treasury cost of a line, and how a line below the threshold is shown.
+- **The user's three answers, relayed by `arp-f3` (task 71 §5):** a line below the threshold is shown qualified, with no further measurement; a skill the search did not return enters only from 3 wallets; a line's cost to the treasury is accepted on testnet and blocks mainnet. ADRs `0143`, `0144`.
+- **`unconfirmed` covers lines that concern this search, not every line shown.** A line in another domain, an excused failure and `written_by_others` stay under `usage` without it. `docs/28` says so, and the coordinator is telling the user.
 
 ## Rules touched
 
@@ -40,6 +44,7 @@
 - Commit a freeze before launching the next arm, so the order can be read from git.
 - When arms share a skill, report its share in every arm: the second baseline here changed the reading.
 - Compute what a sample can separate rather than estimating it. Here that was one line of Wilson arithmetic.
+- Test a rule through its handler as well as its function: the filter's order against `results_found` and the empty answer were visible only there.
 - Put a measurement's chain facts in a script: T1 to T4's creator and positions are read by hand, and `pulse-lines-*.json` does not hold them.
 
 ## Evidence ladder
