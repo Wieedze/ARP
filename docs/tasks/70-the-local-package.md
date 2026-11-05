@@ -163,3 +163,10 @@ arp_pulse {search_output: "", queries: ["internal project note", "company projec
 
 The regression test uses the failed run's own phrases and domain, and the demo's offer as served. No agent in a session has run this yet: that is step 6 again.
 
+**The threshold on agents.** The user, relayed by `arp-f3`, 2026-11-05: the same threshold as skills. `used_here` is ordered on wallets only from `WALLETS_TO_MOVE`, 3, and below that the graph's order stands and the count is shown with `too_few_wallets_to_move_the_order`. Being listed does not depend on it.
+
+```
+cd apps/mcp && ARP_TARGET=testnet ARP_NO_RECEIPTS=1 bunx vitest run
+ Tests  157 passed (157)
+```
+

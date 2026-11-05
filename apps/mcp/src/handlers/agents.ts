@@ -24,6 +24,7 @@ import {
   resolveRef,
   toCaip19,
   type SubjectControl,
+  WALLETS_TO_MOVE,
   walletControlsSubject,
 } from '@arp-protocol/core';
 import { createPublicClient, getAddress, http, parseAbi, stringToHex } from 'viem';
@@ -705,6 +706,7 @@ export async function agentsForDomain(domain: string): Promise<Record<string, un
     checked.set(key, answer);
     return answer;
   };
+  const moving = (wallets: number) => (wallets < WALLETS_TO_MOVE ? 0 : wallets);
   const rows = await Promise.all(found.map(async (agent) => {
     const read = usage.get(agent.atomId.toLowerCase());
     const inScope = (read?.declarations ?? []).filter((line) =>
@@ -732,12 +734,23 @@ export async function agentsForDomain(domain: string): Promise<Record<string, un
       wallets_failed: failed,
       lines_in_domain: verified.length,
       lines_not_counted: inScope.length - verified.length,
+      ...(moving(worked) === worked && moving(failed) === failed
+        ? {}
+        : {
+            too_few_wallets_to_move_the_order: {
+              worked: moving(worked) === 0 ? worked : 0,
+              failed: moving(failed) === 0 ? failed : 0,
+            },
+          }),
     };
   }));
   const usageCut = truncated || [...usage.values()].some((entry) => entry.truncated);
   // A stranger can qualify anybody's line, and that writes nothing this reader counts.
   const counted = rows.filter((row) => row.lines_in_domain + row.lines_not_counted > 0);
-  counted.sort((a, b) => b.wallets_worked - a.wallets_worked || a.wallets_failed - b.wallets_failed);
+  // The threshold skills have (ADR `0143`). Sorting is stable, so below it the graph's own order stands.
+  counted.sort(
+    (a, b) => moving(b.wallets_worked) - moving(a.wallets_worked) || moving(a.wallets_failed) - moving(b.wallets_failed),
+  );
   let tagged: { atom: string; label: string | null; matched: string | null }[] | null = null;
   try {
     const page = await findAgentsByCapability(domain, { graphqlUrl: GRAPHQL });
@@ -759,6 +772,7 @@ export async function agentsForDomain(domain: string): Promise<Record<string, un
   return {
     domain,
     searched: scope,
+    order: `wallets that said it worked, then failed, and 0 below ${WALLETS_TO_MOVE} wallets saying the same thing, which are only shown; deposits do not count`,
     used_here: counted,
     truncated: usageCut,
     say_they_do_this: tagged,

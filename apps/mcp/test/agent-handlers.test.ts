@@ -122,6 +122,63 @@ describe('arp_find_agents with a domain', () => {
     expect(await rows()).toEqual([]);
   });
 
+  describe('the same threshold as skills', () => {
+    const OTHER = `0x${'cc'.repeat(32)}`;
+    const agents = [
+      { atomId: ATOM, label: 'first', caip19: null, ambiguous: false },
+      { atomId: OTHER, label: 'second', caip19: null, ambiguous: false },
+    ];
+    const lines = (count: number, outcome = 'worked') =>
+      Array.from({ length: count }, (_, index) => ({
+        ...line,
+        writer: `0xw${outcome}${index}`,
+        outcomes: [outcome],
+        lines: [{ domain: 'document', outcome, reasons: [] }],
+      }));
+    const usage = (first: unknown[], second: unknown[]) =>
+      new Map([
+        [ATOM, { declarations: first, byOthers: [], truncated: false }],
+        [OTHER, { declarations: second, byOthers: [], truncated: false }],
+      ]);
+    const labels = async () => (await rows()).map((row) => row['label']);
+
+    beforeEach(() => {
+      mocks.findAgentsInDomains.mockResolvedValue({ agents, truncated: false });
+      mocks.walletControlsSubject.mockResolvedValue('yes');
+    });
+
+    it('keeps the order under 3 wallets, and still shows them', async () => {
+      mocks.getPulseUsage.mockReset().mockResolvedValue(usage(lines(1), lines(2)));
+      expect(await labels()).toEqual(['first', 'second']);
+      expect((await rows())[1]).toMatchObject({
+        wallets_worked: 2,
+        too_few_wallets_to_move_the_order: { worked: 2, failed: 0 },
+      });
+    });
+
+    it('moves the order from 3 wallets, and says nothing was left out', async () => {
+      mocks.getPulseUsage.mockReset().mockResolvedValue(usage(lines(2), lines(3)));
+      expect(await labels()).toEqual(['second', 'first']);
+      expect((await rows())[0]).not.toHaveProperty('too_few_wallets_to_move_the_order');
+    });
+
+    it('does not let one failed line sink an agent', async () => {
+      mocks.getPulseUsage.mockReset().mockResolvedValue(usage(lines(1, 'failed'), lines(1)));
+      expect(await labels()).toEqual(['first', 'second']);
+    });
+
+    it('moves the order from 3 wallets saying failed', async () => {
+      mocks.getPulseUsage.mockReset().mockResolvedValue(usage(lines(3, 'failed'), lines(1)));
+      expect(await labels()).toEqual(['second', 'first']);
+    });
+
+    it('keeps an agent with 2 wallets findable: only its rank does not move', async () => {
+      mocks.getPulseUsage.mockReset().mockResolvedValue(usage(lines(2), []));
+      expect(await rows()).toHaveLength(1);
+      expect((await rows())[0]).toMatchObject({ label: 'first', wallets_worked: 2 });
+    });
+  });
+
   it('comes back from arp_pulse beside the skills, as one search', async () => {
     mocks.getPulseUsage.mockReset().mockResolvedValue(usageOf([line]));
     mocks.walletControlsSubject.mockResolvedValue('yes');
