@@ -1,9 +1,9 @@
-import {describe, expect, it} from "vitest";
+import {describe, expect, it, vi} from "vitest";
 import {INTUITION_URL} from "./helpers.js";
 
-import {TOOL_LISTING_QUERY, TOOL_LISTING_SPONSORED_QUERY} from "@arp-protocol/graphql";
+import {SPONSORED_WALLETS_QUERY, TOOL_LISTING_QUERY, TOOL_LISTING_SPONSORED_QUERY} from "@arp-protocol/graphql";
 
-import {INTUITION_MAX_PAGE, listTools} from "../src/tool-listing.js";
+import {INTUITION_MAX_PAGE, getToolWallets, listTools} from "../src/tool-listing.js";
 import {SAME_AS, USES} from "../src/sources/intuition/terms.js";
 
 /** One `uses` edge, shaped like the graph returns it. */
@@ -16,7 +16,7 @@ function edge(params: {
     hostedAt?: string;
     /** Every deposit on the support term, and how many of them the sponsor sent. */
     deposits?: number;
-    proven?: number;
+    sponsored?: number;
     /** The declaring agent's identity atom, the edge's subject. */
     subject?: string;
 }) {
@@ -39,7 +39,7 @@ function edge(params: {
                 },
             ],
             deposits: {aggregate: {count: params.deposits ?? 0}},
-            ...(params.proven === undefined ? {} : {proven: {aggregate: {count: params.proven}}}),
+            ...(params.sponsored === undefined ? {} : {sponsored: {aggregate: {count: params.sponsored}}}),
         },
         counter_term: {
             total_assets: params.opposeAssets ?? "0",
@@ -205,10 +205,9 @@ describe("listTools", () => {
 
 const SPONSOR = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
 
-describe("listTools — proven and declared (ADR 0094 §2)", () => {
+describe("listTools — sponsored and declared (ADR 0094 §2)", () => {
     it("counts every deposit as declared when no sponsor is configured", async () => {
-        // With no sponsoring address there is no sender to count as proven. Zero proven is true,
-        // not unknown.
+        // A sponsor that is not configured deposited nothing, so zero is true, not unknown.
         const {transport, queries, seen} = transportOf([
             edge({atomId: "0xaa", deposits: 2}),
             edge({atomId: "0xaa", supportAssets: "1", deposits: 1}),
@@ -217,32 +216,93 @@ describe("listTools — proven and declared (ADR 0094 §2)", () => {
         expect(queries[0]).toBe(TOOL_LISTING_QUERY);
         expect(seen[0]).not.toHaveProperty("sponsor");
         expect(page.sponsor).toBeNull();
-        expect(page.tools[0]?.provenDeposits).toBe(0);
+        expect(page.tools[0]?.sponsoredDeposits).toBe(0);
         expect(page.tools[0]?.declaredDeposits).toBe(3);
+    });
+
+    it("counts a wallet once across a tool's edges, whatever its case", async () => {
+        const request = vi.fn(async (query: string) =>
+            query === SPONSORED_WALLETS_QUERY
+                ? {
+                      deposits: [
+                          {term_id: "edge-0xaa-0", receiver_id: "0xAbC"},
+                          {term_id: "edge-0xaa-0", receiver_id: "0xDeF"},
+                          {term_id: "edge-0xaa-1", receiver_id: "0xabc"},
+                      ],
+                  }
+                : {
+                      triples: [
+                          edge({atomId: "0xaa", deposits: 2, sponsored: 2}),
+                          edge({atomId: "0xaa", supportAssets: "1", deposits: 1, sponsored: 1}),
+                      ],
+                  },
+        );
+        const page = await listTools({
+            graphqlUrl: INTUITION_URL,
+            // A stub of the one method `listTools` calls; the transport's other members go unused.
+            transport: {request} as never,
+            sponsor: SPONSOR,
+        });
+        expect(page.tools[0]?.sponsoredWallets).toBe(2);
+    });
+
+    it("keeps the listing when the wallet read fails, and says it cannot count", async () => {
+        const request = vi.fn(async (query: string) => {
+            if (query === SPONSORED_WALLETS_QUERY) throw new Error("indexer stalled");
+            return {triples: [edge({atomId: "0xaa", deposits: 2, sponsored: 1})]};
+        });
+        const page = await listTools({
+            graphqlUrl: INTUITION_URL,
+            // A stub of the one method `listTools` calls; the transport's other members go unused.
+            transport: {request} as never,
+            sponsor: SPONSOR,
+        });
+        expect(page.tools[0]?.sponsoredDeposits).toBe(1);
+        expect(page.tools[0]?.sponsoredWallets).toBeNull();
+    });
+
+    it("sums one tool's sponsored deposits per wallet, the most first", async () => {
+        const request = vi.fn(async () => ({
+            deposits: [
+                {receiver_id: "0xAbC", assets_after_fees: "5"},
+                {receiver_id: "0xDeF", assets_after_fees: "7"},
+                {receiver_id: "0xabc", assets_after_fees: "5"},
+            ],
+        }));
+        const wallets = await getToolWallets("0xaa", {
+            graphqlUrl: INTUITION_URL,
+            // A stub of the one method `getToolWallets` calls; the transport's other members go unused.
+            transport: {request} as never,
+            sponsor: SPONSOR,
+        });
+        expect(wallets).toEqual([
+            {account: "0xAbC", deposits: 2, assets: 10n},
+            {account: "0xDeF", deposits: 1, assets: 7n},
+        ]);
     });
 
     it("splits each edge's deposits by sender and sums them per tool", async () => {
         const {transport, queries, seen} = transportOf([
-            edge({atomId: "0xaa", deposits: 3, proven: 1}),
-            edge({atomId: "0xaa", supportAssets: "1", deposits: 2, proven: 2}),
-            edge({atomId: "0xbb", deposits: 1, proven: 0}),
+            edge({atomId: "0xaa", deposits: 3, sponsored: 1}),
+            edge({atomId: "0xaa", supportAssets: "1", deposits: 2, sponsored: 2}),
+            edge({atomId: "0xbb", deposits: 1, sponsored: 0}),
         ]);
         const page = await listTools({graphqlUrl: INTUITION_URL, transport, sponsor: SPONSOR});
         expect(queries[0]).toBe(TOOL_LISTING_SPONSORED_QUERY);
         expect(seen[0]?.["sponsor"]).toBe(SPONSOR);
         expect(page.sponsor).toBe(SPONSOR);
-        expect(page.tools.map((t) => [t.atomId, t.provenDeposits, t.declaredDeposits])).toEqual([
+        expect(page.tools.map((t) => [t.atomId, t.sponsoredDeposits, t.declaredDeposits])).toEqual([
             ["0xaa", 3, 2],
             ["0xbb", 0, 1],
         ]);
     });
 
     it("never reports a negative declared count from an inconsistent response", async () => {
-        // Two aggregates are two reads of a table that can move between them. More proven than
+        // Two aggregates are two reads of a table that can move between them. More sponsored than
         // total would make `declared` negative; it is clamped instead.
-        const {transport} = transportOf([edge({atomId: "0xaa", deposits: 1, proven: 4})]);
+        const {transport} = transportOf([edge({atomId: "0xaa", deposits: 1, sponsored: 4})]);
         const page = await listTools({graphqlUrl: INTUITION_URL, transport, sponsor: SPONSOR});
-        expect(page.tools[0]?.provenDeposits).toBe(1);
+        expect(page.tools[0]?.sponsoredDeposits).toBe(1);
         expect(page.tools[0]?.declaredDeposits).toBe(0);
     });
 
@@ -252,13 +312,13 @@ describe("listTools — proven and declared (ADR 0094 §2)", () => {
         ]);
         const page = await listTools({graphqlUrl: INTUITION_URL, transport, sponsor: SPONSOR});
         expect(page.tools[0]?.edgeCount).toBe(1);
-        expect(page.tools[0]?.provenDeposits).toBe(0);
+        expect(page.tools[0]?.sponsoredDeposits).toBe(0);
         expect(page.tools[0]?.declaredDeposits).toBe(0);
     });
 
     it("refuses a sponsor that is not an address, before any request", async () => {
         // It is matched with `_ilike`, where `%` and `_` are wildcards: a malformed value could
-        // count somebody else's deposits as proven.
+        // count somebody else's deposits as sponsored.
         const {transport, seen} = transportOf([]);
         await expect(
             listTools({graphqlUrl: INTUITION_URL, transport, sponsor: "0x%"}),

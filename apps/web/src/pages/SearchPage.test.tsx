@@ -16,7 +16,8 @@ const tool = (name: string, label: string): ToolRow => ({
     href: `/atom/0x${name}`,
     declarations: 0,
     declarers: [],
-    provenDeposits: null,
+    sponsoredDeposits: null,
+    wallets: null,
     supportTrust: "0.001",
     opposeTrust: null,
     stakers: 0,
@@ -67,7 +68,7 @@ vi.mock("../hooks/use-agent-cohort", async (importOriginal) => ({
     }),
 }));
 vi.mock("../hooks/use-tool-catalog", () => ({
-    useReadsUsage: () => false,
+    useReadsSignals: () => false,
     useToolCatalog: () => ({data: CATALOG, error: null}),
 }));
 vi.mock("../hooks/use-skill-facts", () => ({
@@ -104,7 +105,7 @@ describe("the search page (task 48)", () => {
         expect(screen.getByText(/No agent by that name/)).toBeInTheDocument();
     });
 
-    it("orders by installs where Usage cannot be read, then stars, then the name", () => {
+    it("orders by installs where Signals cannot be read, then stars, then the name", () => {
         renderWithProviders(<SearchPage />);
         search("plans");
         const names = screen.getAllByRole("link").map((link) => link.textContent ?? "");

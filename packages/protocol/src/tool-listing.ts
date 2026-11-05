@@ -10,7 +10,11 @@ import {
     readString,
     TOOL_LISTING_QUERY,
     TOOL_LISTING_SPONSORED_QUERY,
+    SPONSORED_WALLETS_QUERY,
+    TOOL_WALLETS_QUERY,
 } from "@arp-protocol/graphql";
+import {getAddress} from "viem";
+
 import {SAME_AS, USES} from "./sources/intuition/terms.js";
 import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
 
@@ -35,12 +39,13 @@ import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
  * `pricedEdges`: how many of a tool's edges carry **at least one** position. Assets are additive, so
  * their sum is reported, and it is named as a sum.
  *
- * **Proven and declared are read from events, not positions** (ADR `0094` §2, task 42). A deposit
+ * **Sponsored and declared are read from events, not positions** (ADR `0094` §2, task 42). A deposit
  * made through ARP's sponsoring service and one made from Intuition's explorer land in the same
  * vault, and a position merges both: a withdrawal does not say which part it takes. The `Deposited`
  * event keeps its `sender` and its `receiver`, so a deposit the sponsoring address sent to another
- * wallet went through the proof gate and every other one did not, the service's own creation deposit
- * included (ADR `0143`). The address is config: without one, every deposit is declared.
+ * wallet went through the service and every other one did not, the service's own creation deposit
+ * included (ADR `0143`). It does not say a proof was checked: `/line` asks none (ADR `0144`). The address is
+ * config: without one, every deposit is declared.
  */
 
 
@@ -95,11 +100,18 @@ export type ToolListing = {
      */
     pricedEdges: number;
     /**
-     * Deposits on this tool's edges the sponsoring address sent to somebody else — each one passed
-     * ARP's proof gate. Its own creation deposit is not one (ADR `0143`). `0` when no sponsoring address is configured, which is true rather than unknown: nothing
-     * can have passed a gate that does not exist.
+     * Deposits on this tool's edges the sponsoring address sent to somebody else: a proof it checked
+     * (ADR `0094`), or a line it wrote in the agent's name with no proof (ADR `0144`), and nothing on
+     * chain tells them apart. Its own creation deposit is not one (ADR `0143`). `0` when no sponsoring address is configured, which is true rather than unknown: a sponsor that is
+     * not configured deposited nothing.
      */
-    provenDeposits: number;
+    sponsoredDeposits: number;
+    /**
+     * How many distinct wallets received those deposits, across this tool's edges. `null` when this
+     * read cannot say: no sponsoring address, the wallet read failed, or it hit the page limit and
+     * would undercount. A separate read, so its failure costs this figure and nothing else.
+     */
+    sponsoredWallets: number | null;
     /**
      * Every other deposit on this tool's edges, the creation deposit of each edge included, whoever
      * created it. An agent's own TRUST with no proof, or anybody else backing the claim.
@@ -117,7 +129,7 @@ export type ToolListingPage = {
     edgesRead: number;
     /** True when the edge limit was hit, so the grouping may be a prefix rather than the whole set. */
     truncated: boolean;
-    /** The sponsoring address `provenDeposits` was read against, or `null` when none was given. */
+    /** The sponsoring address `sponsoredDeposits` was read against, or `null` when none was given. */
     sponsor: string | null;
     tools: ToolListing[];
 };
@@ -138,7 +150,7 @@ export type ToolListingConfig = {
     order?: ToolListingOrder;
     /**
      * The address ARP's sponsoring service deposits from. What it sends to another wallet counts as
-     * proven; omitted or `null`, every deposit counts as declared.
+     * sponsored; omitted or `null`, every deposit counts as declared.
      */
     sponsor?: string | null;
 };
@@ -172,7 +184,7 @@ const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
  *
  * It is matched with `_ilike`, so a `%` or `_` in it would be a wildcard. Forty hex digits carry
  * neither, and anything else is a misconfiguration that must fail loudly rather than count the
- * wrong deposits as proven.
+ * wrong deposits as sponsored.
  */
 function sponsorFilterOf(sponsor: string | null | undefined): string | null {
     if (sponsor === undefined || sponsor === null) return null;
@@ -188,11 +200,24 @@ function countOf(term: unknown, key: string): number {
     return isRecord(inner) ? (readNumber(inner, "count") ?? 0) : 0;
 }
 
-/** Proven and declared deposits on one edge's support term. Declared is the rest, never negative. */
-function depositsOf(term: unknown): {proven: number; declared: number} {
+/** Sponsored and declared deposits on one edge's support term. Declared is the rest, never negative. */
+function depositsOf(term: unknown): {sponsored: number; declared: number} {
     const all = countOf(term, "deposits");
-    const proven = Math.min(countOf(term, "proven"), all);
-    return {proven, declared: all - proven};
+    const sponsored = Math.min(countOf(term, "sponsored"), all);
+    return {sponsored, declared: all - sponsored};
+}
+
+/** The wallets the sponsor deposited for, by edge. Case kept off the key: one wallet, one count. */
+function walletsByEdge(rows: readonly unknown[]): Map<string, Set<string>> {
+    const byEdge = new Map<string, Set<string>>();
+    for (const row of rows) {
+        if (!isRecord(row)) continue;
+        const term = readString(row, "term_id");
+        const wallet = readString(row, "receiver_id");
+        if (term === null || wallet === null) continue;
+        byEdge.set(term, (byEdge.get(term) ?? new Set<string>()).add(wallet.toLowerCase()));
+    }
+    return byEdge;
 }
 
 /** Tools, grouped from the `uses` edges and ordered by a measure the caller picks. */
@@ -212,13 +237,29 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
 
     const sponsor = sponsorFilterOf(config.sponsor);
     const base = {uses: USES, sameAs: SAME_AS, curveId: String(curveId), limit: edgeLimit};
-    const data =
+    const [data, walletRead] = await Promise.all([
         sponsor === null
-            ? await transport.request(TOOL_LISTING_QUERY, base)
-            : await transport.request(TOOL_LISTING_SPONSORED_QUERY, {...base, sponsor});
+            ? transport.request(TOOL_LISTING_QUERY, base)
+            : transport.request(TOOL_LISTING_SPONSORED_QUERY, {...base, sponsor}),
+        sponsor === null
+            ? Promise.resolve<Record<string, unknown>>({})
+            : transport
+                  .request(SPONSORED_WALLETS_QUERY, {
+                      uses: USES,
+                      sponsor: getAddress(sponsor.toLowerCase()),
+                      limit: INTUITION_MAX_PAGE,
+                  })
+                  .catch(() => null),
+    ]);
+    const walletRows =
+        walletRead !== null && Array.isArray(walletRead["deposits"]) ? walletRead["deposits"] : null;
+    const readsWallets =
+        sponsor !== null && walletRows !== null && walletRows.length < INTUITION_MAX_PAGE;
+    const edgeWallets = walletsByEdge(walletRows ?? []);
 
     const rows = Array.isArray(data["triples"]) ? data["triples"] : [];
     const byAtom = new Map<string, ToolListing>();
+    const walletsByAtom = new Map<string, Set<string>>();
 
     for (const row of rows) {
         if (!isRecord(row)) continue;
@@ -231,6 +272,12 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
         const support = sideOf(row["term"]);
         const oppose = sideOf(row["counter_term"]);
         const deposits = depositsOf(row["term"]);
+        const wallets = walletsByAtom.get(atomId) ?? new Set<string>();
+        const edgeId = readString(row, "term_id");
+        for (const wallet of edgeId === null ? [] : (edgeWallets.get(edgeId) ?? [])) {
+            wallets.add(wallet);
+        }
+        walletsByAtom.set(atomId, wallets);
 
         const existing = byAtom.get(atomId);
         if (existing === undefined) {
@@ -243,7 +290,8 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
                 edgeCount: 1,
                 declarers: declarer === null ? [] : [declarer],
                 pricedEdges: support.positions > 0 ? 1 : 0,
-                provenDeposits: deposits.proven,
+                sponsoredDeposits: deposits.sponsored,
+                sponsoredWallets: readsWallets ? wallets.size : null,
                 declaredDeposits: deposits.declared,
                 supportAssetsSum: support.assets,
                 opposeAssetsSum: oppose.assets,
@@ -255,7 +303,8 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
             existing.declarers.push(declarer);
         }
         if (support.positions > 0) existing.pricedEdges += 1;
-        existing.provenDeposits += deposits.proven;
+        existing.sponsoredDeposits += deposits.sponsored;
+        existing.sponsoredWallets = readsWallets ? wallets.size : null;
         existing.declaredDeposits += deposits.declared;
         existing.supportAssetsSum += support.assets;
         existing.opposeAssetsSum += oppose.assets;
@@ -275,4 +324,51 @@ export async function listTools(config: ToolListingConfig): Promise<ToolListingP
     });
 
     return {curveId, edgesRead: rows.length, truncated: rows.length >= edgeLimit, sponsor, tools};
+}
+
+/** One wallet the sponsoring service deposited for on a tool's edges. */
+export type ToolWallet = {
+    account: string;
+    deposits: number;
+    assets: bigint;
+};
+
+/**
+ * Who received what the sponsor deposited on a tool, most first: the wallets behind `sponsoredWallets`.
+ *
+ * What was deposited, not what is held today: a position merges this with the wallet's own deposits,
+ * and a withdrawal does not say which part it takes.
+ */
+export async function getToolWallets(
+    atomId: string,
+    config: Omit<ToolListingConfig, "order" | "curveId" | "sponsor"> & {sponsor: string},
+): Promise<ToolWallet[]> {
+    const transport =
+        config.transport ??
+        createGraphqlTransport({
+            url: config.graphqlUrl,
+            fetch: config.fetch ?? defaultFetch(),
+            timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        });
+    const data = await transport.request(TOOL_WALLETS_QUERY, {
+        uses: USES,
+        sameAs: SAME_AS,
+        atomId,
+        sponsor: getAddress(config.sponsor.trim().toLowerCase()),
+        limit: INTUITION_MAX_PAGE,
+    });
+
+    const byWallet = new Map<string, ToolWallet>();
+    for (const deposit of Array.isArray(data["deposits"]) ? data["deposits"] : []) {
+        if (!isRecord(deposit)) continue;
+        const account = readString(deposit, "receiver_id");
+        const assets = readBigInt(deposit, "assets_after_fees");
+        if (account === null || assets === null) continue;
+        const key = account.toLowerCase();
+        const seen = byWallet.get(key) ?? {account, deposits: 0, assets: 0n};
+        byWallet.set(key, {...seen, deposits: seen.deposits + 1, assets: seen.assets + assets});
+    }
+    return [...byWallet.values()].sort((a, b) =>
+        a.assets === b.assets ? 0 : a.assets < b.assets ? 1 : -1,
+    );
 }

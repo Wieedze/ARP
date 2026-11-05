@@ -15,7 +15,8 @@ const row = (index: number, source: string | null): ToolRow => ({
     href: `/atom/0x${index}`,
     declarations: 0,
     declarers: [],
-    provenDeposits: null,
+    sponsoredDeposits: null,
+    wallets: null,
     supportTrust: "0.001",
     opposeTrust: null,
     stakers: 0,
@@ -33,10 +34,10 @@ const VIEW: ToolCatalogView = {
 // The "video" domain holds the first 30 skills.
 const VIDEO = new Set(VIEW.rows.slice(0, 30).map((entry) => entry.key.toLowerCase()));
 
-// Whether Usage can be read does not wait for the read: `loaded` false is the first render.
+// Whether Signals can be read does not wait for the read: `loaded` false is the first render.
 const catalogState = {reads: true, loaded: true};
 vi.mock("../hooks/use-tool-catalog", () => ({
-    useReadsUsage: () => catalogState.reads,
+    useReadsSignals: () => catalogState.reads,
     useToolCatalog: () => ({
         data: catalogState.loaded ? VIEW : undefined,
         error: null,
@@ -91,41 +92,41 @@ describe("the tools page", () => {
         expect(range()).toHaveTextContent("1–25 of 60");
     });
 
-    it("keeps Most used pressed across an index switch, and on the first page", () => {
+    it("keeps Most signals pressed across an index switch, and on the first page", () => {
         renderWithProviders(<ToolCatalog />);
         next();
-        const used = screen.getByRole("button", {name: "Most used"});
+        const used = screen.getByRole("button", {name: "Most signals"});
         fireEvent.click(used);
         expect(used).toHaveAttribute("aria-pressed", "true");
         expect(range()).toHaveTextContent("1–25 of 60");
         fireEvent.click(screen.getByRole("button", {name: /Repositories/}));
-        expect(screen.getByRole("button", {name: "Most used"})).toHaveAttribute(
+        expect(screen.getByRole("button", {name: "Most signals"})).toHaveAttribute(
             "aria-pressed",
             "true",
         );
     });
 
-    it("leads on Most used before the read returns, so the control does not move", () => {
+    it("leads on Most signals before the read returns, so the control does not move", () => {
         catalogState.loaded = false;
         renderWithProviders(<ToolCatalog />);
-        expect(screen.getByRole("button", {name: "Most used"})).toHaveAttribute(
+        expect(screen.getByRole("button", {name: "Most signals"})).toHaveAttribute(
             "aria-pressed",
             "true",
         );
     });
 
-    it("offers no Most used where Usage cannot be read, and restores it on the way back", () => {
+    it("offers no Most signals where Signals cannot be read, and restores it on the way back", () => {
         const {rerender} = renderWithProviders(<ToolCatalog />);
         catalogState.reads = false;
         rerender(<ToolCatalog />);
-        expect(screen.queryByRole("button", {name: "Most used"})).toBeNull();
+        expect(screen.queryByRole("button", {name: "Most signals"})).toBeNull();
         expect(screen.getByRole("button", {name: "Most installs"})).toHaveAttribute(
             "aria-pressed",
             "true",
         );
         catalogState.reads = true;
         rerender(<ToolCatalog />);
-        expect(screen.getByRole("button", {name: "Most used"})).toHaveAttribute(
+        expect(screen.getByRole("button", {name: "Most signals"})).toHaveAttribute(
             "aria-pressed",
             "true",
         );

@@ -415,7 +415,9 @@ export {
 
 export {
     INTUITION_MAX_PAGE,
+    getToolWallets,
     listTools,
+    type ToolWallet,
     type ToolListing,
     type ToolListingConfig,
     type ToolListingOrder,

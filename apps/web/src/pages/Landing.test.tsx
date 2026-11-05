@@ -224,7 +224,7 @@ describe("Landing", () => {
         // The agent card lists what one agent used, with `proven` only where a position stands
         // behind the claim — ADR `0042`: the test is `positions`, never the amount, because every
         // term is born with `minShare`.
-        expect(await screen.findByText("used · proven")).toBeTruthy();
+        expect(await screen.findByText("signalled")).toBeTruthy();
         expect(await screen.findByText("declared only")).toBeTruthy();
     });
 

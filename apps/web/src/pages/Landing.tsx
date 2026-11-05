@@ -325,12 +325,12 @@ function SceneRecord({read}: {read: Read<RecentDeclaration[]>}) {
                                 ? []
                                 : agent.rows.map((row, index) => ({
                                       key: row.tripleId,
-                                      // Proven is a position behind the claim, not the claim. ADR
+                                      // Signalled is a position behind the claim, not the claim. ADR
                                       // `0042`: every term is born with `minShare`, so the test is
                                       // `positions`, never the amount.
                                       filled: row.positions > 0,
                                       name: label(row.object),
-                                      note: row.positions > 0 ? "used · proven" : "declared only",
+                                      note: row.positions > 0 ? "signalled" : "declared only",
                                       index,
                                   }))
                         }

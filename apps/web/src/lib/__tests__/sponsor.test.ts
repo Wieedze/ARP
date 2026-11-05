@@ -5,7 +5,7 @@ import {sponsorAddressFor} from "../sponsor";
 const SPONSOR = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
 
 describe("sponsorAddressFor", () => {
-    it("is null until one is configured, so Usage has nothing to show", () => {
+    it("is null until one is configured, so Signals has nothing to show", () => {
         expect(sponsorAddressFor(13579, undefined)).toBeNull();
         expect(sponsorAddressFor(13579, "")).toBeNull();
     });
@@ -15,7 +15,7 @@ describe("sponsorAddressFor", () => {
     });
 
     it("has none on mainnet, whatever the environment says", () => {
-        // The sponsoring service is testnet-only; a mainnet figure labelled proven by a testnet
+        // The sponsoring service is testnet-only; a mainnet figure read off a testnet
         // key would be two chains in one number.
         expect(sponsorAddressFor(1155, SPONSOR)).toBeNull();
     });

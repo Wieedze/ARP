@@ -5,15 +5,14 @@ import {intuitionTestnet} from "./chains";
 /**
  * The address ARP's sponsoring service deposits from on this chain, or `null`.
  *
- * A deposit it sent to an agent passed the proof gate, and `/tools` counts it as _proven_ (ADRs
- * `0094`, `0143`). The
+ * What it sends to an agent is what `/tools` counts as _signals_ (ADR `0143`). The
  * service is testnet-only (`security.md`, the signing table), so mainnet has none whatever the
- * environment says: a mainnet figure labelled proven by a testnet key would be two chains in one
+ * environment says: a mainnet figure read off a testnet key would be two chains in one
  * number.
  *
  * `configured` is `VITE_ARP_SPONSOR_ADDRESS`; unset or blank, `recorded`, the address in
  * `data/deployments/13579.json`, is used instead (task 58). Malformed, it is `null`, and `/tools`
- * has no Usage to show — never a guess.
+ * has no Signals to show — never a guess.
  */
 export function sponsorAddressFor(
     chainId: number,
