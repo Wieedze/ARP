@@ -89,3 +89,23 @@ Choosing otherwise is reported and sets no verdict: a missing program can be ins
 **Limits, stated now.** n is 5 per arm, and task 64's same arm moved from 1/5 to 4/5, so this checks that the wiring reaches an agent's decision. It is not an effect size. The line is planted, one need says nothing about others, and the word match can count a sentence about something else, so the answers are read by hand too.
 
 **Caps.** `--max-budget-usd 0.50` per session, and the script stops if the total passes $5.
+
+## 8. Result of the agent test
+
+Run 2026-11-05, `data/measurements/field-memory-eval-20261105T1743.jsonl`, `sonnet`, **$0.80 in total** for 10 sessions. **Verdict by the rules of §7: worked.**
+
+| Arm | Sessions | Names the failure | Picks the planted skill |
+| --- | --- | --- | --- |
+| B, nothing on the machine | 5 | 0 | 5 (`jimliu/baoyu-skills@baoyu-url-to-markdown`) |
+| A, one planted line | 5 | 5 | 0 (all 5 pick `easyzoom/aix-skills@webpage-to-markdown`) |
+
+5 of 5 is Wilson 95% 57% to 100%. Every arm A answer was read by hand: each sentence the word match counted is about this failure, and 3 of the 5 repeat that it matched by name only.
+
+**What it shows:** the field reaches an agent's decision, and an agent reports it without being asked.
+
+**What it does not show:**
+
+- **That the new choice is better.** No skill was run. This is about reading, not about results.
+- **That a line is right.** The line was planted. One line moved 5 of 5 choices, even when the agent said it might be another repository's skill. So a wrong line, which §5 says can happen, would move a choice as easily. That matters little for a person's own machine and much more before any line goes public (phase 6, `docs/tasks/67` §9).
+- **Anything general.** One need, three skills, with a good alternative in the list. 41 scripts on the planted skill may have made the agent readier to leave it.
+
