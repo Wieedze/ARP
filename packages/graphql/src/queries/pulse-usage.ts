@@ -38,3 +38,20 @@ export const PULSE_ATOMS_QUERY = `query PulseAtoms($uris: [String!]!, $limit: In
         data
     }
 }`;
+
+/** The `uses` edges qualified with these domains. Their tools come from `PULSE_EDGE_TOOLS_QUERY`. */
+export const PULSE_DOMAIN_EDGES_QUERY = `query PulseDomainEdges($domains: [String!]!, $predicate: String!, $limit: Int!) {
+    triples(where: {predicate_id: {_eq: $predicate}, object: {label: {_in: $domains}}}, limit: $limit) {
+        subject_id
+    }
+}`;
+
+export const PULSE_EDGE_TOOLS_QUERY = `query PulseEdgeTools($edges: [String!]!, $uses: String!, $limit: Int!) {
+    triples(where: {term_id: {_in: $edges}, predicate_id: {_eq: $uses}}, limit: $limit) {
+        object {
+            term_id
+            label
+            data
+        }
+    }
+}`;

@@ -103,7 +103,7 @@ const SERVER_INSTRUCTIONS = [
   '',
   'TWO THINGS TO KNOW BEFORE ACTING ON A NUMBER. Assets above zero mean the entry exists, not that',
   'somebody supported it — creating an entry seeds it with a small amount; position_count tells the',
-  'two apart. And ARP composes no score: every figure is support somebody else put in.',
+  'two apart. The only score is `arp_pulse`\'s, which shows its parts; every other figure is support somebody else put in.',
 ].join('\n');
 
 const SERVED_TOOLS = DESKTOP

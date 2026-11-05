@@ -145,7 +145,7 @@ export const TOOLS = [
       'which other repositories hold the same content with their install figures, and `usage`: the ' +
       'declarations agents paid to write, with their domain and outcome. `status` other than `read` means ' +
       'it was not read, so what it needs is unknown. Pass `constraints`: they stay in this call. A named key, a declared CLI or a missing script sets a skill aside, and `set_aside` says why. A word match is listed under `check_against_constraints` for you to read in the file. ' +
-      ' Pass `domain` to put first what the most wallets said worked in it. ' +
+      ' Results come by `score`, public and shown with its parts: the search\'s rank, then what wallets said worked or failed in this domain. It ranks and does not say a skill works. `domain` is read from your words when you leave it out. ' +
       'Nothing here is a verdict, and nothing is written.',
     inputSchema: {
       type: 'object',
@@ -157,7 +157,7 @@ export const TOOLS = [
         },
         domain: {
           type: 'string',
-          description: 'One category word, `video`. Orders by wallets that said it worked there, then by the search.',
+          description: 'Optional. One category word, `video`. Read from `query` when left out.',
         },
         constraints: {
           type: 'object',

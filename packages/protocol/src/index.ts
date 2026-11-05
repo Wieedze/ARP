@@ -566,9 +566,21 @@ export {
 } from "./pulse.js";
 export {readRequires, type SkillRequires} from "./skill-requires.js";
 
+/** The score of a skill in a context: public, recomputable, never on chain (ADR `0137`). */
+export {
+    inferDomain,
+    priorFromRank,
+    scoreSkill,
+    SCORE_VERSION,
+    walletsSaying,
+    type PulseScore,
+} from "./pulse-score.js";
+
 /** What agents wrote about a tool: declarations, their domain and their outcome (ADR `0135`). */
 export {
+    findDeclaredTools,
     findToolAtoms,
+    readThingUrl,
     getPulseUsage,
     workedInDomain,
     type PulseDeclaration,

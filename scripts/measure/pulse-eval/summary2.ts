@@ -17,7 +17,7 @@ type Row = {
 };
 type Judged = {need: string; source: string; skill: string; verdicts: {verdict?: string}[]};
 
-const path = "data/measurements/pulse-eval2-2026-11-05.jsonl";
+const path = process.argv[2] ?? "data/measurements/pulse-eval2-2026-11-05.jsonl";
 const rows = readFileSync(path, "utf8")
     .split("\n")
     .filter((line) => line.trim() !== "")
@@ -39,7 +39,7 @@ console.log(`runs ${rows.length}, $${rows.reduce((sum, row) => sum + row.costUsd
 const split = judged.filter((row) => new Set(row.verdicts.map((entry) => entry.verdict)).size > 1);
 console.log(`skills read ${judged.length}, readings that disagree ${split.length}`);
 for (const need of ["silences-fixed", "silences", "voiceover", "markdown"]) {
-    for (const arm of ["A", "B", "C", "D"]) {
+    for (const arm of ["A", "B", "C", "D", "S", "F"]) {
         const cell = rows.filter((row) => row.need === need && row.arm === arm);
         if (cell.length === 0) continue;
         const choices = new Map<string, number>();

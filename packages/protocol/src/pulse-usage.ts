@@ -6,6 +6,8 @@ import {
     type GraphqlTransport,
     isRecord,
     PULSE_ATOMS_QUERY,
+    PULSE_DOMAIN_EDGES_QUERY,
+    PULSE_EDGE_TOOLS_QUERY,
     PULSE_QUALIFIERS_QUERY,
     PULSE_USES_QUERY,
     readRecord,
@@ -95,6 +97,59 @@ export async function findToolAtoms(
         if (id !== null && uri !== null) out.set(uri, id);
     }
     return out;
+}
+
+/**
+ * The tools declared in these domains, even ones a search did not return, so what agents learned can reach
+ * the next agent. An atom may read `Unknown`: the indexer does not retry after a failed resolve, so an atom
+ * created before its document was pinned keeps that label. Then its URL comes from the document itself.
+ */
+export async function findDeclaredTools(
+    domains: readonly string[],
+    config: Pick<PulseUsageConfig, "graphqlUrl" | "inContextOf" | "fetch" | "timeoutMs" | "transport"> & {
+        readThing?: (uri: string) => Promise<string | null>;
+    },
+): Promise<{atomId: string; url: string}[]> {
+    if (domains.length === 0) return [];
+    const transport =
+        config.transport ??
+        createGraphqlTransport({
+            url: config.graphqlUrl,
+            fetch: config.fetch ?? defaultFetch(),
+            timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        });
+    const edges = rowsOf(
+        await transport.request(PULSE_DOMAIN_EDGES_QUERY, {domains: [...domains], predicate: config.inContextOf, limit: DEFAULT_LIMIT}),
+    )
+        .map((row) => readString(row, "subject_id"))
+        .filter((id): id is string => id !== null);
+    if (edges.length === 0) return [];
+    const rows = rowsOf(await transport.request(PULSE_EDGE_TOOLS_QUERY, {edges, uses: USES, limit: DEFAULT_LIMIT}));
+    const out = new Map<string, {atomId: string; url: string}>();
+    for (const row of rows) {
+        const object = readRecord(row, "object");
+        const atomId = object === null ? null : readString(object, "term_id");
+        if (object === null || atomId === null || out.has(atomId)) continue;
+        const label = readString(object, "label");
+        const uri = readString(object, "data");
+        const fromLabel = label !== null && label.includes("?skill=") ? `https://${label.replace(/^https?:\/\//, "")}` : null;
+        const url = fromLabel ?? (uri === null || config.readThing === undefined ? null : await config.readThing(uri));
+        if (url !== null) out.set(atomId, {atomId, url});
+    }
+    return [...out.values()];
+}
+
+/** The URL in a tool's pinned document, read from a public IPFS gateway. `null` for anything else. */
+export async function readThingUrl(uri: string, fetcher: FetchLike = defaultFetch()): Promise<string | null> {
+    if (!uri.startsWith("ipfs://")) return null;
+    try {
+        const response = await fetcher(`https://ipfs.io/ipfs/${uri.slice("ipfs://".length)}`);
+        const body: unknown = JSON.parse(await response.text());
+        const url = isRecord(body) ? readString(body, "url") : null;
+        return url !== null && url.includes("?skill=") ? url : null;
+    } catch {
+        return null;
+    }
 }
 
 /** How many distinct wallets named this domain and said it worked. The one fact a list is ordered on. */

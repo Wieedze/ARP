@@ -27,7 +27,7 @@ import {join, resolve} from "node:path";
 
 import {githubPulseSource, readPulse} from "../../packages/protocol/src/pulse.ts";
 
-type Arm = "A" | "B" | "C" | "D";
+type Arm = "A" | "B" | "C" | "D" | "S" | "F";
 type Need = {id: string; ask: string; domain: string; have: string[]; words?: string};
 
 const MACHINE = ["ffmpeg", "ffprobe", "python3", "node", "npx", "git"];
@@ -86,7 +86,9 @@ function prompt(need: Need, arm: Arm): string {
     const search =
         arm === "A"
             ? `Search with: npx skills find "${words}".`
-            : `Search with the arp_pulse tool: query "${words}", domain "${need.domain}", and the constraints this person gave.`;
+            : arm === "S" || arm === "F"
+              ? `Search with the arp_pulse tool: query "${words}", and the constraints this person gave.`
+              : `Search with the arp_pulse tool: query "${words}", domain "${need.domain}", and the constraints this person gave.`;
     return [
         `A person asks: ${need.ask}`,
         `They will not create an account, pay for a service or provide an API key.`,
@@ -167,9 +169,10 @@ async function run(need: Need, arm: Arm, rep: number): Promise<Record<string, un
                     ARP_TARGET: "testnet",
                     ARP_TOOLS: "read",
                     // Task 63 §9: `C` reads the real graph, `B` none, `D` the proxy with invented lines.
-                    ...(arm === "C" || arm === "A"
-                        ? {}
-                        : {INTUITION_GRAPHQL_URL: arm === "D" ? "http://127.0.0.1:3070/" : "http://127.0.0.1:9/"}),
+                    // Task 64: `C` and `D` keep the earlier order, `S` and `F` use the score.
+                    ...(arm === "C" || arm === "D" || arm === "B" ? {ARP_PULSE_SCORE: "off"} : {}),
+                    ...(arm === "D" || arm === "F" ? {INTUITION_GRAPHQL_URL: "http://127.0.0.1:3070/"} : {}),
+                    ...(arm === "B" ? {INTUITION_GRAPHQL_URL: "http://127.0.0.1:9/"} : {}),
                     ARP_NO_RECEIPTS: "1",
                     ...(process.env["GITHUB_TOKEN"] === undefined ? {} : {GITHUB_TOKEN: process.env["GITHUB_TOKEN"]}),
                 },

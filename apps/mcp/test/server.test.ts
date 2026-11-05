@@ -353,7 +353,7 @@ describe("the handshake", () => {
         expect(instructions).toMatch(/needs NOTHING/);
         // And the precautions, still there, at the end where a precaution belongs.
         expect(instructions).toContain("UNSIGNED");
-        expect(instructions).toContain("composes no score");
+        expect(instructions).toContain("only score is `arp_pulse`");
     });
 
     it("takes the `initialized` notification without a body", async () => {

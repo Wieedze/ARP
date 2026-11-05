@@ -10,7 +10,7 @@ import {usePulse} from "../hooks/use-pulse";
 
 /**
  * What a skill implies and what agents wrote about it, on one URL (task 63). Facts only: every line
- * is a match in a file or something a wallet paid to write, and there is no score (ADR `0046`).
+ * is a match in a file or something a wallet paid to write. It shows no score: `arp_pulse` ranks a search, and a page has none.
  */
 export function PulsePage() {
     const {owner = "", repo = "", skill = ""} = useParams();

@@ -5,24 +5,31 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import {
+  findDeclaredTools,
   findToolAtoms,
   getPulseUsage,
   githubPulseSource,
   groupByContent,
   HAS_OUTCOME_LABEL,
+  inferDomain,
   parseSkillsFind,
+  readDomainTree,
   readPulse,
+  readThingUrl,
+  SCORE_VERSION,
+  scoreSkill,
   skillRefFromUrl,
   toolAtomUri,
   type PulseUsage,
   type SkillPulse,
   type SkillSearchResult,
+  walletsSaying,
   workedInDomain,
 } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
 
-import { DESKTOP, GRAPHQL, IN_CONTEXT_OF, reads } from '../config.js';
+import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, reads } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
 const run = promisify(execFile);
@@ -217,8 +224,9 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
  * `arp_pulse`: a search, what each result's files show, and what agents wrote about it (task 63).
  *
  * Holds no key and writes nothing. The constraints are the person's and stay in this call: nothing
- * here sends them anywhere. It orders on one visible fact, how many wallets said it worked in the
- * domain asked about, and then keeps the search's own order. A declared failure never lifts a skill. There is no composed score (ADR `0046`).
+ * here sends them anywhere. It orders on a public score (`pulse-score.ts`), starting on the search's own
+ * order, and each result shows the parts of its score. `ARP_PULSE_SCORE=off` keeps the earlier order, for
+ * the comparison of `docs/tasks/64`. There is no composed score (ADR `0046`).
  */
 export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const query = args['query'];
@@ -229,7 +237,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const limitRaw = args['limit'];
   const limit = typeof limitRaw === 'number' ? Math.min(Math.max(1, Math.floor(limitRaw)), MAX_LIMIT) : DEFAULT_LIMIT;
   const domainRaw = args['domain'];
-  const domain = typeof domainRaw === 'string' && domainRaw.trim() !== '' ? domainRaw.trim().toLowerCase() : null;
+  const askedDomain = typeof domainRaw === 'string' && domainRaw.trim() !== '' ? domainRaw.trim().toLowerCase() : null;
   const constraints = readConstraints(args['constraints']);
 
   let output: string;
@@ -247,19 +255,38 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     output = found.output;
   }
 
-  const results: SkillSearchResult[] = parseSkillsFind(output);
-  if (results.length === 0) return text(id, { search: 'npx skills find', results: [] });
+  const searched: SkillSearchResult[] = parseSkillsFind(output);
+  if (searched.length === 0 && typeof query !== 'string') return text(id, { search: 'search_output', results: [] });
 
-  // What agents wrote comes first and is one query for every result, so a skill agents said worked is
-  // read even when the search ranks it far down. If the chain is busy it degrades to "unknown" and
-  // the file facts still come: the first comparison lost 4 of 9 runs to one failed read.
-  const uriOf = (result: SkillSearchResult) => toolUriOf(result.source, result.skill);
+  // Everything about the public record degrades to "unknown", and the file facts still come: the first
+  // comparison lost 4 of 9 runs to one failed read.
+  const scored = process.env['ARP_PULSE_SCORE'] !== 'off';
+  let domain = askedDomain;
+  let scope: Set<string> | null = domain === null ? null : new Set([domain]);
+  let results = searched;
   let atomByUri = new Map<string, string>();
   let usage = new Map<string, PulseUsage>();
   let usageRead = true;
   try {
+    if (scored) {
+      const tree = await readDomainTree(domainWalk());
+      if (domain === null && typeof query === 'string') domain = inferDomain(query, tree.subtree(DOMAIN_ROOT));
+      if (domain !== null) scope = new Set(tree.subtree(domain).concat(domain));
+      const declared =
+        scope === null
+          ? []
+          : await findDeclaredTools([...scope], { graphqlUrl: GRAPHQL, inContextOf: IN_CONTEXT_OF, readThing: readThingUrl });
+      const seen = new Set(searched.map((row) => `${row.source}?skill=${row.skill}`.toLowerCase()));
+      const added: SkillSearchResult[] = [];
+      for (const { url } of declared) {
+        const ref = skillRefFromUrl(url);
+        if (ref === null || seen.has(`${ref.repo}?skill=${ref.skill}`.toLowerCase())) continue;
+        added.push({ source: ref.repo, skill: ref.skill, installs: null, installsText: null, url: null });
+      }
+      results = [...searched, ...added];
+    }
     atomByUri = await findToolAtoms(
-      results.map(uriOf).filter((uri): uri is string => uri !== null),
+      results.map((row) => toolUriOf(row.source, row.skill)).filter((uri): uri is string => uri !== null),
       { graphqlUrl: GRAPHQL },
     );
     usage = await getPulseUsage([...atomByUri.values()], {
@@ -271,20 +298,33 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     usageRead = false;
     console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
   }
+  if (results.length === 0) return text(id, { search: 'npx skills find', results: [] });
+
   const atomOf = (result: SkillSearchResult) => {
-    const uri = uriOf(result);
+    const uri = toolUriOf(result.source, result.skill);
     return uri === null ? null : (atomByUri.get(uri) ?? null);
   };
   const usageOf = (result: SkillSearchResult) => {
     const atom = atomOf(result);
     return atom === null ? undefined : usage.get(atom.toLowerCase());
   };
+  const rankOf = new Map(searched.map((row, rank) => [`${row.source}@${row.skill}`, rank]));
+  const scoreOf = (result: SkillSearchResult) =>
+    scoreSkill({
+      rank: rankOf.get(`${result.source}@${result.skill}`) ?? null,
+      total: searched.length,
+      ...walletsSaying(usageOf(result), scope),
+    });
   const workedHere = (result: SkillSearchResult) =>
     domain === null ? 0 : workedInDomain(usageOf(result), domain);
 
   const ordered = results
     .map((result, order) => ({ result, order }))
-    .sort((a, b) => workedHere(b.result) - workedHere(a.result) || a.order - b.order)
+    .sort((a, b) =>
+      scored
+        ? scoreOf(b.result).score - scoreOf(a.result).score || a.order - b.order
+        : workedHere(b.result) - workedHere(a.result) || a.order - b.order,
+    )
     .map(({ result }) => result);
 
   const token = process.env['GITHUB_TOKEN'];
@@ -321,12 +361,18 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     search: typeof given === 'string' ? 'search_output' : 'npx skills find',
     results_found: results.length,
     results_read: pulses.length,
-    order: domain === null ? "the search's own" : `wallets that said it worked in "${domain}", then the search's own`,
+    order: scored
+      ? `score ${SCORE_VERSION}: (prior from the search's rank + wallets that said worked) / (1 + worked + failed)`
+      : domain === null
+        ? "the search's own"
+        : `wallets that said it worked in "${domain}", then the search's own`,
+    ...(domain === null ? {} : { domain }),
     read_this:
-      'Mentions are matches in the file, not requirements. Installs are the search\'s figure, not a count of use. ' +
-      'What agents wrote is what they paid to say.',
+      'The score ranks this search from public signals and does not say a skill works. Mentions are matches in the file, ' +
+      'not requirements. Installs are the search\'s figure, not a count of use. What agents wrote is what they paid to say.',
     skills: distinct.slice(0, limit).map((entry) => ({
       ...factsOf(entry.row, copies),
+      ...(scored ? { score: Number(scoreOf(entry.row).score.toFixed(3)), score_parts: scoreOf(entry.row) } : {}),
       ...(toCheck(entry.row, constraints).length === 0 ? {} : { check_against_constraints: toCheck(entry.row, constraints) }),
       ...(entry.atom === null ? {} : { atom_id: entry.atom }),
       usage: usageRead ? usageLine(entry.usage, domain) : { unknown: 'the public record did not answer' },
