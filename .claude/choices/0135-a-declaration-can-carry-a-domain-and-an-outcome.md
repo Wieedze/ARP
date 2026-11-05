@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-11-05
 **Triggered by:** `docs/tasks/63`, the user's question « dans quel contexte cet événement arrive ? » and
-their answer that written facts must be reliable and paid
+an agent's proposal, to which they answered « oui », that written facts be reliable and paid
 
 ## Context
 

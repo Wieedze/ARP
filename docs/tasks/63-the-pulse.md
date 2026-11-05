@@ -28,7 +28,7 @@ an agent used it in a comparable situation.
 | Phase 1 | « oui pour phase 1 » |
 | The next phases, and wallets | « fais les phases suivantes », with existing wallets, everything on testnet |
 | What runs locally | A user's constraints and the runtime's trace stay on their machine |
-| What is written | « Les faits inscrits doivent être fiables et payés » |
+| What is written | An agent proposed that written facts be reliable and paid; the user answered « oui », then said this is simply how a blockchain works (2026-11-05) |
 
 ## 3. The walk
 
