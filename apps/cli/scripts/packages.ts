@@ -67,7 +67,7 @@ function mcpServer(source: Source) {
 }
 
 const FIND =
-  'Find the skill or MCP server that fits a task, and see which ones other agents actually used.';
+  'Check a skill or MCP server before your agent installs it: what it asks for, and what other agents wrote about it.';
 
 function files(source: Source): Files {
   const out: Files = new Map();
@@ -113,7 +113,7 @@ function files(source: Source): Files {
     json({
       name: 'arp',
       owner: { name: 'ARP' },
-      metadata: { description: 'ARP: find the tool that exists for the job, and see who used it.' },
+      metadata: { description: 'ARP: check before your agent installs or pays.' },
       plugins: [{ name: 'arp', source: `./${claude}`, description: meta.description }],
     }),
   );

@@ -568,25 +568,34 @@ export {
     type SkillSearchResult,
 } from "./pulse.js";
 export {readRequires, type SkillRequires} from "./skill-requires.js";
+export {parseLocalFailures, yourFailures, type LocalFailure, type YourFailures} from "./local-failures.js";
 
 /** The score of a skill in a context: public, recomputable, never on chain (ADR `0137`). */
 export {
     inferDomain,
+    lineWeight,
     priorFromRank,
+    scoreFrom,
     scoreSkill,
     SCORE_VERSION,
-    walletsSaying,
+    SIGNAL_WEIGHTS,
+    signalOf,
+    type Capability,
     type PulseScore,
+    type SignalContext,
+    type WeighedLine,
 } from "./pulse-score.js";
 
 /** What agents wrote about a tool: declarations, their domain and their outcome (ADR `0135`). */
 export {
     findDeclaredTools,
     findToolAtoms,
+    readEdgeWriters,
     readThingUrl,
     getPulseUsage,
     workedInDomain,
     type PulseDeclaration,
+    type PulseLine,
     type PulseUsage,
     type PulseUsageConfig,
 } from "./pulse-usage.js";
@@ -604,13 +613,17 @@ export {
     type PaymentFacts,
 } from "./agent-pulse.js";
 export {
+    BECAUSE_LABEL,
     HAS_OUTCOME_LABEL,
     isUsageOutcome,
+    isUsageReason,
     prepareUsageContext,
     USAGE_OUTCOMES,
+    USAGE_REASONS,
     type UsageContextPlan,
     type UsageContextRefusal,
     type UsageOutcome,
+    type UsageReason,
 } from "./declare/usage-context.js";
 
 /**

@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-135 decisions. Newest last. `choices/README.md` says when to write one.
+138 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -167,5 +167,8 @@ Read these before relying on them.
 | [0135](0135-a-declaration-can-carry-a-domain-and-an-outcome.md) | 2026-11-05 | Accepted | A declaration can carry a domain and an outcome, written by the declarer |
 | [0136](0136-the-product-is-the-search.md) | 2026-11-05 | Accepted | The product is the search |
 | [0137](0137-arp-will-compute-a-score.md) | 2026-11-05 | Accepted. Its design is open. | ARP will compute a score |
+| [0138](0138-a-line-is-form-b-and-money-does-not-weigh.md) | 2026-11-05 | Accepted | A line is written in form B, has a closed reason, and money does not weigh in the score |
 | [0139](0139-one-search-two-kinds-of-result.md) | 2026-11-05 | Accepted | One search, two kinds of result, and four uses for an agent you can call |
+| [0140](0140-the-hook-records-a-skills-failure-and-only-that.md) | 2026-11-05 | Accepted | The hook records a skill's failure, in one file, and writes `worked` never |
 | [0141](0141-an-agent-line-carries-the-receipt-of-the-hire.md) | 2026-11-05 | Accepted | An agent's line carries the receipt of the hire, and is read from the index first |
+| [0142](0142-the-message-is-not-the-argument.md) | 2026-11-05 | Accepted | The public message is not the internal argument |

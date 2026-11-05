@@ -170,7 +170,7 @@ export function parseSessionLog(text: string): Invocation[] {
  * What each distinct invocation resolves to, counted.
  *
  * The count is reported and **never weighted**: calling a tool forty times is not forty times the
- * evidence, and ARP composes no score (ADR `0046`). A reader deciding whether to declare wants to
+ * evidence, and this composes no score. A reader deciding whether to declare wants to
  * see it, which is the whole of why it is here.
  */
 export function resolveInvocations(

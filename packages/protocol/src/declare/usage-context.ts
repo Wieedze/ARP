@@ -7,10 +7,17 @@ import type {PreparedCall} from "./types.js";
  * What a `uses` declaration can be qualified with: where it happened and how it went (task 63, ADR
  * `0135`). Like every plan in this package it signs nothing and sends nothing (ADR `0038`).
  *
+ * Form B (ADR `0138`): each line is about the one before, so an outcome belongs to its domain and
+ * a reason to its outcome. A declaration can stop at any level.
+ *
  * ```
- * ((agent, uses, skill), in context of, video)
- * ((agent, uses, skill), has outcome, failed)
+ * T1 = (agent, uses, skill)
+ * T2 = (T1, in context of, video)
+ * T3 = (T2, has outcome, failed)
+ * T4 = (T3, because, missing-key)
  * ```
+ *
+ * With no domain, the outcome is about T1 itself.
  *
  * **The vocabulary is closed on purpose.** A domain must already be a category and an outcome one
  * of two words: on a graph that deletes nothing, free text fragments for ever. Never the text of a
@@ -25,9 +32,14 @@ export type UsageOutcome = (typeof USAGE_OUTCOMES)[number];
 /** A plain string, so its id follows from the word and is the same on every chain. */
 export const HAS_OUTCOME_LABEL = "has outcome";
 
+/** Why a use failed. Closed for the same reason as the outcomes (ADR `0138`). */
+export const USAGE_REASONS = ["missing-key", "missing-program", "missing-file", "not-the-right-tool"] as const;
+export type UsageReason = (typeof USAGE_REASONS)[number];
+export const BECAUSE_LABEL = "because";
+
 export type UsageContextRefusal = {
     status: "refused";
-    rule: "nothing_to_add" | "not_declared" | "unknown_domain";
+    rule: "nothing_to_add" | "not_declared" | "unknown_domain" | "reason_without_failure";
     detail: string;
 };
 
@@ -36,6 +48,7 @@ export type UsageContextPlan = {
     chainId: number;
     contextTripleId: Hex | null;
     outcomeTripleId: Hex | null;
+    reasonTripleId: Hex | null;
     calls: PreparedCall[];
     /**
      * Qualifiers already on chain, which this plan does not create. Without a `declarer` nobody can
@@ -50,6 +63,10 @@ export function isUsageOutcome(value: unknown): value is UsageOutcome {
     return USAGE_OUTCOMES.some((outcome) => outcome === value);
 }
 
+export function isUsageReason(value: unknown): value is UsageReason {
+    return USAGE_REASONS.some((reason) => reason === value);
+}
+
 /**
  * Plan the qualifiers for one `uses` edge.
  *
@@ -61,6 +78,8 @@ export async function prepareUsageContext(params: {
     edgePlanned?: boolean;
     domain?: string;
     outcome?: UsageOutcome;
+    /** Only with `outcome: "failed"`. */
+    reason?: UsageReason;
     /** The predicate this chain's other nested claims use. Read from the deployment record. */
     inContextOf: Hex;
     /** Whether a label is a category under `tool`, read from the index. */
@@ -70,10 +89,15 @@ export async function prepareUsageContext(params: {
      * deposit from it, so an earlier writer cannot silence the declarer (`intuition-integrator`, task 63).
      */
     declarer?: Address;
+    /** `declarer` did not write this edge, so it deposits on it to declare the use (ADR `0138`). */
+    declarerDidNotWriteEdge?: boolean;
     reads: MultiVaultReads;
 }): Promise<UsageContextPlan | UsageContextRefusal> {
     const {reads} = params;
     const domain = params.domain?.trim().toLowerCase();
+    if (params.reason !== undefined && params.outcome !== "failed") {
+        return {status: "refused", rule: "reason_without_failure", detail: "a reason only follows a failure"};
+    }
     if (domain === undefined && params.outcome === undefined) {
         return {status: "refused", rule: "nothing_to_add", detail: "give a domain or an outcome"};
     }
@@ -107,15 +131,15 @@ export async function prepareUsageContext(params: {
         return id;
     };
 
-    const triple = async (predicate: Hex, object: Hex, why: string): Promise<Hex> => {
-        const id = await reads.tripleId(params.usesTripleId, predicate, object);
+    const triple = async (subject: Hex, predicate: Hex, object: Hex, why: string): Promise<Hex> => {
+        const id = await reads.tripleId(subject, predicate, object);
         if (!(await reads.termExists(id))) {
             calls.push({
                 kind: "create-triple",
                 chainId: reads.chainId,
                 to: reads.address,
                 value: tripleAssets,
-                data: encodeCreateTriple(params.usesTripleId, predicate, object, tripleAssets),
+                data: encodeCreateTriple(subject, predicate, object, tripleAssets),
                 why,
             });
         } else {
@@ -134,22 +158,40 @@ export async function prepareUsageContext(params: {
         return id;
     };
 
+    if (params.declarerDidNotWriteEdge === true && params.declarer !== undefined && (await reads.sharesOf(params.declarer, params.usesTripleId, curve)) === 0n) {
+        calls.push({
+            kind: "deposit",
+            chainId: reads.chainId,
+            to: reads.address,
+            value: stake,
+            data: encodeDeposit(params.declarer, params.usesTripleId, curve, 0n),
+            why: "another wallet wrote this use, so deposit on it to declare it too",
+        });
+    }
+
     let contextTripleId: Hex | null = null;
     if (domain !== undefined) {
         const domainId = await atom(domain, `the category "${domain}"`);
-        contextTripleId = await triple(params.inContextOf, domainId, `say this use was in "${domain}"`);
+        contextTripleId = await triple(params.usesTripleId, params.inContextOf, domainId, `say this use was in "${domain}"`);
     }
     let outcomeTripleId: Hex | null = null;
     if (params.outcome !== undefined) {
         const predicate = await atom(HAS_OUTCOME_LABEL, `the word "${HAS_OUTCOME_LABEL}"`);
         const outcomeId = await atom(params.outcome, `the word "${params.outcome}"`);
-        outcomeTripleId = await triple(predicate, outcomeId, `say this use ${params.outcome}`);
+        outcomeTripleId = await triple(contextTripleId ?? params.usesTripleId, predicate, outcomeId, `say this use ${params.outcome}`);
+    }
+    let reasonTripleId: Hex | null = null;
+    if (params.reason !== undefined && outcomeTripleId !== null) {
+        const predicate = await atom(BECAUSE_LABEL, `the word "${BECAUSE_LABEL}"`);
+        const reasonId = await atom(params.reason, `the word "${params.reason}"`);
+        reasonTripleId = await triple(outcomeTripleId, predicate, reasonId, `say it failed because of ${params.reason}`);
     }
     return {
         status: "planned",
         chainId: reads.chainId,
         contextTripleId,
         outcomeTripleId,
+        reasonTripleId,
         calls,
         alreadyWritten,
         totalValue: calls.reduce((sum, call) => sum + call.value, 0n),

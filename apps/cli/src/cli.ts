@@ -31,7 +31,9 @@ const USAGE = `arp ${version} — ARP's agent-side programs
 
 usage
   arp mcp [--http]   the MCP server. stdio by default, which is how an MCP client launches it
-  arp hook           the runtime hook: one payload on stdin, one line in .arp/session.jsonl
+  arp hook           the runtime hook: one payload on stdin. Records what a session used in
+                     .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl
+  arp backfill       read old Claude Code transcripts into ~/.arp/failures.jsonl. Sends nothing
   arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
                      a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
@@ -115,6 +117,14 @@ async function run(argv: readonly string[]): Promise<number> {
       // The hook is a script: importing it reads stdin, writes at most one line and exits 0.
       await import(new URL('./hook.js', import.meta.url).href);
       return EXIT.ok;
+    case 'backfill': {
+      const { backfill } = await import('@arp/hook/backfill');
+      const found = backfill();
+      process.stdout.write(
+        `read ${found.transcripts} transcripts: ${found.uses} skill uses, ${found.added} new failures in ${found.file}\n`,
+      );
+      return EXIT.ok;
+    }
     case 'node': {
       const { main } = await import('@arp/node/node');
       await main();

@@ -136,7 +136,7 @@ function Usage({usage}: {usage: PulseUsage | null}) {
                     </dl>
                     <ul className="m-0 mt-4 list-none p-0">
                         {usage.declarations.slice(0, 10).map((row) => (
-                            <li key={row.tripleId} className="border-t border-[color:var(--color-rule)] py-2 font-mono text-[12px] text-[color:var(--color-silver)] [overflow-wrap:anywhere]">
+                            <li key={`${row.tripleId}-${row.writer}`} className="border-t border-[color:var(--color-rule)] py-2 font-mono text-[12px] text-[color:var(--color-silver)] [overflow-wrap:anywhere]">
                                 {row.agent.label ?? row.agent.atomId}
                                 {row.outcomes.length === 0 ? "" : ` · ${row.outcomes.join(", ")}`}
                                 {row.domains.length === 0 ? "" : ` · ${row.domains.join(", ")}`}

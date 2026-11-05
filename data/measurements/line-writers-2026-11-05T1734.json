@@ -1,0 +1,24 @@
+{
+ "at": "2026-11-05T17:34:05.036Z",
+ "chain": 13579,
+ "ourWallets": [
+  "0x906f3a52ec089f8d4e9127f91c6be5ae0d18f91f",
+  "0xe596096f4176b682e300d73963e7b04b383c1aa1"
+ ],
+ "resultLines": {
+  "total": 5,
+  "truncated": false,
+  "ours": 5,
+  "others": 0,
+  "otherWallets": 0,
+  "holdersOutsideOurs": 0
+ },
+ "usesEdges": {
+  "total": 185,
+  "truncated": false,
+  "ours": 39,
+  "others": 146,
+  "otherWallets": 113,
+  "holdersOutsideOurs": 95
+ }
+}

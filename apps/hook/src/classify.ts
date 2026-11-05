@@ -23,7 +23,12 @@ export type Outcome = 'ok' | 'tool_error' | 'auth' | 'timeout' | 'unreachable' |
 export type Classified = { outcome: Outcome; code: string | null };
 
 const CANCELLED =
-  /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b/i;
+  /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b|\buser doesn't want to (proceed|take this action)\b/i;
+
+/** The person stopped it, so it says nothing about what it ran. */
+export function isCancelled(text: string): boolean {
+  return CANCELLED.test(text);
+}
 const AUTH =
   /\b(unauthori[sz]ed|forbidden|invalid (api )?(key|token)|authentication|not authenticated|expired token)\b/i;
 const TIMEOUT = /\b(timed? ?out|timeout|deadline exceeded|ETIMEDOUT)\b/i;
@@ -38,7 +43,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Every string a failure might carry, from the places a payload has been seen to put one. */
-function failureText(call: ToolCall): string {
+export function failureText(call: ToolCall): string {
   const parts: string[] = [];
   const push = (value: unknown) => {
     if (typeof value === 'string') parts.push(value);

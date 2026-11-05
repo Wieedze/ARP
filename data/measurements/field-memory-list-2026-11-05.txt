@@ -1,0 +1,3 @@
+easyzoom/aix-skills@webpage-to-markdown 7 installs
+jimliu/baoyu-skills@baoyu-url-to-markdown 30.6K installs
+softaworks/agent-toolkit@web-to-markdown 773 installs

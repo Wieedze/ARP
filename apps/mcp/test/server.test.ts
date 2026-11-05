@@ -447,7 +447,7 @@ describe("arp_tool_reputation", () => {
             5,
         );
         const data = JSON.parse((body?.["result"] as {content: {text: string}[]}).content[0].text);
-        expect(data.caveat).toContain("ARP composes no score");
+        expect(data.caveat).toContain("not a score");
         expect(data.provenance.kind).toBe("claim");
     });
 
@@ -511,6 +511,19 @@ describe("arp_declare_used", () => {
         // A caller who assumes ARP executed the plan will not check that it did.
         expect(p["caveat"]).toContain("UNSIGNED");
         expect(p["caveat"]).toContain("nothing has been sent");
+    });
+
+    it("refuses a reason outside the list, and a reason without a failure, before anything is read", async () => {
+        const base = {agent_chain_id: 8453, agent_token_id: "1380", tools: ["ipfs://bafkreistub"]};
+        for (const [args, words] of [
+            [{...base, outcome: "failed", reason: "the moon was full"}, "must be one of"],
+            [{...base, outcome: "worked", reason: "missing-key"}, "only follows"],
+            [{...base, reason: "missing-key"}, "only follows"],
+        ] as const) {
+            const {body} = await call(args);
+            expect(body?.["error"]).toMatchObject({code: -32602});
+            expect((body?.["error"] as {message: string}).message).toContain(words);
+        }
     });
 
     it("rejects a malformed identity rather than planning against a guess", async () => {

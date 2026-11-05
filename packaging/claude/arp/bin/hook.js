@@ -1,7 +1,7 @@
 // ../hook/src/hook.ts
-import { appendFileSync, existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync2, writeFileSync as writeFileSync2 } from "node:fs";
-import { homedir as homedir2 } from "node:os";
-import { dirname, join as join3 } from "node:path";
+import { appendFileSync as appendFileSync2, existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
+import { homedir as homedir3 } from "node:os";
+import { dirname as dirname2, join as join4 } from "node:path";
 // ../../packages/protocol/dist/declare/tool-thing.js
 class InvalidToolUrlError extends Error {
   input;
@@ -52,8 +52,152 @@ function repoOf(url) {
   const parts = /github\.com\/([^/?#]+)\/([^/?#]+)/.exec(url);
   return parts === null ? url : `${parts[1]}/${parts[2]}`;
 }
+// ../../packages/protocol/dist/skill-requires.js
+var LOGIN = /\b(auth login|log ?in|sign ?up|api[ _-]?key|access token)\b/i;
+function frontmatter(markdown) {
+  const lines = markdown.split(`
+`);
+  if (lines[0]?.trim() !== "---")
+    return { lines: [], bodyStart: 0 };
+  const end = lines.findIndex((line, index) => index > 0 && line.trim() === "---");
+  return end === -1 ? { lines: [], bodyStart: 0 } : { lines: lines.slice(1, end), bodyStart: end + 1 };
+}
+function unquote(value) {
+  return value.trim().replace(/^["']|["']$/g, "");
+}
+function declaredBins(lines) {
+  const at = lines.findIndex((line) => /^\s*bins\s*:/.test(line));
+  if (at === -1)
+    return [];
+  const inline = lines[at]?.split(":").slice(1).join(":").trim() ?? "";
+  if (inline.startsWith("[")) {
+    return inline.replace(/^\[|\]$/g, "").split(",").map(unquote).filter((name) => name.length > 0);
+  }
+  const out = [];
+  for (const line of lines.slice(at + 1)) {
+    const item = /^\s*-\s*(.+)$/.exec(line);
+    if (item === null)
+      break;
+    out.push(unquote(item[1] ?? ""));
+  }
+  return out.filter((name) => name.length > 0);
+}
+function bashTools(lines) {
+  const line = lines.find((candidate) => /^\s*allowed-tools\s*:/.test(candidate));
+  if (line === undefined)
+    return [];
+  return [...line.matchAll(/Bash\(\s*([A-Za-z0-9._-]+)/g)].map((match) => match[1] ?? "").filter((name) => name.length > 0);
+}
+function declaredDescription(lines) {
+  const at = lines.findIndex((line) => /^description\s*:/.test(line));
+  if (at === -1)
+    return null;
+  const inline = lines[at]?.split(":").slice(1).join(":").trim() ?? "";
+  if (inline !== "" && !/^[>|][-+]?$/.test(inline))
+    return unquote(inline) || null;
+  const block = [];
+  for (const line of lines.slice(at + 1)) {
+    if (!/^\s+\S/.test(line))
+      break;
+    block.push(line.trim());
+  }
+  return block.length === 0 ? null : block.join(" ");
+}
+var COMMON = new Set(("awk bash break bun case cat cd chmod command continue cp curl cut date diff do done echo else end env " + "esac exit export false fi find for function git grep head if kill ln local ls mkdir mv node npm npx open pip pip3 pnpm printf pwd " + "python python3 read return rm sed set sh shift sleep sort source sudo tail tar tee test then time " + "touch tr true uniq unset unzip wait wc wget which while xargs yarn zip").split(" "));
+var INSTALL = /\b(?:npm\s+(?:i|install)\s+(?:-g|--global)|pnpm\s+add\s+-g|yarn\s+global\s+add|brew\s+install|pipx\s+install|pip3?\s+install|cargo\s+install)\s+([@a-z0-9][@\w./-]*)/i;
+var PROBE = /\b(?:command\s+-v|which)\s+([a-z][\w-]*)/i;
+var COMMAND = /^[a-z][a-z0-9_-]*$/;
+function commandsIn(shell, explicitOnly) {
+  const found = [];
+  for (const segment of shell.split(/&&|\|\||[|;]/)) {
+    const line = segment.trim().replace(/^\$\s+/, "");
+    if (line === "" || line.startsWith("#"))
+      continue;
+    const named = INSTALL.exec(line)?.[1] ?? PROBE.exec(line)?.[1];
+    if (named !== undefined) {
+      found.push(named);
+      continue;
+    }
+    if (explicitOnly)
+      continue;
+    const words = line.split(/\s+/).filter((word) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(word));
+    const first = words[0] === "sudo" ? words[1] : words[0];
+    if (first === undefined || !COMMAND.test(first))
+      continue;
+    found.push(first);
+  }
+  return found;
+}
+var SHELL_FENCE = /^(sh|bash|shell|zsh|console|terminal)$/i;
+function shellLinesRun(lines) {
+  const run = [];
+  let heredocEnd = null;
+  let quote = null;
+  let continued = false;
+  for (const line of lines) {
+    if (heredocEnd !== null) {
+      if (line.trim() === heredocEnd)
+        heredocEnd = null;
+      continue;
+    }
+    if (quote === null && !continued)
+      run.push(line);
+    continued = line.trimEnd().endsWith("\\");
+    heredocEnd = /<<-?\s*['"]?([A-Za-z_]+)/.exec(line)?.[1] ?? null;
+    for (const char of line) {
+      if (quote === null && (char === '"' || char === "'"))
+        quote = char;
+      else if (char === quote)
+        quote = null;
+    }
+  }
+  return run;
+}
+function commandsRun(body, declared) {
+  const found = [];
+  let fence = null;
+  let fenced = [];
+  for (const line of body) {
+    const marker = /^\s*(?:```|~~~)\s*([\w-]*)/.exec(line);
+    if (marker !== null) {
+      if (fence === "shell") {
+        for (const run of shellLinesRun(fenced))
+          found.push(...commandsIn(run, false));
+      }
+      fenced = [];
+      fence = fence !== null ? null : SHELL_FENCE.test(marker[1] ?? "") ? "shell" : "other";
+      continue;
+    }
+    if (fence !== null) {
+      fenced.push(line);
+      continue;
+    }
+    for (const inline of line.matchAll(/`([^`]+)`/g))
+      found.push(...commandsIn(inline[1] ?? "", true));
+  }
+  return [...new Set(found)].filter((name) => !COMMON.has(name) && !declared.includes(name));
+}
+function requiresLine(lines) {
+  const name = lines.map((line) => /^\s*requires\s*:\s*(\S+)\s*$/.exec(line)?.[1]).find(Boolean);
+  return name === undefined ? [] : [unquote(name)];
+}
+function readRequires(markdown) {
+  const { lines, bodyStart } = frontmatter(markdown);
+  const cli = [...new Set([...declaredBins(lines), ...bashTools(lines), ...requiresLine(lines)])];
+  const description = declaredDescription(lines);
+  const body = markdown.split(`
+`);
+  const runs = commandsRun(body.slice(bodyStart), cli);
+  for (let index = bodyStart;index < body.length; index += 1) {
+    const text = body[index] ?? "";
+    if (LOGIN.test(text)) {
+      return { cli, runs, login: { line: index + 1, text: text.trim().slice(0, 160) }, description };
+    }
+  }
+  return { cli, runs, login: null, description };
+}
 // ../hook/src/classify.ts
-var CANCELLED = /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b/i;
+var CANCELLED = /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b|\buser doesn't want to (proceed|take this action)\b/i;
 var AUTH = /\b(unauthori[sz]ed|forbidden|invalid (api )?(key|token)|authentication|not authenticated|expired token)\b/i;
 var TIMEOUT = /\b(timed? ?out|timeout|deadline exceeded|ETIMEDOUT)\b/i;
 var UNREACHABLE = /\b(ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|getaddrinfo|certificate|TLS|SSL|socket hang up|connection refused|fetch failed)\b/i;
@@ -337,14 +481,123 @@ function toolCallOf(raw) {
   };
 }
 
+// ../hook/src/skill-failure.ts
+import { appendFileSync, existsSync, mkdirSync as mkdirSync2, readFileSync as readFileSync2 } from "node:fs";
+import { homedir as homedir2 } from "node:os";
+import { dirname, join as join3 } from "node:path";
+var MISSING_KEY = /\b(api[ _-]?key|access[ _-]?token|credentials?)\b.{0,40}\b(missing|not set|not found|required|invalid|expired)\b|(?<!\bnot )\b(missing|no|invalid|expired)\b.{0,20}\b(api[ _-]?key|access[ _-]?token|credentials?)\b|\b(HTTP|status)(\/[\d.]+| code)?[ :=]*(401|403)\b|\b(401|403) (unauthori[sz]ed|forbidden)\b|\bunauthori[sz]ed\b|not authenticated|not logged in/i;
+var MISSING_KEY_VARIABLE = /\b[A-Z0-9_]*(API_KEY|TOKEN|SECRET)\b.{0,30}\b(not set|missing|required|unset)\b/;
+var MISSING_PROGRAM = /command not found|executable file not found|\bnot installed\b|No module named|spawn \S+ ENOENT|Cannot find module/i;
+var MISSING_FILE = /No such file or directory|\bENOENT\b|file not found|\b(file|path|directory|folder)\b(?!\.).{0,80}\bdoes not exist\b/i;
+function failureReason(text) {
+  if (MISSING_PROGRAM.test(text))
+    return "missing-program";
+  if (MISSING_KEY.test(text) || MISSING_KEY_VARIABLE.test(text))
+    return "missing-key";
+  if (MISSING_FILE.test(text))
+    return "missing-file";
+  return null;
+}
+var RUNNERS = new Set(["bash", "bun", "bunx", "node", "npx", "python", "python3", "sh", "uv", "uvx", "zsh"]);
+function programsOf(command) {
+  const found = [];
+  for (const part of command.split(/&&|\|\||[;|\n]/)) {
+    const words = part.trim().split(/\s+/).filter((word) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(word));
+    const first2 = words[0];
+    if (first2 === undefined || first2 === "")
+      continue;
+    const program = first2.split("/").pop() ?? first2;
+    if (!RUNNERS.has(program)) {
+      found.push(program);
+      continue;
+    }
+    const target = words.slice(1).find((word) => !word.startsWith("-") && word !== "run");
+    if (target !== undefined)
+      found.push(target.split("/").pop() ?? target);
+  }
+  return found;
+}
+var escaped = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function askedBySkill(command, markdown, directory) {
+  if (new RegExp(`${escaped(directory)}(?=[/\\s'"]|$)`).test(command))
+    return true;
+  const { cli, runs } = readRequires(markdown);
+  const named = new Set([...cli, ...runs]);
+  return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
+}
+function skillsOfSession(log, session) {
+  if (!existsSync(log))
+    return [];
+  const skills = [];
+  for (const line of readFileSync2(log, "utf8").split(`
+`)) {
+    try {
+      const row = JSON.parse(line);
+      if (row["kind"] === "skill" && row["session"] === session && typeof row["name"] === "string") {
+        skills.unshift({
+          name: row["name"],
+          source: typeof row["source"] === "string" ? row["source"] : null
+        });
+      }
+    } catch {}
+  }
+  return skills;
+}
+function skillDirectory(name, cwd) {
+  const roots = [join3(cwd, ".claude", "skills"), join3(homedir2(), ".claude", "skills")];
+  const given = process.env["ARP_SKILLS_DIR"];
+  if (given !== undefined && given !== "")
+    roots.unshift(given);
+  return roots.map((root) => join3(root, name)).find((dir) => existsSync(join3(dir, "SKILL.md"))) ?? null;
+}
+function arpHome() {
+  const given = process.env["ARP_HOME"]?.trim();
+  return given !== undefined && given !== "" ? given : join3(homedir2(), ".arp");
+}
+function appendFailure(line) {
+  const path = join3(arpHome(), "failures.jsonl");
+  const seen = existsSync(path) ? readFileSync2(path, "utf8") : "";
+  const key = `"session":${JSON.stringify(line.session)},"skill":${JSON.stringify(line.skill)},`;
+  if (seen.split(`
+`).some((row) => row.includes(key) && row.includes(`"reason":"${line.reason}"`)))
+    return false;
+  mkdirSync2(dirname(path), { recursive: true });
+  appendFileSync(path, `${JSON.stringify(line)}
+`);
+  return true;
+}
+function recordSkillFailure(call, cwd) {
+  const classified = classifyCall(call);
+  if (classified === null || classified.outcome === "ok" || call.session === null)
+    return;
+  const command = call.input?.["command"];
+  if (typeof command !== "string")
+    return;
+  const reason = failureReason(failureText(call));
+  if (reason === null)
+    return;
+  try {
+    const log = process.env["ARP_SESSION_LOG"] ?? join3(cwd, ".arp", "session.jsonl");
+    for (const skill of skillsOfSession(log, call.session)) {
+      const directory = skillDirectory(skill.name, cwd);
+      if (directory === null)
+        continue;
+      if (!askedBySkill(command, readFileSync2(join3(directory, "SKILL.md"), "utf8"), directory))
+        continue;
+      appendFailure({ at: new Date().toISOString(), session: call.session, skill: skill.name, source: skill.source, reason });
+      return;
+    }
+  } catch {}
+}
+
 // ../hook/src/hook.ts
 function fetchedRefs(cwd) {
-  const path = process.env["ARP_RECEIPTS"] ?? join3(cwd, ".arp", "receipts.jsonl");
-  if (!existsSync(path))
+  const path = process.env["ARP_RECEIPTS"] ?? join4(cwd, ".arp", "receipts.jsonl");
+  if (!existsSync2(path))
     return [];
   let text;
   try {
-    text = readFileSync2(path, "utf8");
+    text = readFileSync3(path, "utf8");
   } catch {
     return [];
   }
@@ -424,19 +677,23 @@ try {
   process.exit(0);
 }
 if (process.argv.includes("--capture"))
-  capture(parsed, join3(homedir2(), ".arp", "captures"));
+  capture(parsed, join4(homedir3(), ".arp", "captures"));
 var call = toolCallOf(parsed);
 if (call === null)
   process.exit(0);
 var cwd = call.cwd ?? process.cwd();
+if (call.tool === "Bash") {
+  recordSkillFailure(call, cwd);
+  process.exit(0);
+}
 var what = whatOf(call, cwd, () => fetchedRefs(cwd));
 if (what === null)
   process.exit(0);
 var classified = classifyCall(call);
 if (classified === null)
   process.exit(0);
-var own = join3(cwd, ".arp");
-var path = process.env["ARP_SESSION_LOG"] ?? join3(own, "session.jsonl");
+var own = join4(cwd, ".arp");
+var path = process.env["ARP_SESSION_LOG"] ?? join4(own, "session.jsonl");
 var line = {
   at: new Date().toISOString(),
   session: call.session,
@@ -449,11 +706,11 @@ var line = {
   response: responseOf(call, classified.outcome)
 };
 try {
-  mkdirSync2(dirname(path), { recursive: true });
-  const ignore = join3(own, ".gitignore");
-  if (dirname(path) === own && !existsSync(ignore))
+  mkdirSync3(dirname2(path), { recursive: true });
+  const ignore = join4(own, ".gitignore");
+  if (dirname2(path) === own && !existsSync2(ignore))
     writeFileSync2(ignore, `*
 `);
-  appendFileSync(path, `${JSON.stringify(line)}
+  appendFileSync2(path, `${JSON.stringify(line)}
 `);
 } catch {}

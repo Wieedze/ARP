@@ -30,8 +30,8 @@
  *      cannot build its plan. "The agent chooses to call it", which this comment used to argue, is
  *      true of signing and false of planning. ADR `0045` moves this to a server the operator runs; the
  *      dependency is real until then and is stated here rather than defended.
- *    - not a scorer. It returns what was staked and by whom, with provenance. Composing that into a
- *      single number is a decision nobody has made (`docs/01` rejects being one more score).
+ *    - not a scorer of agents. It returns what was staked and by whom, with provenance. The one score
+ *      here is `arp_pulse`'s, which ranks a search and shows its parts (ADR `0137`, `0138`).
  */
 
 import { linesOf, loopbackHosts, redactUrls, refuseForeignRequest, serveFetch } from '@arp-protocol/core/node';

@@ -1,5 +1,6 @@
 import {
   type AgentListOrder,
+  BECAUSE_LABEL,
   atomIsCanonicalFor,
   findAgents as findAgentsByCapability,
   findAgentsInDomains,
@@ -22,7 +23,6 @@ import {
   toCaip19,
   type SubjectControl,
   walletControlsSubject,
-  walletsSaying,
 } from '@arp-protocol/core';
 import { createPublicClient, getAddress, http, parseAbi, stringToHex } from 'viem';
 
@@ -311,6 +311,7 @@ async function agentPulse(agentChainId: number, tokenId: string, registry: `0x${
         graphqlUrl: GRAPHQL,
         inContextOf: IN_CONTEXT_OF,
         hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
+        because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
       })
     ).get(agentAtom.toLowerCase());
     const declarations = [...(usage?.declarations ?? [])]
@@ -508,7 +509,7 @@ export async function identity(id: JsonRpcId, args: Record<string, unknown>) {
  *
  * Two orders, and the names say what they measure rather than implying a ranking: how **many**
  * statements a source holds about an agent, or how much TRUST sits on its own atom. Neither is a
- * score and this server composes none (ADR `0046`) — a caller that wants one has the parts.
+ * score and this tool composes none — a caller that wants one has the parts.
  *
  * `total` is the cohort's size from the source's own aggregate, never `agents.length`, so a page of
  * 25 out of 28,648 cannot read as 25 agents existing.
@@ -618,6 +619,7 @@ async function findAgentsByNeed(id: JsonRpcId, domain: string) {
       graphqlUrl: GRAPHQL,
       inContextOf: IN_CONTEXT_OF,
       hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
+      because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
     },
   );
   // Only a line written by the agent it names counts: a triple's subject carries no authorisation, so anyone
@@ -644,8 +646,14 @@ async function findAgentsByNeed(id: JsonRpcId, domain: string) {
     );
     const verdicts = await Promise.all(inScope.map((line) => controls(line.agent.atomId, line.writer)));
     const verified = inScope.filter((_line, index) => verdicts[index] === 'yes');
-    const lines = read === undefined ? undefined : { ...read, declarations: verified };
-    const { worked, failed } = walletsSaying(lines, new Set(scope));
+    const saying = (outcome: string) =>
+      new Set(
+        verified
+          .filter((row) => row.lines.some((one) => one.outcome === outcome && one.domain !== null && scope.includes(one.domain)))
+          .map((row) => row.writer.toLowerCase()),
+      ).size;
+    const worked = saying('worked');
+    const failed = saying('failed');
     const ref = agent.caip19 === null ? null : parseCaip19(agent.caip19);
     return {
       caip19: agent.caip19,

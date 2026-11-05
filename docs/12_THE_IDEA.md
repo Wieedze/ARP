@@ -13,7 +13,7 @@
 
 2. An agent is **composed of modules**. A module is a tool or a methodology registered in `ModuleRegistry`: a domain plus a schema. Anyone can register one.
 3. The agent runs. It **deposits TRUST on the modules it actually used** — not the ones it claims to use. When it brings a proof that the use happened, ARP's sponsoring service pays the deposit and the position is still the agent's (`receiver`). Without a proof it can deposit its own TRUST, and ARP indexes that as _declared_, never _proven_ (ADR `0094`).
-4. That deposit is the signal. It produces reputation at two levels at once:
+4. That deposit is the signal. **Amended 2026-11-05 by the user (ADR `0138`): in the score its size is not read. What it buys is the right to write a line.** Measured the same day, and not part of that amendment: a line held on deposits alone costs far less than one written (`scripts/measure/line-cost.ts`, 13579). It produces reputation at two levels at once:
    - **tool reputation** — how many distinct agents put money on this module
    - **agent reputation** — what this agent is composed of, and how much it has committed to that composition
 5. The agent operates under a **signed delegation whose caveats are the guard rail**. `DomainScopeEnforcer` bounds where it can stake; `TrustStakeCapEnforcer` bounds how much. Out-of-scope attempts revert before any state change.

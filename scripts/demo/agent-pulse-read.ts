@@ -23,7 +23,7 @@ import {
 import deployment from '../../data/deployments/13579.json';
 import { canonicalAgentThing, thingUri } from '../../packages/protocol/src/declare/agent-atom.ts';
 import { atomDataForUri, multiVaultReads } from '../../packages/protocol/src/declare/multivault.ts';
-import { HAS_OUTCOME_LABEL } from '../../packages/protocol/src/declare/usage-context.ts';
+import { BECAUSE_LABEL, HAS_OUTCOME_LABEL } from '../../packages/protocol/src/declare/usage-context.ts';
 import { getAgentEndpoints } from '../../packages/protocol/src/directory.ts';
 import { readLineReceipts, receiptHolds, walletControlsSubject } from '../../packages/protocol/src/agent-pulse.ts';
 import { getPulseUsage } from '../../packages/protocol/src/pulse-usage.ts';
@@ -194,7 +194,12 @@ if (bound !== undefined) {
 // Proof 3, read first because it leads to proof 2: the lines about this agent.
 const hasOutcome = await reads.atomId(stringToHex(HAS_OUTCOME_LABEL));
 const usage = (
-  await getPulseUsage([hiredAtom], { graphqlUrl, inContextOf, hasOutcome })
+  await getPulseUsage([hiredAtom], {
+    graphqlUrl,
+    inContextOf,
+    hasOutcome,
+    because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+  })
 ).get(hiredAtom.toLowerCase());
 note('proof 3: the lines', {
   wallets: usage?.wallets ?? 0,

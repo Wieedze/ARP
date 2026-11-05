@@ -1,6 +1,6 @@
 # Task 64 — The score: a search that starts on what exists and moves to what agents did
 
-**Status:** in progress, 2026-11-05, on `feat/pulse`. A trial, by the user's « oui vazy essaye ».
+**Status:** **stopped** 2026-11-05 on `feat/pulse`, by the user: « on arrête ici pour les tests, on va reprendre différemment ». A trial, not pushed, and `task-verifier` was not run.
 **ADR:** `0136` (the product is the search), `0137` (ARP will compute a score).
 **Depends on:** task 63.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
@@ -144,3 +144,29 @@ not built here.
 `scripts/measure/discovery-bench2.ts`, raw output `data/measurements/discovery-bench2-2026-11-05.json`. The same twelve needs and three phrases as §5. `skills` fuses `npx skills find`, `github` fuses GitHub's code search over files named SKILL.md, `both` fuses the two, and a blind judge rates each top 5 twice from descriptions.
 
 **How it will be read, decided now.** Two questions. Can GitHub stand in if the first source fails? `github` alone is rated against `skills`, and "can stand in" means at least as many needs with a skill doing the job, within one. Does it add anything? `both` counts as better than `skills` only if up on at least 10 of 12 needs. A rating is what a description claims, and code search ranks by text and knows nothing of popularity or trust, so unknown and possibly hostile skills are exactly what it may surface: unread skills and distinct contents are reported beside the rating. Nothing is built from this until the user reads it.
+
+## 8. What §6 and §7 showed
+
+**Several phrases in the tool (§6).** `bun run scripts/measure/pulse-eval/summary2.ts data/measurements/pulse-eval4-2026-11-05.jsonl`, 30 sessions, $1.51, plus $0.22 for readings.
+
+| Need | S, one query: good choices | M, three phrases: good choices |
+| --- | --- | --- |
+| Silences | 5/5 (57-100%) | 5/5 (57-100%) |
+| Voice-over | 4/5 (38-96%) | 1/5 (4-62%) |
+| Markdown | 5/5 (57-100%) | 5/5 (57-100%) |
+
+**Not established on any need.** The intervals overlap, so the gain of §5 did not carry over to what agents chose. On voice-over M leans the wrong way, on skills the readers left `unsure`, at n of 5.
+
+**The same arm moved a lot.** S on voice-over was 1/5 with 4 refusals in §3 and is 4/5 with none here, the same day. Between the two the tool's description changed and the search may have, so this is noise, the description, or both, and these runs cannot say. Any difference of this size at n of 5 has to be read with that in mind, and the earlier ones too.
+
+**GitHub as a second source (§7).** `data/measurements/discovery-bench2-2026-11-05.json`, 36 searches, none refused, $0.12.
+
+| Strategy | Needs with a skill doing the job | Such skills per top 5 | Mean DCG@5 | Unread in top 5 | Against `skills` |
+| --- | --- | --- | --- | --- | --- |
+| `skills` | 12/12 | 2.7 | 4.12 | 11/60 | |
+| `github` | 7/12 | 1.3 | 2.58 | 12/60 | 3 up, 8 down |
+| `both` | 11/12 | 2.6 | 3.84 | 7/60 | 5 up, 7 down |
+
+By the rules set in advance, **GitHub cannot stand in** (7 against 12, more than one apart) and **fusing it adds nothing**. It did find skills `skills` did not: all 60 in its top 5. On transcription, backgrounds and charts it or the fusion had more rated as doing the job. A plain equal fusion is one way of combining two sources, and no other was tried. Rating is from descriptions, on one day.
+
+**So the dependency is not solved.** A code search is a weak fallback, better than nothing if the first source fails, and no more.

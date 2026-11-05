@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { chmodSync, mkdirSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -11,21 +11,27 @@ import {
   getPulseUsage,
   githubPulseSource,
   groupByContent,
+  BECAUSE_LABEL,
+  type Capability,
   HAS_OUTCOME_LABEL,
   inferDomain,
+  type LocalFailure,
+  parseLocalFailures,
   parseSkillsFind,
   readDomainTree,
   readPulse,
   readThingUrl,
   SCORE_VERSION,
   scoreSkill,
+  type SignalContext,
+  signalOf,
   skillRefFromUrl,
   toolAtomUri,
   type PulseUsage,
   type SkillPulse,
   type SkillSearchResult,
-  walletsSaying,
   workedInDomain,
+  yourFailures,
 } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
@@ -96,11 +102,14 @@ type Constraints = {
   noScripts: boolean;
   /** Commands the person has. Given, a skill whose CLI is missing from it is set aside. */
   haveCommands: ReadonlySet<string> | null;
+  /** What the person can supply. It weighs a declared failure and sets nothing aside (ADR `0138`). */
+  canProvide: ReadonlySet<Capability>;
 };
 
 function readConstraints(raw: unknown): Constraints {
   const given = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {}; // read field by field
   const have = given['have_commands'];
+  const provide = given['can_provide'];
   return {
     noKeys: given['no_keys'] === true,
     noLogin: given['no_login'] === true,
@@ -109,6 +118,11 @@ function readConstraints(raw: unknown): Constraints {
     haveCommands: Array.isArray(have)
       ? new Set(have.filter((name): name is string => typeof name === 'string'))
       : null,
+    canProvide: new Set(
+      Array.isArray(provide)
+        ? provide.filter((thing): thing is Capability => thing === 'key' || thing === 'program' || thing === 'file')
+        : [],
+    ),
   };
 }
 
@@ -169,9 +183,9 @@ async function inBatches<T, R>(items: readonly T[], read: (item: T) => Promise<R
   return out;
 }
 
-function usageLine(usage: PulseUsage | undefined, domain: string | null) {
+export function usageLine(usage: PulseUsage | undefined, domain: string | null) {
   if (usage === undefined || usage.declarations.length === 0) {
-    return { written_by_agents: 'nobody yet, so unknown' };
+    return { written_by_agents: 'nobody yet, so unknown', ...(usage?.truncated === true ? { truncated: true } : {}) };
   }
   return {
     declarations: usage.declarations.length,
@@ -180,11 +194,34 @@ function usageLine(usage: PulseUsage | undefined, domain: string | null) {
     ...(domain === null ? {} : { in_this_domain: usage.byDomain[domain] ?? 0 }),
     by_domain: usage.byDomain,
     by_outcome: usage.byOutcome,
+    ...(Object.keys(usage.byReason).length === 0 ? {} : { by_reason: usage.byReason }),
     latest: usage.declarations
       .slice(-3)
-      .map((row) => ({ agent: row.agent.label, by: row.writer, domains: row.domains, outcomes: row.outcomes })),
+      .map((row) => ({ agent: row.agent.label, by: row.writer, domains: row.domains, outcomes: row.outcomes, lines: row.lines })),
     ...(usage.byOthers.length === 0 ? {} : { written_by_others: usage.byOthers }),
     ...(usage.truncated ? { truncated: true } : {}),
+  };
+}
+
+/** What this machine already hit (`docs/tasks/68`). Unreadable is empty: it must not cost the search. */
+function readYourFailures(): LocalFailure[] {
+  try {
+    const path = join(arpHome(process.env, homedir()), 'failures.jsonl');
+    return existsSync(path) ? parseLocalFailures(readFileSync(path, 'utf8')) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function yourFailuresLine(rows: readonly LocalFailure[], skill: string, source: string) {
+  const found = yourFailures(rows, skill, source);
+  if (found === null) return {};
+  return {
+    failed_on_this_machine: {
+      reasons: found.reasons,
+      last: found.last,
+      ...(found.byNameOnly ? { matched_by_name_only: true } : {}),
+    },
   };
 }
 
@@ -229,7 +266,7 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
  * Holds no key and writes nothing. The constraints are the person's and stay in this call: nothing
  * here sends them anywhere. It orders on a public score (`pulse-score.ts`), starting on the search's own
  * order, and each result shows the parts of its score. `ARP_PULSE_SCORE=off` keeps the earlier order, for
- * the comparison of `docs/tasks/64`. There is no composed score (ADR `0046`).
+ * the comparison of `docs/tasks/64`.
  */
 export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const query = args['query'];
@@ -272,6 +309,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const scored = process.env['ARP_PULSE_SCORE'] !== 'off';
   let domain = askedDomain;
   let scope: Set<string> | null = domain === null ? null : new Set([domain]);
+  const near = new Set<string>();
   let results = searched;
   let atomByUri = new Map<string, string>();
   let usage = new Map<string, PulseUsage>();
@@ -280,7 +318,14 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     if (scored) {
       const tree = await readDomainTree(domainWalk());
       if (domain === null && phrases.length > 0) domain = inferDomain(phrases.join(' '), tree.subtree(DOMAIN_ROOT));
-      if (domain !== null) scope = new Set(tree.subtree(domain).concat(domain));
+      if (domain !== null) {
+        scope = new Set(tree.subtree(domain).concat(domain));
+        for (const label of tree.subtree(domain)) near.add(label);
+        const above = tree.pathToRoot(domain);
+        // The root says only that it is a tool, so a line there is about nothing nearer than any other.
+        if (above.found) for (const label of above.path) if (label !== DOMAIN_ROOT) near.add(label);
+        near.delete(domain);
+      }
       const declared =
         scope === null
           ? []
@@ -302,6 +347,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       graphqlUrl: GRAPHQL,
       inContextOf: IN_CONTEXT_OF,
       hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
+      because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
     });
   } catch (error) {
     usageRead = false;
@@ -318,12 +364,14 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     return atom === null ? undefined : usage.get(atom.toLowerCase());
   };
   const rankOf = new Map(searched.map((row, rank) => [`${row.source}@${row.skill}`, rank]));
-  const scoreOf = (result: SkillSearchResult) =>
-    scoreSkill({
-      rank: rankOf.get(`${result.source}@${result.skill}`) ?? null,
-      total: searched.length,
-      ...walletsSaying(usageOf(result), scope),
-    });
+  const signal: SignalContext = { domain, near, canProvide: constraints.canProvide };
+  const scoreOf = (result: SkillSearchResult) => {
+    const { worked, failed, failuresThatDoNotApply } = signalOf(usageOf(result), signal);
+    return {
+      ...scoreSkill({ rank: rankOf.get(`${result.source}@${result.skill}`) ?? null, total: searched.length, worked, failed }),
+      ...(failuresThatDoNotApply === 0 ? {} : { failures_that_do_not_apply: failuresThatDoNotApply }),
+    };
+  };
   const workedHere = (result: SkillSearchResult) =>
     domain === null ? 0 : workedInDomain(usageOf(result), domain);
 
@@ -366,13 +414,15 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     return true;
   });
 
+  const mine = readYourFailures();
+
   return text(id, {
     search: typeof given === 'string' ? 'search_output' : 'npx skills find',
     ...(phrases.length > 1 ? { phrases } : {}),
     results_found: results.length,
     results_read: pulses.length,
     order: scored
-      ? `score ${SCORE_VERSION}: (prior from the search's rank + wallets that said worked) / (1 + worked + failed)`
+      ? `score ${SCORE_VERSION}: (prior from the search's rank + worked) / (1 + worked + failed), each a sum over distinct wallets, weighed by domain and reason; deposits do not count`
       : domain === null
         ? "the search's own"
         : `wallets that said it worked in "${domain}", then the search's own`,
@@ -382,6 +432,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       'not requirements. Installs are the search\'s figure, not a count of use. What agents wrote is what they paid to say.',
     skills: distinct.slice(0, limit).map((entry) => ({
       ...factsOf(entry.row, copies),
+      ...yourFailuresLine(mine, entry.row.skill, entry.row.source),
       ...(scored ? { score: Number(scoreOf(entry.row).score.toFixed(3)), score_parts: scoreOf(entry.row) } : {}),
       ...(toCheck(entry.row, constraints).length === 0 ? {} : { check_against_constraints: toCheck(entry.row, constraints) }),
       ...(entry.atom === null ? {} : { atom_id: entry.atom }),

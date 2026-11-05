@@ -40,8 +40,8 @@ export function serialise(usage: ToolUsage) {
     provenance: usage.provenance,
     caveat:
       "Each declaration is somebody's word; the market prices it. A declaration with " +
-      "staked=false has nobody's TRUST behind it and carries no weight at all. ARP composes no " +
-      'score.',
+      "staked=false has nobody's TRUST behind it and carries no weight at all. These figures " +
+      'are not a score.',
   };
 }
 

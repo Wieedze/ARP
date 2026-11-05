@@ -4,7 +4,10 @@ import {
   isUsageOutcome,
   parseSessionLog,
   prepareDeclareUsed,
+  isUsageReason,
   prepareUsageContext,
+  readEdgeWriters,
+  USAGE_REASONS,
   readDomainTree,
   resolveDeclarationSubject,
   resolveInvocations,
@@ -61,6 +64,19 @@ async function readLocalReceipts(): Promise<Map<string, SignedContentReceipt>> {
   return held;
 }
 
+/**
+ * What to tell a signer about edges that already exist. A wallet writes a line on an edge by having written it or
+ * holding a position on it (ADR `0138`). Given `declarer`, the plan deposits where it has to, so there is nothing to say.
+ */
+export function edgeWriterWarning(writers: ReadonlyMap<string, string>, declarer: string | undefined) {
+  if (declarer !== undefined || writers.size === 0) return {};
+  return {
+    lines_count_for_their_declarers: [...writers.entries()].map(([edge, writer]) => ({ edge, written_by: writer })),
+    lines_note:
+      'these uses edges already exist. Your lines count only if your wallet wrote them or holds a position on them: pass `declarer` and the plan deposits where it has to',
+  };
+}
+
 /** The agent a declaration is about, with its registry when the caller named one. */
 function agentRefOf(chainId: number, tokenId: string, registry: unknown) {
   return {
@@ -100,6 +116,13 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   if (outcome !== undefined && !isUsageOutcome(outcome)) {
     return fail(id, -32602, 'outcome, when given, must be worked or failed');
   }
+  const reason = args['reason'];
+  if (reason !== undefined && !isUsageReason(reason)) {
+    return fail(id, -32602, `reason, when given, must be one of ${USAGE_REASONS.join(', ')}`);
+  }
+  if (reason !== undefined && outcome !== 'failed') {
+    return fail(id, -32602, 'a reason only follows outcome: failed');
+  }
   const declarerRaw = args['declarer'];
   if (declarerRaw !== undefined && !isAddress(declarerRaw)) {
     return fail(id, -32602, 'declarer, when given, must be a 20-byte hex address');
@@ -121,15 +144,24 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
   const qualifiers: PreparedCall[] = [];
   const alreadyWritten: string[] = [];
+  const existing = plan.tools.filter((tool) => tool.tripleExists).map((tool) => tool.tripleId);
+  const writers = await readEdgeWriters(existing, { graphqlUrl: GRAPHQL });
+  const warning = edgeWriterWarning(writers, declarerRaw);
   for (const tool of plan.tools) {
     const planned = await prepareUsageContext({
       usesTripleId: tool.tripleId,
       edgePlanned: !tool.tripleExists,
       ...(domainRaw === undefined ? {} : { domain: domainRaw }),
       ...(outcome === undefined ? {} : { outcome }),
+      ...(reason === undefined ? {} : { reason }),
       inContextOf: IN_CONTEXT_OF,
       isCategory: async (label) => tree?.pathToRoot(label).found ?? false,
-      ...(declarerRaw === undefined ? {} : { declarer: declarerRaw }),
+      ...(declarerRaw === undefined
+        ? {}
+        : {
+            declarer: declarerRaw,
+            declarerDidNotWriteEdge: tool.tripleExists && writers.get(tool.tripleId.toLowerCase())?.toLowerCase() !== declarerRaw.toLowerCase(),
+          }),
       reads,
     });
     if (planned.status === 'refused') return fail(id, -32602, planned.detail);
@@ -145,6 +177,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
       calls,
       totalValue: calls.reduce((sum, call) => sum + call.value, 0n),
     }),
+    ...warning,
     // Said, because a line already on chain gets no call, and may be somebody else's word.
     ...(alreadyWritten.length === 0
       ? {}

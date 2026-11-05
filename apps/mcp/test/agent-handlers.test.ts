@@ -48,6 +48,7 @@ const line = {
   declaredAt: null,
   domains: ['document'],
   outcomes: ['worked'],
+  lines: [{ domain: 'document', outcome: 'worked', reasons: [] }],
 };
 const usageOf = (declarations: unknown[]) => new Map([[ATOM, { declarations, byOthers: [], truncated: false }]]);
 
@@ -109,7 +110,7 @@ describe('arp_find_agents with a domain', () => {
   });
 
   it('leaves out an agent with no line in the domain', async () => {
-    mocks.getPulseUsage.mockReset().mockResolvedValue(usageOf([{ ...line, domains: [] }]));
+    mocks.getPulseUsage.mockReset().mockResolvedValue(usageOf([{ ...line, domains: [], lines: [] }]));
     expect(await rows()).toEqual([]);
   });
 

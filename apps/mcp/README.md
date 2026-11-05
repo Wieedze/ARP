@@ -5,10 +5,12 @@
 
 # ARP MCP server
 
-Gives any MCP client (Claude, Cursor, Gemini, Codex…) access to ARP: it finds the right tool for a
-task, shows who used it, serves the skill itself, and prepares the calls to declare a use.
+Gives any MCP client (Claude, Cursor, Gemini, Codex…) access to ARP, to check before an agent installs
+or pays: what a skill's files name, whether an agent's address answers, and what agents wrote about
+either. So far no third party has reported a result on a skill. It also serves the skill itself and
+prepares the calls to write a line.
 
-**It never signs a transaction.** Every write comes back as unsigned calls that you sign yourself.
+**Outside sponsored mode, it never signs a transaction.** Every write comes back as unsigned calls that you sign yourself.
 
 ## Run it
 

@@ -18,7 +18,11 @@ export const PULSE_USES_QUERY = `query PulseUses($tools: [String!]!, $uses: Stri
     }
 }`;
 
-export const PULSE_QUALIFIERS_QUERY = `query PulseQualifiers($edges: [String!]!, $predicates: [String!]!, $limit: Int!) {
+/**
+ * `positions` asks only for the declarers: the index caps a nested list at 100 with no order and no sign
+ * of the cut (`intuition-integrator`, task 66), so asking for all of them could miss the one that matters.
+ */
+export const PULSE_QUALIFIERS_QUERY = `query PulseQualifiers($edges: [String!]!, $predicates: [String!]!, $writers: [String!]!, $limit: Int!) {
     triples(where: {subject_id: {_in: $edges}, predicate_id: {_in: $predicates}}, limit: $limit) {
         term_id
         subject_id
@@ -28,7 +32,7 @@ export const PULSE_QUALIFIERS_QUERY = `query PulseQualifiers($edges: [String!]!,
         object {
             label
         }
-        positions(where: {shares: {_gt: "0"}}) {
+        positions(where: {shares: {_gt: "0"}, account_id: {_in: $writers}}) {
             account_id
         }
     }
@@ -109,5 +113,13 @@ export const IDENTITY_CLAIMS_QUERY = `query IdentityClaims($caip19: String!, $sa
             term_id
             data
         }
+    }
+}`;
+
+/** Who wrote these `uses` edges. Any other wallet has to hold a position on one to write a line on it (ADR `0138`). */
+export const PULSE_EDGE_WRITERS_QUERY = `query PulseEdgeWriters($edges: [String!]!, $limit: Int!) {
+    triples(where: {term_id: {_in: $edges}}, limit: $limit) {
+        term_id
+        creator_id
     }
 }`;

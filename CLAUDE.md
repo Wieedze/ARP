@@ -159,6 +159,8 @@ ARP/
 │   ├── 25_THE_DOMAIN_TREE.md        (was `18_THE_DOMAIN_TREE.md`; commits before 2026-10-30 cite it so)
 │   ├── 26_DEMO_PLAN.md              (how to demo ARP in Claude Desktop and in Claude Code, what to say
 │   │                                and what not to — kept for when a demo is needed)
+│   ├── 28_THE_SIGNAL.md             (how a line is written on chain, with the schema, and what it does to a search)
+│   ├── 30_THE_POSITIONING.md        (what ARP says in public and what it may claim today)
 │   ├── tasks/                       atomic task files
 │   ├── design/                      design handoffs, one folder per thing designed — its
 │   │                                `README.md` says what each is and whether it is built:

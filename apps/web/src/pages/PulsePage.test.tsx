@@ -62,7 +62,7 @@ describe("PulsePage", () => {
     it("says unknown, not unused, when nobody declared", () => {
         read = {
             status: "ok",
-            view: {pulse, atomId: "0x1", usage: {declarations: [], agents: 0, wallets: 0, byDomain: {}, byOutcome: {}, byOthers: [], truncated: false}},
+            view: {pulse, atomId: "0x1", usage: {declarations: [], agents: 0, wallets: 0, byDomain: {}, byOutcome: {}, byReason: {}, byOthers: [], truncated: false}},
         };
         open();
         expect(screen.getByText(/Unknown, not unused/)).toBeTruthy();
@@ -76,10 +76,10 @@ describe("PulsePage", () => {
     });
 
     it("shows who wrote what, with outcomes and domains", () => {
-        const declaration = {tripleId: "0x2", agent: {atomId: "0x3", label: "agent six"}, writer: "0x4", declaredAt: null, domains: ["video"], outcomes: ["failed"]};
+        const declaration = {tripleId: "0x2", agent: {atomId: "0x3", label: "agent six"}, writer: "0x4", declaredAt: null, domains: ["video"], outcomes: ["failed"], lines: []};
         read = {
             status: "ok",
-            view: {pulse, atomId: "0x1", usage: {declarations: [declaration], agents: 1, wallets: 1, byDomain: {video: 1}, byOutcome: {failed: 1}, byOthers: [], truncated: false}},
+            view: {pulse, atomId: "0x1", usage: {declarations: [declaration], agents: 1, wallets: 1, byDomain: {video: 1}, byOutcome: {failed: 1}, byReason: {}, byOthers: [], truncated: false}},
         };
         open();
         expect(screen.getByText(/1, by 1 agent and 1 wallet/)).toBeTruthy();
@@ -87,7 +87,7 @@ describe("PulsePage", () => {
     });
 
     it("shows a line another wallet wrote apart, and says when the read is a floor", () => {
-        const declaration = {tripleId: "0x2", agent: {atomId: "0x3", label: "agent six"}, writer: "0x4", declaredAt: null, domains: [], outcomes: []};
+        const declaration = {tripleId: "0x2", agent: {atomId: "0x3", label: "agent six"}, writer: "0x4", declaredAt: null, domains: [], outcomes: [], lines: []};
         read = {
             status: "ok",
             view: {
@@ -99,6 +99,7 @@ describe("PulsePage", () => {
                     wallets: 1,
                     byDomain: {},
                     byOutcome: {},
+                    byReason: {},
                     byOthers: [{tripleId: "0x5", writer: "0xOther", predicate: "outcome", value: "failed"}],
                     truncated: true,
                 },

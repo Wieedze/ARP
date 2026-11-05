@@ -152,8 +152,8 @@ export const TOOLS = [
       'which other repositories hold the same content with their install figures, and `usage`: the ' +
       'declarations agents paid to write, with their domain and outcome. `status` other than `read` means ' +
       'it was not read, so what it needs is unknown. Pass `constraints`: they stay in this call. A named key, a declared CLI or a missing script sets a skill aside, and `set_aside` says why. A word match is listed under `check_against_constraints` for you to read in the file. ' +
-      ' Results come by `score`, public and shown with its parts: the search\'s rank, then what wallets said worked or failed in this domain. It ranks and does not say a skill works. `domain` is read from your words when you leave it out. ' +
-      'Nothing here is a verdict, and nothing is written.',
+      ' Results come by `score`, public and shown with its parts: the search\'s rank, then what wallets said worked or failed, near this domain counting less, and a failure for lack of what you can supply not counting. The amount deposited never counts. It ranks and does not say a skill works. `domain` is read from your words when you leave it out. ' +
+      '`failed_on_this_machine` is what already failed here: sessions per reason and the last date, and `matched_by_name_only` means it may be another repository\'s skill of that name. Check it before installing or running the skill again. Nothing here is a verdict, and nothing is written.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -185,6 +185,11 @@ export const TOOLS = [
               type: 'array',
               items: { type: 'string' },
               description: 'The commands this machine has. A skill declaring another one is set aside.',
+            },
+            can_provide: {
+              type: 'array',
+              items: { type: 'string', enum: ['key', 'program', 'file'] },
+              description: 'What this person can supply. A failure declared for lack of it does not lower a result.',
             },
           },
         },
@@ -259,8 +264,8 @@ export const TOOLS = [
         declarer: {
           type: 'string',
           description:
-            'Optional. The address that will sign. Given, a domain or outcome somebody else already ' +
-            'wrote on this use gets a small deposit from you, so it counts as your word.',
+            'Optional. The address that will sign. Given with a domain or outcome, a use, domain or outcome ' +
+            'somebody else already wrote gets a small deposit from you, so it counts as your word.',
         },
         outcome: {
           type: 'string',
@@ -268,6 +273,13 @@ export const TOOLS = [
           description:
             'Optional. How this use went, in your own name. One more paid triple per tool. ' +
             'It is your word about your use and never a verdict on the tool.',
+        },
+        reason: {
+          type: 'string',
+          enum: ['missing-key', 'missing-program', 'missing-file', 'not-the-right-tool'],
+          description:
+            'Optional, with `outcome: failed`. Why it failed, one more paid triple per tool. An agent that can ' +
+            'supply what was missing is not told this failure concerns it.',
         },
       },
       required: ['agent_chain_id', 'agent_token_id', 'tools'],

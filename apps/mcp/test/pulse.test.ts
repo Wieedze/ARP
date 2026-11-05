@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest";
 
-import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, toCheck} from "../src/handlers/pulse.js";
+import {edgeWriterWarning} from "../src/handlers/declare.js";
+import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, toCheck, usageLine, yourFailuresLine} from "../src/handlers/pulse.js";
 import type {SkillPulse} from "@arp-protocol/core";
 
 const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): SkillPulse => ({
@@ -28,7 +29,7 @@ const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): S
     ...overrides,
 });
 
-const none = {noKeys: false, noLogin: false, noPaid: false, noScripts: false, haveCommands: null};
+const none = {noKeys: false, noLogin: false, noPaid: false, noScripts: false, haveCommands: null, canProvide: new Set<never>()};
 
 describe("the search package", () => {
     it("runs pinned, with the query as one argument", () => {
@@ -63,7 +64,7 @@ describe("setAsideBecause", () => {
             requires: {cli: ["belt"], runs: [], login: null, description: null},
         });
         expect(
-            setAsideBecause(pulse, {noKeys: true, noLogin: false, noPaid: false, noScripts: true, haveCommands: new Set(["ffmpeg"])}),
+            setAsideBecause(pulse, {noKeys: true, noLogin: false, noPaid: false, noScripts: true, haveCommands: new Set(["ffmpeg"]), canProvide: new Set<never>()}),
         ).toEqual([
             "mentions ELEVENLABS_API_KEY",
             "ships 2 script(s)",
@@ -78,7 +79,7 @@ describe("setAsideBecause", () => {
             paidWords: ["credits"],
             requires: {cli: [], runs: ["end"], login: {line: 20, text: "login page"}, description: null},
         });
-        const constraints = {noKeys: true, noLogin: true, noPaid: true, noScripts: false, haveCommands: new Set(["ffmpeg"])};
+        const constraints = {noKeys: true, noLogin: true, noPaid: true, noScripts: false, haveCommands: new Set(["ffmpeg"]), canProvide: new Set<never>()};
         expect(setAsideBecause(pulse, constraints)).toEqual([]);
         expect(toCheck(pulse, constraints)).toEqual([
             "login, line 20: login page",
@@ -95,5 +96,50 @@ describe("setAsideBecause", () => {
     it("does not set aside a skill it could not read, because nothing is known about it", () => {
         const pulse: SkillPulse = {source: "x", skill: "y", installs: 1, installsText: "1", url: null, status: "not_github"};
         expect(setAsideBecause(pulse, {...none, noKeys: true})).toEqual([]);
+    });
+});
+
+describe("usageLine", () => {
+    it("says a read was cut even when no line is left, so a cut does not read as nobody declaring", () => {
+        const empty = {declarations: [], agents: 0, wallets: 0, byDomain: {}, byOutcome: {}, byReason: {}, byOthers: [], truncated: true};
+        expect(usageLine(empty, null)).toEqual({written_by_agents: "nobody yet, so unknown", truncated: true});
+        expect(usageLine({...empty, truncated: false}, null)).toEqual({written_by_agents: "nobody yet, so unknown"});
+    });
+});
+
+describe("edgeWriterWarning", () => {
+    const writers = new Map([["0xedge", "0xABC"]]);
+
+    it("says nothing with a declarer, since the plan deposits where it has to", () => {
+        expect(edgeWriterWarning(writers, "0xdef")).toEqual({});
+    });
+
+    it("gives the writers and says how to declare when the signer is unknown", () => {
+        const warning = edgeWriterWarning(writers, undefined);
+        expect(warning.lines_count_for_their_declarers).toEqual([{edge: "0xedge", written_by: "0xABC"}]);
+        expect(warning.lines_note).toContain("declarer");
+    });
+
+    it("says nothing when no edge exists yet", () => {
+        expect(edgeWriterWarning(new Map(), undefined)).toEqual({});
+    });
+});
+
+describe("yourFailuresLine", () => {
+    const row = {at: "2026-11-05T10:00:00Z", skill: "clip", source: "a/b", reason: "missing-key" as const};
+
+    it("adds nothing for a skill that never failed here", () => {
+        expect(yourFailuresLine([row], "other", "a/b")).toEqual({});
+    });
+
+    it("says what failed here and why", () => {
+        expect(yourFailuresLine([row], "clip", "a/b")).toEqual({
+            failed_on_this_machine: {reasons: {"missing-key": 1}, last: row.at},
+        });
+    });
+
+    it("says when only the name matched", () => {
+        const found = yourFailuresLine([{...row, source: null}], "clip", "a/b");
+        expect(found).toMatchObject({failed_on_this_machine: {matched_by_name_only: true}});
     });
 });
