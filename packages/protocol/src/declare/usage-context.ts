@@ -197,3 +197,28 @@ export async function prepareUsageContext(params: {
         totalValue: calls.reduce((sum, call) => sum + call.value, 0n),
     };
 }
+
+export type BudgetRefusal = {
+    status: "refused";
+    rule: "over_budget";
+    total_value_wei: string;
+    budget_wei: string;
+    detail: string;
+};
+
+/**
+ * A plan that costs more than the caller said it can spend, or `null` when it fits. Checked before anything is
+ * signed: a line is permanent, and an agent that learns the price afterwards has already paid it
+ * (`docs/tasks/65` §9, where 0.011 went out against a budget of 0.01). The budget is what is left, so a
+ * payment already made is the caller's to subtract.
+ */
+export function budgetRefusal(totalValue: bigint, budget: bigint): BudgetRefusal | null {
+    if (totalValue <= budget) return null;
+    return {
+        status: "refused",
+        rule: "over_budget",
+        total_value_wei: totalValue.toString(),
+        budget_wei: budget.toString(),
+        detail: `this costs ${totalValue} wei, more than the ${budget} wei left. Nothing was planned to send`,
+    };
+}

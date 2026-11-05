@@ -134,6 +134,7 @@ export {
     BECAUSE_LABEL,
     HAS_OUTCOME_LABEL,
     isUsageOutcome,
+    budgetRefusal,
     isUsageReason,
     prepareUsageContext,
     USAGE_OUTCOMES,

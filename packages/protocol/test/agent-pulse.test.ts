@@ -11,6 +11,7 @@ import {describe, expect, it} from "vitest";
 
 import {canonicalAgentThing, thingUri} from "../src/declare/agent-atom.js";
 import {atomDataForUri} from "../src/declare/multivault.js";
+import {budgetRefusal} from "../src/declare/usage-context.js";
 import {atomIsCanonicalFor, findAgentsInDomains, readLineReceipts, receiptHolds, resolveAgentAtom, walletControlsSubject, type LineReceipt, type PaymentFacts} from "../src/agent-pulse.js";
 import type {StrictIdentityAtom} from "../src/declare/index.js";
 import type {AgentIdentityAtom} from "../src/verify/subject.js";
@@ -233,6 +234,24 @@ describe("readLineReceipts", () => {
         });
         expect(urls).toHaveLength(1);
         expect(receiptHolds(receipt!)).toBe(true);
+    });
+});
+
+describe("budgetRefusal", () => {
+    const eth = (thousandths: bigint) => thousandths * 10n ** 15n;
+
+    it("refuses the case that broke: 0.011 against 0.01", () => {
+        expect(budgetRefusal(eth(11n), eth(10n))).toMatchObject({
+            status: "refused",
+            rule: "over_budget",
+            total_value_wei: "11000000000000000",
+            budget_wei: "10000000000000000",
+        });
+    });
+
+    it("lets a plan through at exactly the budget, and one that costs nothing", () => {
+        expect(budgetRefusal(eth(10n), eth(10n))).toBeNull();
+        expect(budgetRefusal(0n, 0n)).toBeNull();
     });
 });
 

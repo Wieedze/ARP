@@ -4,6 +4,7 @@ import {
   isUsageOutcome,
   parseSessionLog,
   prepareDeclareUsed,
+  budgetRefusal,
   isUsageReason,
   prepareUsageContext,
   readEdgeWriters,
@@ -127,6 +128,12 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   if (declarerRaw !== undefined && !isAddress(declarerRaw)) {
     return fail(id, -32602, 'declarer, when given, must be a 20-byte hex address');
   }
+  const budgetRaw = args['budget_wei'];
+  if (budgetRaw !== undefined && (typeof budgetRaw !== 'string' || !/^\d{1,78}$/.test(budgetRaw))) {
+    return fail(id, -32602, 'budget_wei, when given, must be a decimal string of wei');
+  }
+  const overBudget = (total: bigint) =>
+    budgetRaw === undefined ? null : budgetRefusal(total, BigInt(budgetRaw));
   // ADR `0135`: testnet first. Mainnet would be a real fee on a vocabulary nobody has reviewed there,
   // and 1155's record has no `in context of` predicate to write with.
   if ((domainRaw !== undefined || outcome !== undefined) && chainId !== 13579) {
@@ -138,7 +145,9 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
     reads,
     lookup: toolAtoms,
   });
-  if (domainRaw === undefined && outcome === undefined) return text(id, serialiseDeclarePlan(plan));
+  if (domainRaw === undefined && outcome === undefined) {
+    return text(id, overBudget(plan.totalValue) ?? serialiseDeclarePlan(plan));
+  }
 
   // ADR `0135`: a qualifier is a triple about the edge, so it is planned after the edge's own call.
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
@@ -171,11 +180,14 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
     }
   }
   const calls = [...plan.calls, ...qualifiers];
+  const totalValue = calls.reduce((sum, call) => sum + call.value, 0n);
+  const refused = overBudget(totalValue);
+  if (refused !== null) return text(id, refused);
   return text(id, {
     ...serialiseDeclarePlan({
       ...plan,
       calls,
-      totalValue: calls.reduce((sum, call) => sum + call.value, 0n),
+      totalValue,
     }),
     ...warning,
     // Said, because a line already on chain gets no call, and may be somebody else's word.

@@ -488,6 +488,21 @@ describe("arp_declare_used", () => {
         ]);
     });
 
+    it("refuses a plan over the budget before anything can be signed, and says its price", async () => {
+        const args = {agent_chain_id: 8453, agent_token_id: "1380", tools: ["ipfs://bafkreistub"]};
+        const total = BigInt((await plan(args))["total_value_wei"] as string); // a decimal string, per the test below
+        const refused = await plan({...args, budget_wei: (total - 1n).toString()});
+        expect(refused).toMatchObject({status: "refused", rule: "over_budget", total_value_wei: total.toString()});
+        expect(refused).not.toHaveProperty("calls");
+        const fits = await plan({...args, budget_wei: total.toString()});
+        expect(fits["calls"]).toHaveLength(2);
+    });
+
+    it("refuses a budget that is not a decimal string of wei", async () => {
+        const {body} = await call({agent_chain_id: 8453, agent_token_id: "1380", tools: ["ipfs://bafkreistub"], budget_wei: "0.01"});
+        expect((body?.["error"] as {message: string}).message).toContain("budget_wei");
+    });
+
     it("totals the cost in wei as a string, from the costs the chain reported", async () => {
         const p = await plan({
             agent_chain_id: 8453,

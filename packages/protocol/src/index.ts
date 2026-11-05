@@ -569,6 +569,15 @@ export {
 } from "./pulse.js";
 export {readRequires, type SkillRequires} from "./skill-requires.js";
 export {parseLocalFailures, yourFailures, type LocalFailure, type YourFailures} from "./local-failures.js";
+export {
+    decideShare,
+    installedFromSkillLock,
+    isSharingOn,
+    sharedLineKey,
+    type InstalledSkill,
+    type ShareDecision,
+    type SharedLine,
+} from "./share-failures.js";
 
 /** The score of a skill in a context: public, recomputable, never on chain (ADR `0137`). */
 export {
@@ -616,6 +625,7 @@ export {
     BECAUSE_LABEL,
     HAS_OUTCOME_LABEL,
     isUsageOutcome,
+    budgetRefusal,
     isUsageReason,
     prepareUsageContext,
     USAGE_OUTCOMES,

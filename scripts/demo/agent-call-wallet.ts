@@ -19,6 +19,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import deployment from '../../data/deployments/13579.json';
 import { canonicalAgentThing, thingUri } from '../../packages/protocol/src/declare/agent-atom.ts';
 import { atomDataForUri, encodeCreateAtom, encodeCreateTriple, multiVaultReads } from '../../packages/protocol/src/declare/multivault.ts';
+import { budgetRefusal } from '../../packages/protocol/src/declare/usage-context.ts';
 import { hireReceiptMatches, verifyHireReceipt, type SignedHireReceipt } from '../../packages/protocol/src/hire-receipt.ts';
 
 import { sendPlan, type SerialisedCall } from '../helpers/send-plan.ts';
@@ -125,8 +126,9 @@ const LINE_TOOL = {
       domain: { type: 'string' },
       outcome: { type: 'string', enum: ['worked', 'failed'] },
       reason: { type: 'string', enum: ['missing-key', 'missing-program', 'missing-file', 'not-the-right-tool'] },
+      budget_wei: { type: 'string', description: 'What you have left to spend, in wei. A line costing more is refused, with its price, and nothing is sent.' },
     },
-    required: ['payment_hash', 'domain', 'outcome'],
+    required: ['payment_hash', 'domain', 'outcome', 'budget_wei'],
   },
 };
 
@@ -147,7 +149,7 @@ async function send(calls: SerialisedCall[]): Promise<string[]> {
 }
 
 async function writeLine(args: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const { payment_hash: hash, domain, outcome, reason } = args;
+  const { payment_hash: hash, domain, outcome, reason, budget_wei: budget } = args;
   const refuse = (why: string) => {
     record({ tool: 'write_line', payment_hash: hash, domain, outcome, reason, refused: why });
     return { refused: why };
@@ -155,6 +157,7 @@ async function writeLine(args: Record<string, unknown>): Promise<Record<string, 
   const paid = typeof hash === 'string' ? paidCalls.get(hash.toLowerCase()) : undefined;
   if (paid === undefined) return refuse('a line follows a call this tool paid for');
   if (paid.written) return refuse('this call already has its line');
+  if (typeof budget !== 'string' || !/^\d{1,78}$/.test(budget)) return refuse('budget_wei must be a decimal string');
   const plan = await planLine(paid.agentToken, {
     domain,
     outcome,
@@ -176,6 +179,11 @@ async function writeLine(args: Record<string, unknown>): Promise<Record<string, 
   }
   const total = calls.reduce((sum, call) => sum + BigInt(call.value), 0n);
   if (total > MAX_PER_LINE) return refuse(`this line would cost ${formatEther(total)}, over the limit`);
+  const overBudget = budgetRefusal(total, BigInt(budget));
+  if (overBudget !== null) {
+    record({ tool: 'write_line', payment_hash: hash, domain, outcome, reason, ...overBudget });
+    return overBudget;
+  }
   const hashes = await send(calls);
   paid.written = true;
   record({ tool: 'write_line', payment_hash: hash, domain, outcome, reason, edge: paid.edge, receiptUri, calls: calls.map((call) => [call.kind, call.why.slice(0, 60)]), costWei: total.toString(), hashes });

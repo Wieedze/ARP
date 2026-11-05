@@ -47,3 +47,16 @@ Mainnet. A change to a score weight without the user. Task 67's list or threshol
 ## Evidence ladder
 
 Tier 3, staked: it makes a declared line reachable from one install. It moves ARP up only when somebody else writes one.
+
+## Evidence, item by item
+
+**Item 5, the cost before writing.** `arp_declare_used` takes `budget_wei`: over it, the answer is `status: refused` with the plan's total and no calls. The demo's `write_line` requires it, and counts the receipt in the total. It is what is left to spend, so a payment already made is the caller's to subtract: an agent that passes its whole budget after paying can still go over it, which no tool here can see. `write_line` was not run against the chain after this change.
+
+```
+cd packages/protocol && bunx vitest run test/agent-pulse.test.ts -t budgetRefusal --reporter=verbose
+ ✓ budgetRefusal > refuses the case that broke: 0.011 against 0.01
+ ✓ budgetRefusal > lets a plan through at exactly the budget, and one that costs nothing
+cd apps/mcp && ARP_TARGET=testnet ARP_NO_RECEIPTS=1 bunx vitest run test/server.test.ts -t budget
+ Tests  2 passed | 39 skipped (41)
+```
+

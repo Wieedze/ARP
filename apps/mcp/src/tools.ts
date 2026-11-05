@@ -261,6 +261,12 @@ export const TOOLS = [
             'Optional. The category this use was in, one existing word such as `video`. Never the ' +
             "text of a request. One more paid triple per tool, so other agents can read it in context.",
         },
+        budget_wei: {
+          type: 'string',
+          description:
+            'Optional. What you have left to spend, in wei. A plan costing more is refused and returns no calls, ' +
+            'with its total, so you learn the price before anything is signed.',
+        },
         declarer: {
           type: 'string',
           description:
