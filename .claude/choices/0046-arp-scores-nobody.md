@@ -1,6 +1,6 @@
 # 0046 — ARP scores nobody; it makes staking possible and reads the result
 
-**Status:** Accepted
+**Status:** Superseded by `0137` (2026-11-05): ARP will compute a score. This still describes what ships until one does.
 **Date:** 2026-10-20
 **Triggered by:** user decision, verbatim — _« ARP ne note personne. ARP permet de miser et de lire.
 C'est la décision. »_ Reached while working out where an agent must deposit for reputation to build.

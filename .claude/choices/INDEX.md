@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-132 decisions. Newest last. `choices/README.md` says when to write one.
+133 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -11,6 +11,7 @@ Read these before relying on them.
 - **0015** (Accepted in part — the trust-provider role is **rejected** by ADR `0046`) — Adopt the canonical Intuition ERC-8004 pattern; ARP publishes as a trust provider
 - **0041** (Accepted. Amended by `0082` (2026-10-30): a `packages/graphql` read layer goes under it.) — One protocol package, not two, and it is called what it is
 - **0045** (Accepted. **Amended by ADR `0092`** (2026-10-30): ARP may host a service that pays or) — the invariant is the request path, not the runtime
+- **0046** (Superseded by `0137` (2026-11-05): ARP will compute a score. This still describes what ships until one does.) — ARP scores nobody; it makes staking possible and reads the result
 - **0057** (Accepted — 2026-10-27, on the user's instruction to close everything open.) — Brand identity v0.3: The Source, Saffron, Archivo + Geist Mono
 - **0080** (Accepted. **Amended by ADR `0094`** (2026-10-30): constraint 2 holds for a declaration) — The node signs for what it served, and for nothing else
 - **0082** (Accepted. Amends `0041` (a `packages/graphql` under the protocol package).) — Three apps: the MCP server, the agent node and the runtime hook are different programs
@@ -27,6 +28,7 @@ Read these before relying on them.
 - **0100** (Proposed) — `/account` revokes through a one-shot delegation, keeps a list, and holds no key
 - **0101** (Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's) — The hire receipt v2 names the one verifier it is for, and the hirer chooses it
 - **0113** (Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en) — Who may speak for an agent's identity: trusted writers, the market, then ambiguity
+- **0137** (Accepted. Its design is open.) — ARP will compute a score
 
 ## All
 
@@ -77,7 +79,7 @@ Read these before relying on them.
 | [0043](0043-a-retraction-is-greppable-or-it-is-partial.md) | 2026-10-19 | Accepted | A retraction is greppable, or it is partial |
 | [0044](0044-tool-is-the-one-word.md) | 2026-10-20 | Accepted | "Tool" is the one word on screen; two rule lines corrected |
 | [0045](0045-the-invariant-is-the-request-path-not-the-runtime.md) | 2026-10-20 | Accepted. **Amended by ADR `0092`** (2026-10-30): ARP may host a service that pays or | the invariant is the request path, not the runtime |
-| [0046](0046-arp-scores-nobody.md) | 2026-10-20 | Accepted | ARP scores nobody; it makes staking possible and reads the result |
+| [0046](0046-arp-scores-nobody.md) | 2026-10-20 | Superseded by `0137` (2026-11-05): ARP will compute a score. This still describes what ships until one does. | ARP scores nobody; it makes staking possible and reads the result |
 | [0047](0047-the-mirror-is-a-prerequisite-and-signing-is-a-separate-program.md) | 2026-10-20 | Accepted | the mirror is a prerequisite nobody listed, and signing is a separate program |
 | [0048](0048-arp-does-not-mirror-8004-feedback.md) | 2026-10-20 | Accepted | ARP does not mirror ERC-8004 feedback; it reads it beside its own claims |
 | [0049](0049-arp-does-not-calibrate.md) | 2026-10-20 | Accepted | ARP does not calibrate, and the positioning says what it does instead |
@@ -164,3 +166,4 @@ Read these before relying on them.
 | [0134](0134-a-skills-pulse-is-read-on-demand.md) | 2026-11-05 | Accepted | A skill's pulse is read on demand, and its content id is git's tree id |
 | [0135](0135-a-declaration-can-carry-a-domain-and-an-outcome.md) | 2026-11-05 | Accepted | A declaration can carry a domain and an outcome, written by the declarer |
 | [0136](0136-the-product-is-the-search.md) | 2026-11-05 | Accepted | The product is the search |
+| [0137](0137-arp-will-compute-a-score.md) | 2026-11-05 | Accepted. Its design is open. | ARP will compute a score |
