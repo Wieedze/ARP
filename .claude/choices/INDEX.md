@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-133 decisions. Newest last. `choices/README.md` says when to write one.
+134 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -167,3 +167,4 @@ Read these before relying on them.
 | [0135](0135-a-declaration-can-carry-a-domain-and-an-outcome.md) | 2026-11-05 | Accepted | A declaration can carry a domain and an outcome, written by the declarer |
 | [0136](0136-the-product-is-the-search.md) | 2026-11-05 | Accepted | The product is the search |
 | [0137](0137-arp-will-compute-a-score.md) | 2026-11-05 | Accepted. Its design is open. | ARP will compute a score |
+| [0138](0138-a-line-is-form-b-and-money-does-not-weigh.md) | 2026-11-05 | Accepted | A line is written in form B, has a closed reason, and money does not weigh in the score |
