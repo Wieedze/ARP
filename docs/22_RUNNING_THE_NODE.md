@@ -57,7 +57,9 @@ agent key in `~/.arp/agent-key` (ADR `0110`). That key sends exactly two zero-va
 testnet 13579, `register()` and one MultiVault approval, and refuses every other call before signing
 (`apps/mcp/src/desktop/agent-key.ts`, `refusal`). It also signs two typed-data messages that move
 nothing: the request a content receipt is issued to, and the request for a sponsored deposit. ARP's
-sponsoring service pays everything that carries value. Without one of those two values, the paragraph above holds.
+sponsoring service pays everything that carries value.
+
+**The commands `arp line` and `arp share send` do the same, on any install, when you run them.** They load or create that key, can send the same two transactions, sign a list-tool and a line request, and reach `ARP_SPONSOR`. The MCP server itself still holds no key in the read or full mode: without one of those two `ARP_TOOLS` values, and until you run one of those commands, the paragraph above holds.
 
 **It executes no skill it fetches.** The one package it runs is below (`arp_pulse`). A skill's file is Markdown. It is returned with
 `content-type: text/plain`, `x-content-type-options: nosniff` and
@@ -111,7 +113,7 @@ would stop accepting your receipts.
 **The sponsored mode writes more** (`ARP_TOOLS=desktop` or `sponsored`), and this is all of it:
 
 ```
-~/.arp/agent-key              the agent's key, mode 0600, created on the first fetch
+~/.arp/agent-key              the agent's key, mode 0600, created on the first fetch, or by arp line or arp share send
 ~/.arp/agent.json             the agent's id and identity atom, once it is registered
 ~/.arp/receipts.jsonl         every skill served to the agent, with its receipt
 <ARP_SKILLS_DIR>/<name>/**    the skill's files, scripts included, when ARP_SKILLS_DIR is set
@@ -122,7 +124,7 @@ would stop accepting your receipts.
 
 Six fixed hosts, the first two configurable, and agents' own signed addresses. The sponsored mode also reaches two more, both
 configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`),
-both local by default.
+both local by default. `arp line` and `arp share send` reach the sponsoring service too. `arp_pulse` reaches up to ten agents' signed addresses on a search with words: `GET /`, with none of your words, though each node sees your IP and the time.
 
 ```
 the Intuition graph    reads. Set by ARP_TARGET, or INTUITION_GRAPHQL_URL
@@ -306,7 +308,7 @@ ARP_SKILLS_DIR         also read by the hook, to find a skill's SKILL.md and dec
                        nothing) when a different file is already at one of those paths, and
                        appends the receipt to ARP_RECEIPTS
 ARP_CONTENT            desktop/sponsored only: the content server. Default http://127.0.0.1:3002
-ARP_SPONSOR            desktop/sponsored only: the sponsoring service. Default http://127.0.0.1:3200
+ARP_SPONSOR            desktop/sponsored, arp line, arp share send: the sponsoring service. Default http://127.0.0.1:3200
 ARP_ACTIVITY_DIR       session-log.ts --serve only: the directory it tails. Default .arp
 ARP_ACTIVITY_PORT      session-log.ts --serve only: its port. Default 3003, on 127.0.0.1
 ARP_ACTIVITY_ORIGINS   session-log.ts --serve only: comma-separated origins added to the CORS list

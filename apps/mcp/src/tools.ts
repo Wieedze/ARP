@@ -210,7 +210,7 @@ export const TOOLS = [
       properties: {
         tool_atom_id: {
           type: 'string',
-          description: 'The `tool_atom_id` that `arp_find_tools` returned (0x + 32 bytes).',
+          description: 'The `atom_id` from `arp_pulse`, or the `tool_atom_id` from `arp_find_tools` (0x + 32 bytes).',
         },
         attested_by: {
           type: 'string',

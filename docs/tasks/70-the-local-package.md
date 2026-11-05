@@ -50,6 +50,8 @@ Testnet 13579, `claude -p`, `sonnet`, from a tarball of the CLI installed in a t
 | 6, first | **Failed.** The user ran the node and the wallet, as the auto mode refused the tunnel to the agent session. With one search, the agent searched its own words and `domain: business`, got only skills, and paid nobody. A regression from item 4: agent 2 is only in `document` | $0.23 |
 | 6, after `efa2a9e` | The same prompt, the same offer, the plugin's read tools over HTTP, one run. The agent found agent 2 through `offers_matching_need`, paid 0.001 tTRUST once at the signed address, and answered 14 March and 41,300 | see `agent-paid-runs-2026-11-05.jsonl`, 19:04:44 |
 
+**Not shown by this walk:** the content server did not run. The plugin no longer serves `arp_get_skill`, so no step needed it. `arp_get_skill` with the server up belongs to the sponsored setup, and its failure message is item 6.
+
 **Seen on the way:** a machine that already has ARP as a global MCP server has two servers of the same name, and a session may call the global one. In this walk that is `mcp__arp__arp_pulse`, excluded with `--disallowedTools 'mcp__arp__*'` so the plugin's was the one tested. The first attempts at steps 3 and 4 hit this as a permission refusal, and their line had no source and no domain.
 
 **Item 6:** with both services stopped, `arp line` and `arp_get_skill` each name the service, its address and, for the content server, `ARP_CONTENT` (`1772253`). `arp line`'s own message was written by item 1.
@@ -161,7 +163,7 @@ arp_pulse {search_output: "", queries: ["internal project note", "company projec
  4.4 s; used_here: [], offers_matching_need: agent 2
 ```
 
-The regression test uses the failed run's own phrases and domain, and the demo's offer as served. No agent in a session has run this yet: that is step 6 again.
+The regression test uses the failed run's own phrases and domain, and the demo's offer as served. An agent in a session ran it afterwards: step 6 in the walk's table.
 
 **The threshold on agents.** The user, relayed by `arp-f3`, 2026-11-05: the same threshold as skills. `used_here` is ordered on wallets only from `WALLETS_TO_MOVE`, 3, and below that the graph's order stands and the count is shown with `too_few_wallets_to_move_the_order`. Being listed does not depend on it.
 

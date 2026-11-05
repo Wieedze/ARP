@@ -72,8 +72,14 @@ export async function resolveOnGitHub(
     return { ok: false, reason: `github.com/${asked} does not exist` };
   // A rate limit or an outage says nothing about the repository: thrown, not refused.
   if (!repoResponse.ok) throw new Error(`GitHub answered HTTP ${repoResponse.status} for ${asked}`);
-  const { full_name: fullName } = (await repoResponse.json()) as { full_name?: string };
+  const { full_name: fullName, private: isPrivate } = (await repoResponse.json()) as {
+    full_name?: string;
+    private?: boolean;
+  };
   if (typeof fullName !== 'string') throw new Error(`GitHub gave no full_name for ${asked}`);
+  // A line is public and permanent, and a token can read what the world cannot. Only a repository
+  // GitHub says is public goes on chain.
+  if (isPrivate !== false) return { ok: false, reason: `github.com/${fullName} is not public` };
   if (ref === null) return { ok: true, fullName };
 
   const treeResponse = await get(`${fullName}/git/trees/HEAD?recursive=1`);
