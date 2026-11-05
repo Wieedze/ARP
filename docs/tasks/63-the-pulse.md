@@ -123,8 +123,7 @@ the modes that keep an agent key. The first version ran it unpinned with the ser
 which `task-verifier` found and neither review had raised. Reachable on every call with a `query`; no misuse
 is known. It still runs as the operator's OS user, which `docs/22` says.
 
-**The tests.
-** The comparison allows two commands and an MCP tool, so nothing a search returns can run. One real attempt
+**The tests.** The comparison allows two commands and an MCP tool, so nothing a search returns can run. One real attempt
 ran a skill's script in `bubblewrap`, with no network and no home directory. The harness's classifier then
 refused a downloaded binary, and that refusal was respected: the other uses are commands typed by hand
 with the machine's ffmpeg.
@@ -135,4 +134,5 @@ with the machine's ffmpeg.
 - A figure for installs is skills.sh's, and it is not a count of use.
 - An outcome is one agent's word that it paid to say. ARP gives no verdict (ADR `0049`).
 - Nobody outside ARP has declared anything. This shows the mechanism, not demand.
-- `npx` in Claude Desktop is untested; `search_output` is the path meant for it, also untested there.
+- `desktop` and `sponsored` do not run the package, so `search_output` is their only path, untested in
+  Claude Desktop.

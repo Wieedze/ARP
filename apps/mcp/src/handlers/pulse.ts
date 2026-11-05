@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { mkdirSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
@@ -28,8 +29,8 @@ const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 20;
 
 /**
- * The version the comparison ran on. 1.7.4 returns 20 results where this returns 100, so a bump changes
- * what an agent can find, and is a change to review.
+ * The version the comparison ran on. 1.7.4 returns at most 20 results where this returns up to 100, so
+ * a bump changes what an agent can find, and is a change to review.
  */
 export const SKILLS_CLI = 'skills@1.7.6';
 
@@ -37,12 +38,12 @@ export const SKILLS_CLI = 'skills@1.7.6';
  * How the search runs, as data so a test can hold it to this: a pinned package, the query as one
  * argument and never through a shell, and an environment of four variables. It is somebody else's
  * package, and `task-verifier` found the first version handing it the server's whole environment.
- * `HOME` points away from the operator's, so a default path to a key is not one. It still runs as the
- * same OS user, which is why a server holding an agent key does not run it (`canSearch`) and `docs/22`
+ * `HOME` is a private directory of the operator's, so a default path to a key is not one, and it is not
+ * in a shared `/tmp`, where another account could plant the `.npmrc` that chooses npm's registry
+ * (`task-verifier`, tested on the file's read). It still runs as the same OS user, which is why a server holding an agent key does not run it (`canSearch`) and `docs/22`
  * says so.
  */
-export function searchInvocation(query: string, path: string | undefined) {
-  const home = join(tmpdir(), 'arp-skills-cli');
+export function searchInvocation(query: string, path: string | undefined, home: string) {
   return {
     file: 'npx',
     args: ['--yes', SKILLS_CLI, 'find', query],
@@ -66,7 +67,9 @@ async function search(query: string): Promise<{ output: string } | { error: stri
     return { error: 'this server does not run the search package' };
   }
   try {
-    const { file, args, env } = searchInvocation(query, process.env['PATH']);
+    const home = join(homedir(), '.arp', 'skills-cli');
+    mkdirSync(home, { recursive: true, mode: 0o700 });
+    const { file, args, env } = searchInvocation(query, process.env['PATH'], home);
     const { stdout } = await run(file, args, { env, timeout: 90_000, maxBuffer: 4_000_000 });
     return { output: stdout };
   } catch (error) {

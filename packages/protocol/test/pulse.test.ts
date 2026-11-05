@@ -12,7 +12,7 @@ import {
     type SkillSearchResult,
 } from "../src/pulse.js";
 
-// Captured from `npx skills find "video editing ffmpeg"`, skills 1.7.4, 2026-11-05.
+// Captured from `npx skills find "video editing ffmpeg"`, skills 1.7.6, 2026-11-05.
 const FIND_OUTPUT = `
 \u001b[38;5;102mInstall with\u001b[0m npx skills add <owner/repo@skill>
 

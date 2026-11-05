@@ -44,9 +44,12 @@ approval. The fees are paid by the [sponsoring service](../sponsor).
 
 ## Safety
 
-- It executes nothing it fetches. A skill comes back as plain text.
-- A request cannot make it fetch from anywhere else: the source comes from the catalogue, never
-  from the request.
+- It executes no skill it fetches. A skill comes back as plain text.
+- `arp_get_skill`'s source comes from the catalogue, never from the request.
+- `arp_pulse` is the exception on both counts. A `query` runs the pinned npm package `skills@1.7.6`
+  on your machine, with no secret in its environment, and sends your words to skills.sh. Results
+  decide which public GitHub repositories it reads. `ARP_PULSE_SEARCH=off` stops the package, and
+  `desktop` and `sponsored` never run it. See `docs/22_RUNNING_THE_NODE.md`.
 - It listens on `127.0.0.1` only.
 
 Every file it writes, every variable it reads and every connection it opens is listed in

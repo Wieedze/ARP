@@ -32,15 +32,15 @@ const none = {noKeys: false, noLogin: false, noPaid: false, noScripts: false, ha
 
 describe("the search package", () => {
     it("runs pinned, with the query as one argument", () => {
-        const {file, args} = searchInvocation('video; rm -rf "$HOME"', "/usr/bin");
+        const {file, args} = searchInvocation('video; rm -rf "$HOME"', "/usr/bin", "/private/cli");
         expect(SKILLS_CLI).toMatch(/^skills@\d+\.\d+\.\d+$/);
         expect([file, ...args]).toEqual(["npx", "--yes", SKILLS_CLI, "find", 'video; rm -rf "$HOME"']);
     });
 
     it("hands it no secret, and not the operator's home", () => {
-        const {env} = searchInvocation("x", "/usr/bin");
+        const {env} = searchInvocation("x", "/usr/bin", "/private/cli");
         expect(Object.keys(env).sort()).toEqual(["DISABLE_TELEMETRY", "HOME", "NO_COLOR", "PATH"]);
-        expect(env.HOME).toContain("arp-skills-cli");
+        expect(env.HOME).toBe("/private/cli");
     });
 
     it("does not run where an agent key is kept, or where the operator turned it off", () => {
