@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import type {LocalFailure} from "../src/local-failures.js";
-import {decideShare, installedFromSkillLock, isSharingOn, sharedLineKey} from "../src/share-failures.js";
+import {decideShare, installedFromReceipts, installedFromSkillLock, isSharingOn, sharedLineKey} from "../src/share-failures.js";
 
 const failure = (over: Partial<LocalFailure> = {}): LocalFailure => ({
     at: "2026-11-05T10:00:00Z",
@@ -41,6 +41,22 @@ describe("installedFromSkillLock", () => {
     it("reads a missing or broken lock as nothing", () => {
         expect(installedFromSkillLock(null)).toEqual([]);
         expect(installedFromSkillLock("{half")).toEqual([]);
+    });
+});
+
+describe("installedFromReceipts", () => {
+    it("reads the URL of a project receipt and of a server receipt, and skips the rest", () => {
+        const text = [
+            JSON.stringify({skill: "clip", atom: "0x1", url: "https://github.com/a/b?skill=clip"}),
+            JSON.stringify({receipt: {url: "github.com/c/d?skill=ocr"}}),
+            JSON.stringify({url: "https://example.com/x?skill=y"}),
+            "{half",
+        ].join("\n");
+        expect(installedFromReceipts(text)).toEqual([
+            {skill: "clip", source: "a/b"},
+            {skill: "ocr", source: "c/d"},
+        ]);
+        expect(installedFromReceipts(null)).toEqual([]);
     });
 });
 

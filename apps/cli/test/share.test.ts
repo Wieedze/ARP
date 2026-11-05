@@ -10,7 +10,7 @@ let dir: string;
 let env: ShareEnv;
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'arp-share-'));
-  env = { arpHome: join(dir, 'arp'), home: dir };
+  env = { arpHome: join(dir, 'arp'), home: dir, cwd: dir };
   mkdirSync(env.arpHome);
   mkdirSync(join(dir, '.agents'));
   writeFileSync(
@@ -34,7 +34,7 @@ test('by default nothing leaves: the writer is never called and nothing is recor
   const result = await sendShared(env, async () => {
     calls += 1;
   });
-  expect(result).toEqual({ sent: 0, failed: 0 });
+  expect(result).toEqual({ sent: 0, failed: 0, firstError: null });
   expect(calls).toBe(0);
   expect(existsSync(join(env.arpHome, 'shared-failures.jsonl'))).toBe(false);
   expect(existsSync(join(env.arpHome, 'sharing.json'))).toBe(false);
@@ -47,7 +47,7 @@ test('turned on, only the public skill goes, in closed words', async () => {
   const result = await sendShared(env, async (line) => {
     written.push(line);
   });
-  expect(result).toEqual({ sent: 1, failed: 0 });
+  expect(result).toEqual({ sent: 1, failed: 0, firstError: null });
   expect(written).toEqual([{ toolUrl: 'https://github.com/a/b?skill=clip', outcome: 'failed', reason: 'missing-key' }]);
   expect(JSON.stringify(written)).not.toContain('SESSION-ID');
   expect(JSON.stringify(written)).not.toContain('my-private-skill');
@@ -55,15 +55,21 @@ test('turned on, only the public skill goes, in closed words', async () => {
 
 test('a line goes once, and one that failed to write is tried again', async () => {
   setSharing(env, true);
-  expect(await sendShared(env, () => Promise.reject(new Error('down')))).toEqual({ sent: 0, failed: 1 });
-  expect(await sendShared(env, async () => {})).toEqual({ sent: 1, failed: 0 });
-  expect(await sendShared(env, async () => {})).toEqual({ sent: 0, failed: 0 });
+  expect(await sendShared(env, () => Promise.reject(new Error('down')))).toEqual({ sent: 0, failed: 1, firstError: 'down' });
+  expect(await sendShared(env, async () => {})).toEqual({ sent: 1, failed: 0, firstError: null });
+  expect(await sendShared(env, async () => {})).toEqual({ sent: 0, failed: 0, firstError: null });
+});
+
+test('a skill fetched through ARP is recognised from its receipt', () => {
+  setSharing(env, true);
+  writeFileSync(join(env.arpHome, 'receipts.jsonl'), JSON.stringify({ receipt: { url: 'https://github.com/o/r?skill=my-private-skill' } }));
+  expect(decide(env).lines.map((line) => line.toolUrl)).toContain('https://github.com/o/r?skill=my-private-skill');
 });
 
 test('turned off again, nothing leaves', async () => {
   setSharing(env, true);
   setSharing(env, false);
-  expect(await sendShared(env, () => Promise.reject(new Error('must not be called')))).toEqual({ sent: 0, failed: 0 });
+  expect(await sendShared(env, () => Promise.reject(new Error('must not be called')))).toEqual({ sent: 0, failed: 0, firstError: null });
   expect(readFileSync(join(env.arpHome, 'sharing.json'), 'utf8')).toContain('false');
 });
 

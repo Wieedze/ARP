@@ -1,3 +1,4 @@
+import {skillRefFromUrl} from "./content-path.js";
 import type {UsageReason} from "./declare/usage-context.js";
 import type {LocalFailure} from "./local-failures.js";
 
@@ -47,6 +48,23 @@ export function installedFromSkillLock(lock: string | null): InstalledSkill[] {
     } catch {
         return [];
     }
+}
+
+/** What was fetched through ARP (`receipts.jsonl`): the served URL names the repository. A broken line is skipped. */
+export function installedFromReceipts(text: string | null): InstalledSkill[] {
+    const found: InstalledSkill[] = [];
+    for (const line of (text ?? "").split("\n")) {
+        if (line.trim() === "") continue;
+        try {
+            const row = JSON.parse(line) as {url?: unknown; receipt?: {url?: unknown}}; // read field by field
+            const url = typeof row.url === "string" ? row.url : row.receipt?.url;
+            const ref = typeof url === "string" ? skillRefFromUrl(url) : null;
+            if (ref !== null) found.push({skill: ref.skill, source: ref.repo});
+        } catch {
+            continue;
+        }
+    }
+    return found;
 }
 
 /** A key for one sentence: the same skill and reason is one line, however often it failed. */

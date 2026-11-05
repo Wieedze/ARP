@@ -571,6 +571,7 @@ export {readRequires, type SkillRequires} from "./skill-requires.js";
 export {parseLocalFailures, yourFailures, type LocalFailure, type YourFailures} from "./local-failures.js";
 export {
     decideShare,
+    installedFromReceipts,
     installedFromSkillLock,
     isSharingOn,
     sharedLineKey,

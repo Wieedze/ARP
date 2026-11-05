@@ -35,7 +35,7 @@ usage
                      .arp/session.jsonl, and a skill's failures in ~/.arp/failures.jsonl
   arp backfill       read old Claude Code transcripts into ~/.arp/failures.jsonl. Sends nothing
   arp share          say what would be public from ~/.arp/failures.jsonl, and what stays here.
-                     arp share on, arp share off. Off by default
+                     arp share on, off (off by default). arp share send writes them on testnet
   arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
                      a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
@@ -125,10 +125,24 @@ async function run(argv: readonly string[]): Promise<number> {
       const { arpHome } = await import('@arp-protocol/core/node');
       const { homedir } = await import('node:os');
       const share = await import('./share.ts');
-      const env = { arpHome: arpHome(process.env, homedir()), home: homedir() };
+      const env = { arpHome: arpHome(process.env, homedir()), home: homedir(), cwd: process.cwd() };
+      if (rest[0] === 'send') {
+        if (!share.decide(env).on) {
+          process.stderr.write('sharing is off: nothing was sent. `arp share on` turns it on\n');
+          return EXIT.ok;
+        }
+        process.env['ARP_TARGET'] ??= 'testnet';
+        const { writeLineHere } = await import('@arp/mcp/line');
+        const done = await share.sendShared(env, async (line) => {
+          await writeLineHere(line);
+        });
+        process.stdout.write(`sent ${done.sent}, failed ${done.failed}\n`);
+        if (done.firstError !== null) process.stderr.write(`${done.firstError}\n`);
+        return done.failed === 0 ? EXIT.ok : 1;
+      }
       if (rest[0] === 'on' || rest[0] === 'off') share.setSharing(env, rest[0] === 'on');
       else if (rest[0] !== undefined) {
-        process.stderr.write('usage: arp share [on|off]\n');
+        process.stderr.write('usage: arp share [on|off|send]\n');
         return EXIT.usage;
       }
       process.stdout.write(share.describe(share.decide(env)));

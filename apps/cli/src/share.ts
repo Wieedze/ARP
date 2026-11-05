@@ -10,6 +10,7 @@ import { join } from 'node:path';
 
 import {
   decideShare,
+  installedFromReceipts,
   installedFromSkillLock,
   isSharingOn,
   parseLocalFailures,
@@ -18,7 +19,7 @@ import {
   sharedLineKey,
 } from '@arp-protocol/core';
 
-export type ShareEnv = { arpHome: string; home: string };
+export type ShareEnv = { arpHome: string; home: string; cwd: string };
 
 const read = (path: string) => (existsSync(path) ? readFileSync(path, 'utf8') : null);
 
@@ -40,7 +41,11 @@ export function decide(env: ShareEnv): ShareDecision & { on: boolean } {
   const decision = decideShare({
     on,
     failures: parseLocalFailures(read(join(env.arpHome, 'failures.jsonl')) ?? ''),
-    installed: installedFromSkillLock(read(join(env.home, '.agents', '.skill-lock.json'))),
+    installed: [
+      ...installedFromSkillLock(read(join(env.home, '.agents', '.skill-lock.json'))),
+      ...installedFromReceipts(read(join(env.arpHome, 'receipts.jsonl'))),
+      ...installedFromReceipts(read(join(env.cwd, '.arp', 'receipts.jsonl'))),
+    ],
     alreadyShared: shared(env),
   });
   return { ...decision, on };
@@ -55,21 +60,23 @@ export function setSharing(env: ShareEnv, on: boolean): void {
 export async function sendShared(
   env: ShareEnv,
   write: (line: SharedLine) => Promise<void>,
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; firstError: string | null }> {
   const { on, lines } = decide(env);
-  if (!on) return { sent: 0, failed: 0 };
+  if (!on) return { sent: 0, failed: 0, firstError: null };
   let sent = 0;
   let failed = 0;
+  let firstError: string | null = null;
   for (const line of lines) {
     try {
       await write(line);
       appendFileSync(join(env.arpHome, 'shared-failures.jsonl'), `${JSON.stringify(line)}\n`);
       sent += 1;
-    } catch {
+    } catch (error) {
       failed += 1;
+      firstError ??= error instanceof Error ? error.message : String(error);
     }
   }
-  return { sent, failed };
+  return { sent, failed, firstError };
 }
 
 const WHY = {
