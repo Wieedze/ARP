@@ -6,7 +6,7 @@ const NOTES: Record<string, string> = {
 
 export const offer = {
   description: 'Answers from a private collection of internal project notes that are published nowhere else.',
-  input: '{"note": "<the note id, such as orchard-17>"}',
+  input: '{"note": "<the note id>"}',
   output: '{"note": "<id>", "text": "<the note>"}',
 };
 

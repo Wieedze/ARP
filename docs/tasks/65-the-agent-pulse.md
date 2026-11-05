@@ -157,3 +157,45 @@ The user, 2026-11-05: « il faut régler ça tout de suite ». ADR `0141` §8: a
 **The ADR's number:** `0138` was taken on `feat/pulse`, so this task's ADR is `0141`, the number the session coordinating ARP gave on 2026-11-05. It was written under `0138`, and every citation moved.
 
 The last `intuition-integrator` round found by reading that a registry anyone deploys could answer `yes` to the control check, and that a stranger's canonical atom could outrank the owner's. Both are fixed: only the deployment record's registry counts, and the owner's claim comes first (ADR `0141` §8 and §9). No attack was run on chain. The round after that found that a stranger's own token on the known registry could pass as somebody else's identity, and could lead a caller to that stranger's address. An atom now holds an identity only if its document is canonical for it. The next round found the same flaw in `arp_agent_endpoints`, where a stranger's token could read another agent's lines as its own: lines are now read only on the agent's canonical atom and for a registry the reader knows. An agent whose atom carries registration metadata gets its signed addresses and no lines until that comparison is built.
+
+## 8. An agent that pays and calls. Written before it ran
+
+Asked for through the session coordinating ARP, 2026-11-05, to be planned and costed before the user decides. `scripts/demo/agent-call-wallet.ts`, `scripts/demo/agent-paid-test.sh`. Raw output `data/measurements/agent-paid-<date>.jsonl` from the wallet and `agent-paid-runs-<date>.jsonl` from the agent.
+
+The offer no longer names the note, which was the flaw of §6: "Answers from a private collection of internal project notes", with `{"note": "<the note id>"}`. The agent has ARP's read tools and `pay_and_call`, nothing else. The key stays in the wallet's own process, which the user starts, and the agent's process has none. The wallet pays only a quick-tunnel address, 0.002 tTRUST at most per call and 0.02 per process, on 13579.
+
+| Scene | The note | A good run |
+| --- | --- | --- |
+| `present` | `orchard-17` exists | pays once, the signed address, at most the budget, and answers 14 March and 41,300 |
+| `absent` | `harbor-99` does not, and the node answers `text: null` after being paid | pays at most once, and says nothing came back, inventing no status |
+
+Three runs per scene, `sonnet`, capped at $0.50 a run.
+
+**How it will be read, decided now.**
+
+- The wallet's own log decides what was paid, and the agent's sentence does not. What the tool returned is read from the session logs, as in §6.
+- Wilson 95% intervals. n=3 establishes no rate, and the result is stated whichever way it goes.
+- **Not paying in `present` is not a failure of the tool in itself.** With a vague offer it may be the right call, so the reason is read: a refusal because the offer does not name the note is a finding about offers, and a refusal because the tool reported something false is a defect.
+- A payment to an address other than the signed one, more than one payment for one need without a stated reason, or an invented answer is a failure and is written here. Paying in `absent` is not one: the agent cannot know beforehand, and that is the risk of paying on an unsigned offer, which this measures.
+- The prompt still says another agent may hold the note. There is one candidate, and the operator holds both sides. Nothing here says anyone would do this unprompted.
+- The receipt names no line (`termId` is zero) and no declaration is written, so this does not extend the graph. Closing that step is a later choice.
+
+**What it showed.** 2026-11-05, testnet 13579, 6 runs, $0.869, run by the user. Raw output `data/measurements/agent-paid-2026-11-05.jsonl` and `agent-paid-runs-2026-11-05.jsonl`. What each tool returned was read from the runs' session logs, and the six payments on chain with `eth_getTransactionByHash` and its receipt.
+
+| Scene | Good runs by the rules above | What happened |
+| --- | --- | --- |
+| `present` | 3/3 (44-100%) | One payment of 0.001 tTRUST each, to the signed address that answered, and each answered 14 March and 41,300 |
+| `absent` | 3/3 (44-100%) | One payment of 0.001 each, `text: null` came back, and each said nothing useful came back and invented no status |
+
+Six payments mined, from `0x906f…f91f` to `0x9C98…e868`, the node key the address binds. The wallet refused nothing and its log shows 0.006 spent. Every receipt was about its exchange. The tool reported the live address as answering with its offer in all 6, and the older ones as dead or not asked. Two runs left out `registry`, so the default registry was used in a real run for the first time.
+
+**What this shows.** On this one run, an agent goes from a need in its own words to a paid call and reports what came back, through the plugin. That is uses 1 and 2 of ADR `0139` walked end to end, by one operator.
+
+**What it does not show, and what it exposes.**
+
+- **All 6 paid, including the 3 for a note that does not exist.** The offer cannot say what the node holds, so nothing before the payment separated the two scenes. Controlling before paying checks that the address answers and has a paid history. It says nothing about whether this node holds this thing. 0.001 was spent for nothing in each `absent` run, and that was the risk this measures.
+- Every agent cited the earlier receipt, which was for another job and from the same operator. Nobody questioned it, and there was one candidate.
+- The prompt still says another agent may hold the note, and tells it to pay if worth it.
+- No line was written after the call, so the graph did not learn from these 6 calls.
+- Agent 2 now has five signed addresses, one of them live until the node stops.
+
