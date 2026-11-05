@@ -1,7 +1,7 @@
-import {PULSE_QUALIFIERS_QUERY, PULSE_USES_QUERY, type GraphqlTransport} from "@arp-protocol/graphql";
+import {PULSE_ATOMS_QUERY, PULSE_QUALIFIERS_QUERY, PULSE_USES_QUERY, type GraphqlTransport} from "@arp-protocol/graphql";
 import {describe, expect, it} from "vitest";
 
-import {getPulseUsage} from "../src/pulse-usage.js";
+import {findToolAtoms, getPulseUsage, workedInDomain} from "../src/pulse-usage.js";
 
 const TOOL = "0xaaa";
 const CONTEXT = "0xc0";
@@ -75,5 +75,39 @@ describe("getPulseUsage", () => {
     it("says when the read stopped at its limit", async () => {
         const usage = (await read([use("0x1", "a")], [], 1)).get(TOOL);
         expect(usage?.truncated).toBe(true);
+    });
+});
+
+describe("workedInDomain", () => {
+    it("counts a stated success in that domain, so a declared failure does not lift a skill", async () => {
+        const usage = (
+            await read(
+                [use("0x1", "a"), use("0x2", "b"), use("0x3", "c")],
+                [
+                    qualifier("0x1", CONTEXT, "video"),
+                    qualifier("0x1", OUTCOME, "failed"),
+                    qualifier("0x2", CONTEXT, "video"),
+                    qualifier("0x2", OUTCOME, "worked"),
+                    qualifier("0x3", CONTEXT, "web"),
+                    qualifier("0x3", OUTCOME, "worked"),
+                ],
+            )
+        ).get(TOOL);
+        expect(workedInDomain(usage, "video")).toBe(1);
+        expect(workedInDomain(undefined, "video")).toBe(0);
+    });
+});
+
+describe("findToolAtoms", () => {
+    it("maps the URIs that exist, and asks nothing for an empty list", async () => {
+        const transport: GraphqlTransport = {
+            request: async (query: string) => {
+                expect(query).toBe(PULSE_ATOMS_QUERY);
+                return {atoms: [{term_id: "0xa", data: "ipfs://one"}]};
+            },
+        };
+        const found = await findToolAtoms(["ipfs://one", "ipfs://two"], {graphqlUrl: "unused", transport});
+        expect([...found]).toEqual([["ipfs://one", "0xa"]]);
+        expect((await findToolAtoms([], {graphqlUrl: "unused", transport})).size).toBe(0);
     });
 });

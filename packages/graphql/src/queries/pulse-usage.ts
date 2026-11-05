@@ -27,3 +27,11 @@ export const PULSE_QUALIFIERS_QUERY = `query PulseQualifiers($edges: [String!]!,
         }
     }
 }`;
+
+/** Which of these atom URIs exist, in one query. A tool's URI is computed locally from its URL. */
+export const PULSE_ATOMS_QUERY = `query PulseAtoms($uris: [String!]!, $limit: Int!) {
+    atoms(where: {data: {_in: $uris}}, limit: $limit) {
+        term_id
+        data
+    }
+}`;

@@ -568,7 +568,9 @@ export {readRequires, type SkillRequires} from "./skill-requires.js";
 
 /** What agents wrote about a tool: declarations, their domain and their outcome (ADR `0135`). */
 export {
+    findToolAtoms,
     getPulseUsage,
+    workedInDomain,
     type PulseDeclaration,
     type PulseUsage,
     type PulseUsageConfig,

@@ -79,6 +79,11 @@ function FileFacts({pulse}: {pulse: SkillPulse}) {
             </h2>
             <dl className="m-0 mt-3">
                 <Fact term="Keys">{listOrNone(pulse.keys)}</Fact>
+                {pulse.keysInScriptsItRuns.length === 0 ? null : (
+                    <Fact term="Keys in scripts it runs">
+                        {pulse.keysInScriptsItRuns.map((entry) => `${entry.file}: ${entry.keys.join(", ")}`).join("; ")}
+                    </Fact>
+                )}
                 <Fact term="Login">{pulse.requires.login === null ? none : `line ${pulse.requires.login.line}: ${pulse.requires.login.text}`}</Fact>
                 <Fact term="Paid words">{listOrNone(pulse.paidWords)}</Fact>
                 <Fact term="Commands">{listOrNone(commands)}</Fact>

@@ -2,26 +2,27 @@
  "date": "2026-11-05",
  "queries": [
   "video editing",
-  "video editing ffmpeg"
+  "video editing ffmpeg",
+  "cut silences video"
  ],
  "summary": {
-  "results": 180,
+  "results": 214,
   "status": {
-   "read": 157,
-   "absent": 9,
+   "read": 188,
+   "absent": 12,
    "not_github": 12,
    "repository_unreachable": 2
   },
-  "distinctContents": 136,
-  "contentsInSeveralRepositories": 6,
+  "distinctContents": 162,
+  "contentsInSeveralRepositories": 9,
   "ofRead": {
-   "read": 157,
-   "mentionsKey": 43,
-   "mentionsLogin": 61,
-   "mentionsPaid": 40,
-   "declaresOrRunsCli": 92,
-   "hasScripts": 54,
-   "namesHost": 71
+   "read": 188,
+   "mentionsKey": 48,
+   "mentionsLogin": 62,
+   "mentionsPaid": 43,
+   "declaresOrRunsCli": 106,
+   "hasScripts": 71,
+   "namesHost": 75
   }
  },
  "pulses": [
@@ -46,7 +47,7 @@
    "contentId": "f5459a91f7d8670c807c4e95b72ad8f0b4c48848",
    "skillMdSha": "524f075989aff50a74ca3b3159b6a9200eee82fa",
    "repository": {
-    "stars": 297481,
+    "stars": 297494,
     "pushedAt": "2026-11-02T04:56:08Z",
     "archived": false
    },
@@ -61,6 +62,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -111,6 +114,8 @@
     "www.pexels.com",
     "hf-mirror.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -164,6 +169,8 @@
    ],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -204,6 +211,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "ffmpeg"
@@ -232,8 +241,8 @@
    "contentId": "02f573e2f3a1b980f9b736e97a45b7d8e7ede31d",
    "skillMdSha": "ca62dabcb591c7c9fe879ff4df08791285973b58",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -244,6 +253,8 @@
     "pricing"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -280,6 +291,8 @@
     "paid"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -316,8 +329,8 @@
    "contentId": "dde1f2ae6ee90ae398010f82c0e0823d8a049941",
    "skillMdSha": "e1b522d3976b3e62b3b9f7b24c0a7ac13e8ccf18",
    "repository": {
-    "stars": 79202,
-    "pushedAt": "2026-11-05T09:39:53Z",
+    "stars": 79212,
+    "pushedAt": "2026-11-05T10:10:21Z",
     "archived": false
    },
    "files": 78,
@@ -326,6 +339,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -350,8 +365,8 @@
    "contentId": "8f08f5dd72603d18204be03a497d42559c7cd805",
    "skillMdSha": "a4a2085d98ab96dfce16e6814cd946c999bc9d4c",
    "repository": {
-    "stars": 79202,
-    "pushedAt": "2026-11-05T09:39:53Z",
+    "stars": 79212,
+    "pushedAt": "2026-11-05T10:10:21Z",
     "archived": false
    },
    "files": 118,
@@ -367,6 +382,8 @@
    "hosts": [
     "developers.heygen.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -413,6 +430,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -461,6 +480,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -509,6 +530,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -557,6 +580,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -604,6 +629,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -651,6 +678,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -692,6 +721,8 @@
     "free tier"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -730,6 +761,8 @@
    ],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "mediakit-cli"
@@ -773,6 +806,11 @@
    "hosts": [
     "www.xskill.ai"
    ],
+   "runsAbsentFiles": [
+    ".cursor/skills/seedance2-api/scripts/seedance_api.py",
+    "scripts/seedance_api.py"
+   ],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -815,6 +853,23 @@
    "paidWords": [],
    "hosts": [
     "aistudio.google.com"
+   ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "skills/gemini-omni-flash-api/scripts/upload_file.py",
+     "keys": [
+      "GEMINI_API_KEY",
+      "REDACTED_TOKEN"
+     ]
+    },
+    {
+     "file": "skills/gemini-omni-flash-api/scripts/video/generate_video.py",
+     "keys": [
+      "GEMINI_API_KEY",
+      "REDACTED_TOKEN"
+     ]
+    }
    ],
    "requires": {
     "cli": [],
@@ -880,6 +935,8 @@
     "www.qianwenai.com",
     "img.alicdn.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -932,6 +989,8 @@
     "alioth.alicdn.com",
     "www.qianwenai.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -961,7 +1020,7 @@
    "contentId": "d8db5d5cf3e1aaf8f513750c8d05d4c09e556b12",
    "skillMdSha": "1b307d33af748841382842a6e79b80f7972507fd",
    "repository": {
-    "stars": 297481,
+    "stars": 297494,
     "pushedAt": "2026-11-02T04:56:08Z",
     "archived": false
    },
@@ -971,6 +1030,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1011,6 +1072,8 @@
    "hosts": [
     "mcp.app.layer.ai"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1055,6 +1118,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1088,6 +1153,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1121,6 +1188,21 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "library/motion/seedance-2/scripts/generate-seedance.sh",
+     "keys": [
+      "MUAPI_KEY"
+     ]
+    },
+    {
+     "file": "core/media/generate-video.sh",
+     "keys": [
+      "MUAPI_KEY"
+     ]
+    }
+   ],
    "requires": {
     "cli": [],
     "runs": [
@@ -1160,6 +1242,8 @@
     "sergeshima.com",
     "aimasters.me"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1220,6 +1304,8 @@
     "billing"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1272,6 +1358,8 @@
     "www.qwencloud.com",
     "img.alicdn.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1312,6 +1400,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1362,6 +1452,8 @@
     "www.qwencloud.com",
     "docs.qwencloud.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1402,6 +1494,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1437,6 +1531,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1473,6 +1569,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1499,7 +1597,7 @@
    "contentId": "870dd3aa11641ff8eae447f676886836544a7211",
    "skillMdSha": "fc56d4d13d4b52956af0b57510ea8c3a817be43e",
    "repository": {
-    "stars": 76808,
+    "stars": 76825,
     "pushedAt": "2026-11-03T17:42:02Z",
     "archived": false
    },
@@ -1515,6 +1613,8 @@
    "hosts": [
     "api.x.ai"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1548,6 +1648,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1585,6 +1687,27 @@
    ],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "core/edit/enhance-image.sh",
+     "keys": [
+      "MUAPI_KEY"
+     ]
+    },
+    {
+     "file": "core/edit/lipsync.sh",
+     "keys": [
+      "MUAPI_KEY"
+     ]
+    },
+    {
+     "file": "core/edit/video-effects.sh",
+     "keys": [
+      "MUAPI_KEY"
+     ]
+    }
+   ],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1608,7 +1731,7 @@
    "contentId": "65502c6c70492e354905fb1706434c306eab647d",
    "skillMdSha": "45383671700f78bf61189eafa16a2bab3f5b5af1",
    "repository": {
-    "stars": 5778,
+    "stars": 5779,
     "pushedAt": "2026-11-05T02:45:21Z",
     "archived": false
    },
@@ -1620,6 +1743,8 @@
    "hosts": [
     "auto-editor.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1655,6 +1780,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1690,6 +1817,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -1732,6 +1861,8 @@
    "hosts": [
     "codelynx.dev"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "node",
@@ -1760,7 +1891,7 @@
    "contentId": "2e3618a3288dcaed8bd3729b41efcf5ed49d4849",
    "skillMdSha": "89b1a84f849cfbbb872696d767f917273d9a5b83",
    "repository": {
-    "stars": 12435,
+    "stars": 12442,
     "pushedAt": "2026-10-31T14:53:23Z",
     "archived": false
    },
@@ -1770,6 +1901,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -1812,6 +1945,8 @@
     "deno.land",
     "treg.to"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "node",
@@ -1859,6 +1994,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "codex",
@@ -1910,6 +2047,8 @@
    "hosts": [
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "yt-dlp",
@@ -1953,6 +2092,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "node",
@@ -1996,6 +2137,8 @@
    "hosts": [
     "anycap.ai"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -2034,6 +2177,8 @@
    "hosts": [
     "nominatim.openstreetmap.org"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "ffmpeg",
@@ -2087,6 +2232,8 @@
     "elevenlabs.io",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "ffmpeg",
@@ -2126,6 +2273,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2159,6 +2308,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2182,8 +2333,8 @@
    "contentId": "868068f79e4726e691dd2aa9bfd20483747387e6",
    "skillMdSha": "f9795c2b2c6f8956ffad79e8b16dbe5b2b24cc74",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2194,6 +2345,8 @@
     "pricing"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2229,6 +2382,8 @@
    "hosts": [
     "anycap.ai"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -2268,6 +2423,8 @@
    "hosts": [
     "www.pippit.ai"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2291,8 +2448,8 @@
    "contentId": "f833ebc192579d47dd304b44ad46b2ef2095c587",
    "skillMdSha": "e97d6670990f97b15925a114925eb3de19544d7a",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2301,6 +2458,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2334,6 +2493,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2357,8 +2518,8 @@
    "contentId": "feb0d7dd8b54cf34b02be6d60ee1dabd060c0131",
    "skillMdSha": "70887d01e9a8b9366538a13295835a842e57e953",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2367,6 +2528,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2390,8 +2553,8 @@
    "contentId": "357641599de5062cb7cd572c3d95312877c242cd",
    "skillMdSha": "f0335ec1e1dca0c74ba1d92c8e7812b736030ff7",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2400,6 +2563,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2423,7 +2588,7 @@
    "contentId": "1953e497852cb6752aaff622452ad6e05a64d52a",
    "skillMdSha": "a741f97d5ef8dc6a9ef0e7688df26f1111e6a9e6",
    "repository": {
-    "stars": 6244,
+    "stars": 6247,
     "pushedAt": "2026-11-04T22:32:14Z",
     "archived": false
    },
@@ -2437,6 +2602,8 @@
    "hosts": [
     "x.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2460,8 +2627,8 @@
    "contentId": "ee147c8f1bb5dd3c2f25a252a4bc38458b121dbf",
    "skillMdSha": "4d4b0d925288cdbece6ca8dcf4650eb5655e31d5",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2470,6 +2637,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2493,8 +2662,8 @@
    "contentId": "308f80b28e6e472135e29f82361a20a69442c141",
    "skillMdSha": "92477fa25655ab21164c81cbd6f105b3c8888b58",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2506,6 +2675,8 @@
     "pricing"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2529,8 +2700,8 @@
    "contentId": "0c7e4522de7590119aa61a939806a1465ec636aa",
    "skillMdSha": "ffdc2ba3f6b211fed8fd42350ffbd6c877ba8e65",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2539,6 +2710,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2562,8 +2735,8 @@
    "contentId": "8d317e802513bdc4d5dafb7e968f30a29adeb9c7",
    "skillMdSha": "ae042a28ec394606871ad3313193156245956116",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2572,6 +2745,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2595,8 +2770,8 @@
    "contentId": "e48156c2a725de306743c0b2eb4113cb34c8d601",
    "skillMdSha": "fc1ea9389bfb5f7347e2176f6bf8f10655849856",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2605,6 +2780,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2628,8 +2805,8 @@
    "contentId": "04cbba1d09fc6b97142dac798bc982db4d7787b0",
    "skillMdSha": "2a698642d5aad9c6a9846c3378fa4c815e40e621",
    "repository": {
-    "stars": 2687,
-    "pushedAt": "2026-11-05T09:38:10Z",
+    "stars": 2693,
+    "pushedAt": "2026-11-05T09:51:22Z",
     "archived": false
    },
    "files": 1,
@@ -2638,6 +2815,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2671,6 +2850,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2721,6 +2902,8 @@
     "eachlabs.ai",
     "api.eachlabs.ai"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2760,6 +2943,8 @@
     "anycap.ai",
     "ai.google.dev"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -2795,6 +2980,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2828,6 +3015,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2867,6 +3056,8 @@
    "hosts": [
     "dansugc.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2937,6 +3128,8 @@
    "hosts": [
     "pireel.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -2970,6 +3163,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -3006,6 +3201,8 @@
     "credits"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -3044,6 +3241,8 @@
     "credits"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -3084,6 +3283,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -3117,6 +3318,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -3131,7 +3334,8 @@
    "installsText": "269",
    "url": "https://skills.sh/nateherkai/herk-edit-kit/short-form-edit",
    "queries": [
-    "video editing"
+    "video editing",
+    "cut silences video"
    ],
    "status": "read",
    "path": ".agents/skills/short-form-edit/SKILL.md",
@@ -3154,6 +3358,8 @@
     "credits"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -3169,7 +3375,8 @@
    "url": "https://skills.sh/nateherkai/herk-edit-kit/cut-mistakes",
    "queries": [
     "video editing",
-    "video editing ffmpeg"
+    "video editing ffmpeg",
+    "cut silences video"
    ],
    "status": "read",
    "path": ".agents/skills/cut-mistakes/SKILL.md",
@@ -3190,6 +3397,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -3234,6 +3443,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3281,6 +3492,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3322,6 +3535,8 @@
     "inference.sh",
     "cloud.inference.sh"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3369,6 +3584,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3416,6 +3633,8 @@
     "clip1.mp",
     "clip2.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3459,6 +3678,8 @@
     "inference.sh",
     "your-video.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3500,6 +3721,8 @@
     "inference.sh",
     "cloud.inference.sh"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3541,6 +3764,8 @@
     "inference.sh",
     "cloud.inference.sh"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3582,6 +3807,8 @@
     "inference.sh",
     "cloud.inference.sh"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3623,6 +3850,8 @@
     "inference.sh",
     "cloud.inference.sh"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3664,6 +3893,8 @@
     "inference.sh",
     "cloud.inference.sh"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3705,6 +3936,8 @@
     "inference.sh",
     "cloud.inference.sh"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3748,6 +3981,8 @@
     "inference.sh",
     "your-video.mp"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [
      "belt"
@@ -3788,6 +4023,8 @@
    ],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -3835,6 +4072,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -3878,6 +4117,8 @@
     "handbrake.fr",
     "trac.ffmpeg.org"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -3914,6 +4155,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -3928,7 +4171,8 @@
    "installsText": "248",
    "url": "https://skills.sh/nateherkai/herk-edit-kit/cut-silences",
    "queries": [
-    "video editing ffmpeg"
+    "video editing ffmpeg",
+    "cut silences video"
    ],
    "status": "read",
    "path": ".agents/skills/cut-silences/SKILL.md",
@@ -3949,6 +4193,17 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "scripts/transcribe-elevenlabs.mjs",
+     "keys": [
+      "ELEVENLABS_API_KEY",
+      "ELEVEN_API_KEY",
+      "XI_API_KEY"
+     ]
+    }
+   ],
    "requires": {
     "cli": [],
     "runs": [],
@@ -3992,6 +4247,8 @@
     "ram.console.aliyun.com",
     "bailian.console.aliyun.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4036,6 +4293,8 @@
     "credits"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4078,6 +4337,27 @@
     "free tier"
    ],
    "hosts": [],
+   "runsAbsentFiles": [
+    "skills/ai-video-gen/multi_scene.py"
+   ],
+   "keysInScriptsItRuns": [
+    {
+     "file": "skills/ai-video-gen/generate_video.py",
+     "keys": [
+      "OPENAI_API_KEY",
+      "REPLICATE_API_TOKEN",
+      "LUMAAI_API_KEY",
+      "RUNWAY_API_KEY",
+      "ELEVENLABS_API_KEY"
+     ]
+    },
+    {
+     "file": "skills/ai-video-gen/add_voiceover.py",
+     "keys": [
+      "OPENAI_API_KEY"
+     ]
+    }
+   ],
    "requires": {
     "cli": [],
     "runs": [
@@ -4116,6 +4396,8 @@
     "ffmpeg.org",
     "trac.ffmpeg.org"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4154,6 +4436,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4210,6 +4494,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4245,6 +4531,8 @@
     "paid"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4282,6 +4570,8 @@
     "x.com",
     "open.bigmodel.cn"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4329,6 +4619,8 @@
    "hosts": [
     "nodejs.org"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4378,6 +4670,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4413,6 +4707,8 @@
    ],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4454,6 +4750,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4507,6 +4805,8 @@
     "billing"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4543,6 +4843,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4576,6 +4878,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4613,6 +4917,8 @@
     "paid"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4648,6 +4954,8 @@
     "credit"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4689,6 +4997,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4729,6 +5039,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4774,6 +5086,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4817,6 +5131,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4855,6 +5171,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -4888,6 +5206,10 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [
+    "generate_chapters.py"
+   ],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4933,6 +5255,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -4971,6 +5295,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5008,6 +5334,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5048,6 +5376,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5111,6 +5441,15 @@
     "fonts.google.com",
     "www.unicode.org",
     "elevenlabs.io"
+   ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "video-use-best-practices/scripts/captions-only.sh",
+     "keys": [
+      "ELEVENLABS_API_KEY"
+     ]
+    }
    ],
    "requires": {
     "cli": [],
@@ -5182,6 +5521,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5222,6 +5563,8 @@
    ],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5269,6 +5612,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5310,6 +5655,8 @@
     "elevenlabs.io",
     "modal.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5366,6 +5713,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5404,6 +5753,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5445,6 +5796,8 @@
    ],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5481,6 +5834,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5527,6 +5882,10 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [
+    ".../convert.py"
+   ],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5565,6 +5924,8 @@
    "hosts": [
     "aistudio.google.com"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5601,6 +5962,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5644,6 +6007,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5687,6 +6052,8 @@
     "api.getsquish.app",
     "getsquish.app"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5720,6 +6087,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5746,8 +6115,8 @@
    "contentId": "88db55949beb27000f0a94f81cda29ccd033d11d",
    "skillMdSha": "2f858a5dd678aaf98f5abc0de6d37468caa0642c",
    "repository": {
-    "stars": 49183,
-    "pushedAt": "2026-11-05T08:28:15Z",
+    "stars": 49187,
+    "pushedAt": "2026-11-05T10:11:26Z",
     "archived": false
    },
    "files": 5,
@@ -5761,6 +6130,21 @@
    ],
    "hosts": [
     "ai.google.dev"
+   ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "plugins/agentic-awesome-skills-claude/skills/gemini-omni-flash-api/scripts/upload_file.py",
+     "keys": [
+      "GEMINI_API_KEY"
+     ]
+    },
+    {
+     "file": "plugins/agentic-awesome-skills-claude/skills/gemini-omni-flash-api/scripts/video/generate_video.py",
+     "keys": [
+      "GEMINI_API_KEY"
+     ]
+    }
    ],
    "requires": {
     "cli": [],
@@ -5798,6 +6182,23 @@
    "paidWords": [],
    "hosts": [
     "ai.google.dev"
+   ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "gemini-omni-flash-api/scripts/upload_file.py",
+     "keys": [
+      "GEMINI_API_KEY",
+      "REDACTED_TOKEN"
+     ]
+    },
+    {
+     "file": "gemini-omni-flash-api/scripts/video/generate_video.py",
+     "keys": [
+      "GEMINI_API_KEY",
+      "REDACTED_TOKEN"
+     ]
+    }
    ],
    "requires": {
     "cli": [],
@@ -5859,6 +6260,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -5894,6 +6297,8 @@
     "paid"
    ],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5938,6 +6343,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -5997,6 +6404,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6040,6 +6449,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6081,6 +6492,10 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [
+    "scripts/transcribe-fast.ts"
+   ],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6116,6 +6531,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [],
@@ -6157,6 +6574,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6200,6 +6619,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6238,6 +6659,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6274,6 +6697,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6310,6 +6735,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6346,6 +6773,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6381,6 +6810,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6397,7 +6828,8 @@
    "installsText": "2",
    "url": "https://skills.sh/ukvalley/video-editing-skills/video-editor-pro",
    "queries": [
-    "video editing ffmpeg"
+    "video editing ffmpeg",
+    "cut silences video"
    ],
    "status": "read",
    "path": "skills/video-editor-pro/SKILL.md",
@@ -6416,6 +6848,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6455,6 +6889,8 @@
    "keys": [],
    "paidWords": [],
    "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6497,6 +6933,8 @@
     "www.remotion.dev",
     "api.elevenlabs.io"
    ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
    "requires": {
     "cli": [],
     "runs": [
@@ -6519,6 +6957,1265 @@
     "video editing ffmpeg"
    ],
    "status": "not_github"
+  },
+  {
+   "source": "openclaudia/openclaudia-skills",
+   "skill": "podcast-edit",
+   "installs": 271,
+   "installsText": "271",
+   "url": "https://skills.sh/openclaudia/openclaudia-skills/podcast-edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/podcast-edit/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "ba7c5d6800435aa660588d62c4cd4c92200b6405",
+   "skillMdSha": "5c47b7faea654a04f1333de59cea1a16063a14e5",
+   "repository": {
+    "stars": 730,
+    "pushedAt": "2026-11-04T05:15:56Z",
+    "archived": false
+   },
+   "files": 3,
+   "bytes": 34659,
+   "scripts": 2,
+   "keys": [
+    "OPENAI_API_KEY"
+   ],
+   "paidWords": [],
+   "hosts": [
+    "api.openai.com"
+   ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "resemblyzer",
+     "ffprobe",
+     "ffmpeg",
+     "gaps"
+    ],
+    "login": null,
+    "description": "Edit podcast audio or video — trim pre/post-show chat, remove filler words, cut silences, enhance audio quality, and cut a video version of the same edit. Use when the user asks to edit a podcast, clean up audio, remove fillers, trim a recording, or improve voice quality."
+   }
+  },
+  {
+   "source": "louisedesadeleer/cut-video",
+   "skill": "cut-video",
+   "installs": 108,
+   "installsText": "108",
+   "url": "https://skills.sh/louisedesadeleer/cut-video/cut-video",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "a5a87a64f381c62b8972a92132fb48015b0e50ff",
+   "skillMdSha": "81ce9a41951b9e503fc2aa1b4896f553ef8b2e17",
+   "repository": {
+    "stars": 119,
+    "pushedAt": "2026-07-09T12:05:10Z",
+    "archived": false
+   },
+   "files": 4,
+   "bytes": 62204,
+   "scripts": 1,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "ffmpeg",
+     "whisper",
+     "miniforge",
+     "conda"
+    ],
+    "login": null,
+    "description": "Tighten a long recording aggressively — remove silences, fillers, hedges, false starts, and repetitions while preserving laughs and comedic pauses. Cuts are driven by Montreal Forced Aligner (MFA) word boundaries (auto-installs on first run), not raw Whisper timestamps. Use when the user pastes a video and says \"cut this\", \"tighten this video\", \"remove silences\", \"strip ums\", \"clean this up\", or any variant of \"make this video shorter without losing the good parts\"."
+   }
+  },
+  {
+   "source": "melvynx/video-agent-skills",
+   "skill": "video-edit",
+   "installs": 50,
+   "installsText": "50",
+   "url": "https://skills.sh/melvynx/video-agent-skills/video-edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "absent",
+   "skillFiles": 13
+  },
+  {
+   "source": "samuelgursky/davinci-resolve-mcp",
+   "skill": "resolve-tighten-recording",
+   "installs": 28,
+   "installsText": "28",
+   "url": "https://skills.sh/samuelgursky/davinci-resolve-mcp/resolve-tighten-recording",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/resolve-tighten-recording/SKILL.md",
+   "alsoAt": [
+    ".claude/skills/resolve-tighten-recording/SKILL.md"
+   ],
+   "differsAt": [],
+   "contentId": "274f59357c728e7a6c48280d65e11d0aac5513f8",
+   "skillMdSha": "03c83d760bcc21aa9d4ab6736a87323a1ad17817",
+   "repository": {
+    "stars": 3944,
+    "pushedAt": "2026-11-05T02:01:12Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 8759,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Tightening one long single-take recording — talking-head, screencast, tutorial, podcast video — by removing dead air in the DaVinci Resolve MCP. Apply when asked to tighten a recording, remove silences or dead air, cut the pauses out of a long take, or turn a raw one-take recording into a first cut. The subtractive counterpart to resolve-rough-cut, which selects shots from many clips; this skill removes time from one clip."
+   }
+  },
+  {
+   "source": "vincentventalon/my-claude-skills",
+   "skill": "video-editing",
+   "installs": 13,
+   "installsText": "13",
+   "url": "https://skills.sh/vincentventalon/my-claude-skills/video-editing",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "absent",
+   "skillFiles": 13
+  },
+  {
+   "source": "samin12/cut-video",
+   "skill": "cut-video",
+   "installs": 13,
+   "installsText": "13",
+   "url": "https://skills.sh/samin12/cut-video/cut-video",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "6e3a56c23f6c9503d26cf24a131cfdb29b265a6b",
+   "skillMdSha": "3dfa21686d45c2891046572200de60af1edab733",
+   "repository": {
+    "stars": 13,
+    "pushedAt": "2026-07-28T20:48:50Z",
+    "archived": false
+   },
+   "files": 4,
+   "bytes": 1916377,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "ffmpeg",
+     "whisper",
+     "miniforge",
+     "conda"
+    ],
+    "login": null,
+    "description": "Tighten a long recording — remove silences, fillers, mistakes, and dead air while preserving laughs and comedic pauses. Use when the user pastes a video and says \"cut this\", \"tighten this video\", \"remove silences\", \"strip ums\", \"clean this up\", or any variant of \"make this video shorter without losing the good parts\". Fast (proxy + hardware decode + trim/concat) — runs in seconds, not minutes, on M-series Macs."
+   }
+  },
+  {
+   "source": "immamdouhaboammar/motion-graphics-skills",
+   "skill": "jump-cut-pacing",
+   "installs": 25,
+   "installsText": "25",
+   "url": "https://skills.sh/immamdouhaboammar/motion-graphics-skills/jump-cut-pacing",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/jump-cut-pacing/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "85070f27f4dfea2672e80a4a6e3c7063ff1ac8b9",
+   "skillMdSha": "5bf3951030c1ed2fdb450bcc37d2cfab1d7b9f99",
+   "repository": {
+    "stars": 46,
+    "pushedAt": "2026-11-01T16:34:40Z",
+    "archived": false
+   },
+   "files": 4,
+   "bytes": 19184,
+   "scripts": 2,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Tighten raw talking-head footage with silence trimming and intentional face-safe jump cuts. Detects pauses with FFmpeg, preserves breath padding, alternates subtle reframing only when it helps continuity, and keeps the speaker face safe. Use for talking-head edits, voice pause cleanup, jump-cut pacing, or requests such as \"cut the silences\", \"tighten this video\", and \"smooth talking head zooms\"."
+   }
+  },
+  {
+   "source": "palmier-io/palmier-skills",
+   "skill": "ugc-editing",
+   "installs": 21,
+   "installsText": "21",
+   "url": "https://skills.sh/palmier-io/palmier-skills/ugc-editing",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/ugc-editing/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "16ebbb48ced83e1c6d76fb0a1b8776250472644e",
+   "skillMdSha": "5721c848001fdb13f16f51ba26e21c057545da84",
+   "repository": {
+    "stars": 83,
+    "pushedAt": "2026-09-01T00:00:18Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 10674,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Covers assembling raw footage, trimming bad takes and silences, choosing and applying a talking-head/b-roll format (straight intercut, stacked split, or masked/floating overlay), and caption placement for UGC-style content — agnostic to whether the clips are AI-generated or real filmed footage. Use whenever the user wants to edit, cut, assemble, format, or caption UGC-style video, or pick a talking-head + b-roll layout. Picks up after ugc-photo-prompts/ugc-video-prompts if the footage is AI-generated, or after real footage is imported via import_media."
+   }
+  },
+  {
+   "source": "alemtuzlak/skills",
+   "skill": "produce-video",
+   "installs": 17,
+   "installsText": "17",
+   "url": "https://skills.sh/alemtuzlak/skills/produce-video",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/produce-video/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "b26e754dc0e6d4fef809b0ee5e0fa8b3c7b5980d",
+   "skillMdSha": "9ee59026026ebc35654ebe97cdd75e590ca22976",
+   "repository": {
+    "stars": 45,
+    "pushedAt": "2026-10-30T11:25:22Z",
+    "archived": false
+   },
+   "files": 23,
+   "bytes": 98580,
+   "scripts": 6,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "auto-editor"
+    ],
+    "login": null,
+    "description": "Use when the user wants to turn a raw talking-head / screen-share recording into a finished, edited, annotated video plus a full content package. Removes silences, flags mistakes for the user to cut, transcribes, adds transcript-synced overlays (code, on-screen code highlights, word highlights, lists, comparisons, diagrams, section labels, punch-in zooms), renders with original audio, then generates blog/socials/YouTube content. Triggers on \"produce a video\", \"edit my video\", \"annotate my recording\", \"/produce-video\"."
+   }
+  },
+  {
+   "source": "railly/vcut",
+   "skill": "vcut",
+   "installs": 10,
+   "installsText": "10",
+   "url": "https://skills.sh/railly/vcut/vcut",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "packages/cli/skills/vcut/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "5a5e076b4c3f18104ef8a6a95a3dcece9b6d1864",
+   "skillMdSha": "7187e381947baffa723e1473b9c9fa3ce8abf46a",
+   "repository": {
+    "stars": 1,
+    "pushedAt": "2026-08-17T20:41:02Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 4182,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [
+    "vcut.crafter.run"
+   ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [
+     "vcut",
+     "npx"
+    ],
+    "runs": [
+     "@crafter/vcut",
+     "commands"
+    ],
+    "login": null,
+    "description": "Cut silences, filler words, and dead air out of a recording and render a clean master, reproducibly. Use when the user has a raw screen or camera recording, a meeting-recorder or podcast audio track with no video, mentions cutting silences or filler words or dead air, asks to clean up a take before publishing, wants an edit decision list from a video or audio-only source, or asks to trim pauses out of a talking-head recording. Also use when a recording needs a technical pass for clipping, black frames, or frozen frames before it ships. Do not use for story ideation, caption styling, subtitle translation, or publishing to a platform."
+   }
+  },
+  {
+   "source": "matt-j-penny/ai-video-marketing",
+   "skill": "capcut-full-edit",
+   "installs": 9,
+   "installsText": "9",
+   "url": "https://skills.sh/matt-j-penny/ai-video-marketing/capcut-full-edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/capcut/full-edit/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "55a733baaa104a51ef6956b9d0af3b3e1b4f7c92",
+   "skillMdSha": "fe1370c73ce1a1c307259b0cfd5ee8314997cb21",
+   "repository": {
+    "stars": 5,
+    "pushedAt": "2026-10-15T12:32:04Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 10667,
+   "scripts": 0,
+   "keys": [
+    "DEEPGRAM_API_KEY",
+    "BRAVE_API_KEY"
+   ],
+   "paidWords": [],
+   "hosts": [
+    "console.deepgram.com",
+    "brave.com"
+   ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "uv"
+    ],
+    "login": null,
+    "description": "End-to-end CapCut edit: rough-cut the raw footage (silences/bad takes), then plan and BUILD motion graphics across the whole video as real overlay assets placed on new CapCut overlay tracks — full-screen graphics, on-screen overlays (e.g. lower-third callouts), and split layouts (footage cropped/repositioned, e.g. to 9:16 docked to one side, with a graphic filling the rest). Use when the user wants a complete pass from raw clip to a graphics-finished CapCut draft in one go (e.g. '/full-edit'). Orchestrates capcut-rough-cut, capcut-beat-detector, the motion-graphics skill, and the bridge's overlay/transform commands, ending in the add-motion-graphics verification loop."
+   }
+  },
+  {
+   "source": "matt-j-penny/ai-video-marketing",
+   "skill": "rough-cut",
+   "installs": 8,
+   "installsText": "8",
+   "url": "https://skills.sh/matt-j-penny/ai-video-marketing/rough-cut",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/video-editing/rough-cut/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "7a5661ba8c01a09c96e9608a4956ea6517b8f91e",
+   "skillMdSha": "93cbca46f3b79a68822272ac28cb82224523b757",
+   "repository": {
+    "stars": 5,
+    "pushedAt": "2026-10-15T12:32:04Z",
+    "archived": false
+   },
+   "files": 2,
+   "bytes": 10697,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "ffmpeg"
+    ],
+    "login": null,
+    "description": "When the user wants to turn a raw talking-head or narrated video into a rough cut — strip dead air, and remove bad takes (false starts, repeated takes, fluffs/mistakes). Use when the user mentions 'rough cut,' 'remove the silences,' 'cut out the ums,' 'bad takes,' 'jump cuts,' or hands over raw talking-head/narration footage to clean up before a final edit. Finds every cut — dead air and bad takes alike — from the gaps and content of a word-level-timestamp transcript (Deepgram nova-2 first, then ElevenLabs, then local Whisper), then refines each one against a small local window of the audio before cutting, in ffmpeg or in a connected video editor."
+   }
+  },
+  {
+   "source": "matt-j-penny/ai-video-marketing",
+   "skill": "capcut-rough-cut",
+   "installs": 8,
+   "installsText": "8",
+   "url": "https://skills.sh/matt-j-penny/ai-video-marketing/capcut-rough-cut",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/capcut/rough-cut/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "a625189917c2242c1436f44d7d1fee9d32975f2f",
+   "skillMdSha": "d989843db755ed1f413c935904a0b66b44a3f935",
+   "repository": {
+    "stars": 5,
+    "pushedAt": "2026-10-15T12:32:04Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 5986,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "ffmpeg",
+     "uv"
+    ],
+    "login": null,
+    "description": "Turn a raw talking-head/narrated clip into a rough cut INSIDE CapCut — strip dead air and bad takes (false starts, repeated takes, fluffs), cut aggressively, using the bridge's file-lane `replay` command. Use when the user wants a rough cut, wants silences/bad takes removed, and wants the result as a CapCut draft (not an ffmpeg output file). Needs a word-level transcript first (capcut-transcribe)."
+   }
+  },
+  {
+   "source": "matt-j-penny/ai-video-marketing",
+   "skill": "full-edit",
+   "installs": 8,
+   "installsText": "8",
+   "url": "https://skills.sh/matt-j-penny/ai-video-marketing/full-edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/video-production/full-edit/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "2bb80eccc2ef865a73e1b0c813a836c0c096a4f4",
+   "skillMdSha": "ad5c6e854c1e8f9f63e967555f4a8a7595fedfa4",
+   "repository": {
+    "stars": 5,
+    "pushedAt": "2026-10-15T12:32:04Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 7071,
+   "scripts": 0,
+   "keys": [
+    "DEEPGRAM_API_KEY",
+    "BRAVE_API_KEY"
+   ],
+   "paidWords": [],
+   "hosts": [
+    "console.deepgram.com",
+    "brave.com"
+   ],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "End-to-end Remotion edit: rough-cut the raw talking-head footage (silences/bad takes) with ffmpeg, then plan and build motion graphics across the whole video in a Remotion composition and render the finished MP4 — full-screen, overlay, and split layouts, verified. Runs with the user's saved preferences (canvas, brand, cut aggressiveness, graphic density, layouts) and runs a first-time setup if none exist. Use when the user wants a complete pass from raw clip to a graphics-finished video in one go (e.g. '/full-edit'). Orchestrates transcribe, rough-cut, level-audio, and storyboard."
+   }
+  },
+  {
+   "source": "nexumai-online/skills-edicion",
+   "skill": "cut-silences",
+   "installs": 3,
+   "installsText": "3",
+   "url": "https://skills.sh/nexumai-online/skills-edicion/cut-silences",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/cut-silences/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [
+    ".claude/skills/cut-silences/SKILL.md"
+   ],
+   "contentId": "0116f606a6ffa7d99958529eb807d9397b8b9824",
+   "skillMdSha": "06848d1b271b4c47c22f2da4bcecb0286ea7291b",
+   "repository": {
+    "stars": 5,
+    "pushedAt": "2026-10-05T09:50:15Z",
+    "archived": false
+   },
+   "files": 2,
+   "bytes": 16917,
+   "scripts": 1,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "scripts/transcribe-elevenlabs.mjs",
+     "keys": [
+      "ELEVENLABS_API_KEY",
+      "ELEVEN_API_KEY",
+      "XI_API_KEY"
+     ]
+    }
+   ],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Primera etapa de edición. Elimina silencios y tiempos muertos de una grabación de una persona hablando a cámara a partir de una transcripción por palabras. Usala para recortar pausas o agilizar el ritmo. Produce una EDL, una transcripción con tiempos actualizados y, opcionalmente, el video recortado con ffmpeg. No elimina errores, repeticiones ni arranques fallidos; eso corresponde a cut-mistakes."
+   }
+  },
+  {
+   "source": "nateherkai/hyperframes-video-pipeline",
+   "skill": "cut-silences",
+   "installs": 2,
+   "installsText": "2",
+   "url": "https://skills.sh/nateherkai/hyperframes-video-pipeline/cut-silences",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/cut-silences/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [
+    ".claude/skills/cut-silences/SKILL.md"
+   ],
+   "contentId": "fc22e1af91a9f36695b9e721c89d8860d8878af8",
+   "skillMdSha": "8615b65d991ec92b3aa845cb953c28198b6c836d",
+   "repository": {
+    "stars": 58,
+    "pushedAt": "2026-09-08T17:16:11Z",
+    "archived": false
+   },
+   "files": 2,
+   "bytes": 16615,
+   "scripts": 1,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "scripts/transcribe-elevenlabs.mjs",
+     "keys": [
+      "ELEVENLABS_API_KEY",
+      "ELEVEN_API_KEY",
+      "XI_API_KEY"
+     ]
+    }
+   ],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Agent 1 of the video editing pipeline. Removes silences and dead air from a talking-head recording. Use when asked to cut silences, trim pauses, remove dead air / gaps, or tighten the pacing of a raw video, given a word-level transcript. Produces an edit list (EDL), a re-timed transcript for downstream agents, and optionally the cut video via ffmpeg. Does NOT cut mistakes, repeats, or false starts — that is the cut-mistakes agent."
+   }
+  },
+  {
+   "source": "wismio/hyperframes-video-create",
+   "skill": "cut-silences",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/wismio/hyperframes-video-create/cut-silences",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/cut-silences/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [
+    ".claude/skills/cut-silences/SKILL.md"
+   ],
+   "contentId": "fc22e1af91a9f36695b9e721c89d8860d8878af8",
+   "skillMdSha": "8615b65d991ec92b3aa845cb953c28198b6c836d",
+   "repository": {
+    "stars": 1,
+    "pushedAt": "2026-09-08T18:40:40Z",
+    "archived": false
+   },
+   "files": 2,
+   "bytes": 16615,
+   "scripts": 1,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [
+    {
+     "file": "scripts/transcribe-elevenlabs.mjs",
+     "keys": [
+      "ELEVENLABS_API_KEY",
+      "ELEVEN_API_KEY",
+      "XI_API_KEY"
+     ]
+    }
+   ],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Agent 1 of the video editing pipeline. Removes silences and dead air from a talking-head recording. Use when asked to cut silences, trim pauses, remove dead air / gaps, or tighten the pacing of a raw video, given a word-level transcript. Produces an edit list (EDL), a re-timed transcript for downstream agents, and optionally the cut video via ffmpeg. Does NOT cut mistakes, repeats, or false starts — that is the cut-mistakes agent."
+   }
+  },
+  {
+   "source": "wismio/hyperframes-video-create",
+   "skill": "cut-mistakes",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/wismio/hyperframes-video-create/cut-mistakes",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/cut-mistakes/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [
+    ".claude/skills/cut-mistakes/SKILL.md"
+   ],
+   "contentId": "e994d216d6971d00b5a1d0be04279f5cb8a60b61",
+   "skillMdSha": "94cf1b8061e374a14c70fcbf0589d2cb4ea2c7ef",
+   "repository": {
+    "stars": 1,
+    "pushedAt": "2026-09-08T18:40:40Z",
+    "archived": false
+   },
+   "files": 3,
+   "bytes": 21277,
+   "scripts": 2,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Agent 2 of the video editing pipeline. Finds and removes spoken mistakes — stutters, repeated words, false starts, and retakes (re-recorded lines) — from a talking-head recording. Use after cut-silences, when asked to cut mistakes, remove stutters / repeats / filler restarts, clean up flubs, or keep the best take. Works review-gated: it proposes every cut with context and a reason for approval, then renders only the approved cuts via ffmpeg. Requires a word-level transcript."
+   }
+  },
+  {
+   "source": "nateherkai/hyperframes-video-pipeline",
+   "skill": "cut-mistakes",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/nateherkai/hyperframes-video-pipeline/cut-mistakes",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/cut-mistakes/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [
+    ".claude/skills/cut-mistakes/SKILL.md"
+   ],
+   "contentId": "e994d216d6971d00b5a1d0be04279f5cb8a60b61",
+   "skillMdSha": "94cf1b8061e374a14c70fcbf0589d2cb4ea2c7ef",
+   "repository": {
+    "stars": 58,
+    "pushedAt": "2026-09-08T17:16:11Z",
+    "archived": false
+   },
+   "files": 3,
+   "bytes": 21277,
+   "scripts": 2,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Agent 2 of the video editing pipeline. Finds and removes spoken mistakes — stutters, repeated words, false starts, and retakes (re-recorded lines) — from a talking-head recording. Use after cut-silences, when asked to cut mistakes, remove stutters / repeats / filler restarts, clean up flubs, or keep the best take. Works review-gated: it proposes every cut with context and a reason for approval, then renders only the approved cuts via ffmpeg. Requires a word-level transcript."
+   }
+  },
+  {
+   "source": "rami-maalouf/cutroom",
+   "skill": "cutroom",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/rami-maalouf/cutroom/cutroom",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/cutroom/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "68698baef7557f92e933dbc43475ed415c024380",
+   "skillMdSha": "de357c4fed92e98c4d8f0977f9f4396670016e63",
+   "repository": {
+    "stars": 0,
+    "pushedAt": "2026-10-21T21:04:36Z",
+    "archived": false
+   },
+   "files": 7,
+   "bytes": 59719,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "cutroom"
+    ],
+    "login": null,
+    "description": "Edit real footage into a finished cut with the cutroom CLI - a talking-head recording (one take, a podcast-style video), an explainer (a demo or walkthrough that switches between camera, screen and live demos, like an Expo product video or a Screen Studio project) or a vlog (a folder of clips from a shoot or event). Quick clean-ups remove silences and retakes; full edits are story-first - transcripts (and for vlogs, contact sheets and a clip log) feed a story outline the user approves, the cut follows the story, and the user reviews on a page that plays the cut without rendering, then exports FCPXML, an mp4, a Screen Studio project, or short-form clips. Use when the user asks to clean up, cut, edit, tighten or \"process\" a recording, \"remove the silences and repeats\", make a vlog from a folder of clips, wants short-form clip ideas from a long video, says \"export S3\" / \"take clip 5 for a short\", reviews or iterates on a cut (also on a phone), wants a short as its own Screen Studio project, or brings back an FCPXML edited in Final Cut."
+   }
+  },
+  {
+   "source": "danielrosehill/claude-video-editor-plugin",
+   "skill": "auto-cut-silences",
+   "installs": 7,
+   "installsText": "7",
+   "url": "https://skills.sh/danielrosehill/claude-video-editor-plugin/auto-cut-silences",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/auto-cut-silences/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "2a11eedae5bb049c3c25a484095ea44cdab6f7ed",
+   "skillMdSha": "25e7ffe790825402c09ab1f1046e58f81908bbee",
+   "repository": {
+    "stars": 6,
+    "pushedAt": "2026-05-03T16:11:54Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 3772,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [
+     "test",
+     "mkdir",
+     "ls",
+     "jq",
+     "basename",
+     "dirname",
+     "realpath",
+     "auto-editor"
+    ],
+    "runs": [],
+    "login": null,
+    "description": "Remove silent / dead-air segments from a video or audio file using auto-editor. Use when the user says \"cut the silences\", \"remove dead air\", \"tighten this up\", \"auto-edit this\", \"trim the gaps\". Requires auto-editor installed via deps-setup (lives in the plugin's shared uv venv). Outputs a tightened copy alongside the source; original is preserved."
+   }
+  },
+  {
+   "source": "antoineblc99/reel-kit",
+   "skill": "short-form-edit",
+   "installs": 4,
+   "installsText": "4",
+   "url": "https://skills.sh/antoineblc99/reel-kit/short-form-edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/short-form-edit/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [
+    ".claude/skills/short-form-edit/SKILL.md"
+   ],
+   "contentId": "0a56959147dbf89d8b0b7c6f9a7aeed400a740fd",
+   "skillMdSha": "8852c5b907c354c6b9fee3ded68c2f29f798fcd6",
+   "repository": {
+    "stars": 1,
+    "pushedAt": "2026-09-23T12:36:44Z",
+    "archived": false
+   },
+   "files": 8,
+   "bytes": 45889,
+   "scripts": 2,
+   "keys": [],
+   "paidWords": [
+    "credits"
+   ],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Turn talking-head footage into a finished reel, YouTube Short, or short advertisement with curiosity-led openings, earned payoffs, story-driven cuts, transcript-synced motion graphics, moving B-roll, captions, subtle music, and synchronized sound effects. Use for short-form editing; use edit-video for long-form videos and cut-silences for pause removal alone."
+   }
+  },
+  {
+   "source": "fillrochaa/edvid-lt",
+   "skill": "edvid-lt",
+   "installs": 4,
+   "installsText": "4",
+   "url": "https://skills.sh/fillrochaa/edvid-lt/edvid-lt",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "06070d55f93ff79ae51bd2c2128ef494e5acb671",
+   "skillMdSha": "6b6ed5740af3b056b73c733f9c21d718e7ca143c",
+   "repository": {
+    "stars": 4,
+    "pushedAt": "2026-07-31T15:00:15Z",
+    "archived": false
+   },
+   "files": 17,
+   "bytes": 233840,
+   "scripts": 9,
+   "keys": [
+    "GROQ_API_KEY",
+    "ELEVENLABS_API_KEY"
+   ],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "requests"
+    ],
+    "login": null,
+    "description": "Edvid LT — clean raw VERTICAL shortform footage and deliver it as exact 10-second parts for animation tools (e.g. Google's 10s-per-clip video animator). Two phases with a gate — FASE 1 analyzes the footage, cuts silences/slips/bad takes (audio-primary, cut on silence, never inside a word), renders one clean cut and opens the preview player for approval; FASE 2 (only after the user approves) splits the cut into the Cortes/ folder as parte_01.mp4, parte_02.mp4… each exactly 10.000s (last part keeps the remainder). NO color grade, NO captions/graphics, NO soundtrack, NO URL ingestion, NO horizontal/longform material — those belong to the full edvid skill. Use when the user says \"edvid lt\", \"limpa e divide em 10 segundos\", \"prepara pro Google animar\", or wants clean 10s chunks from vertical raw footage."
+   }
+  },
+  {
+   "source": "nexumai-online/skills-edicion",
+   "skill": "short-form-edit",
+   "installs": 3,
+   "installsText": "3",
+   "url": "https://skills.sh/nexumai-online/skills-edicion/short-form-edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/short-form-edit/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [
+    ".claude/skills/short-form-edit/SKILL.md"
+   ],
+   "contentId": "de8aadcc9d91a7fadd8398657a05396e579246a7",
+   "skillMdSha": "a65bb4fcfa29f460c08cd78e9125281afefeef51",
+   "repository": {
+    "stars": 5,
+    "pushedAt": "2026-10-05T09:50:15Z",
+    "archived": false
+   },
+   "files": 8,
+   "bytes": 42321,
+   "scripts": 2,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Convertí una grabación hablada en un reel, YouTube Short o anuncio corto terminado, con apertura que genere curiosidad, resolución respaldada por el contenido, cortes narrativos, gráficos sincronizados, B-roll en movimiento, subtítulos, música sutil y efectos. Para videos largos usá edit-video; para quitar sólo pausas, cut-silences."
+   }
+  },
+  {
+   "source": "stefanwebb/premiere-ai-skills",
+   "skill": "remove-pauses-from-track",
+   "installs": 3,
+   "installsText": "3",
+   "url": "https://skills.sh/stefanwebb/premiere-ai-skills/remove-pauses-from-track",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/remove-pauses-from-track/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "76f08d810d397e38df19fe53e1cbc266c132b075",
+   "skillMdSha": "2de4b167063654395d7f5967cf110c7ee4e3f223",
+   "repository": {
+    "stars": 3,
+    "pushedAt": "2026-09-17T18:18:27Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 9724,
+   "scripts": 0,
+   "keys": [
+    "ANTHROPIC_API_KEY"
+   ],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Use when asked to remove pauses, silences, or dead air from a specific track in a Premiere Pro sequence, e.g. \"remove the pauses from the narration track\" or \"cut the silences out of audio track 2 (and keep the camera video in sync)\". Also use when a linked video track must stay frame-aligned with the audio track being cleaned up."
+   }
+  },
+  {
+   "source": "crealwork/ai-marketing-kit",
+   "skill": "youtube-edit-kit",
+   "installs": 2,
+   "installsText": "2",
+   "url": "https://skills.sh/crealwork/ai-marketing-kit/youtube-edit-kit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/youtube-edit-kit/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "40dfe30646ea9095aa4dd3655c0d9354b902efb8",
+   "skillMdSha": "84f5b617a7a2b616e4fd5b8d8c471b7054a78c35",
+   "repository": {
+    "stars": 20,
+    "pushedAt": "2026-09-12T23:38:55Z",
+    "archived": false
+   },
+   "files": 16,
+   "bytes": 62390,
+   "scripts": 7,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": {
+     "line": 10,
+     "text": "ffmpeg + faster-whisper, no API key."
+    },
+    "description": "Use when a user provides a video file (talking head, vlog, tutorial, recording — 영상, 녹화본) and wants it edited for YouTube — silence/filler cuts, burned captions, SRT, chapters — or wants vertical Shorts/Reels cut from it. Triggers: \"영상 편집해줘\", \"쇼츠 만들어줘\", \"edit this video\", \"cut the silences\", \"make shorts from this\", \"add captions and chapters\"."
+   }
+  },
+  {
+   "source": "lagudafuadtosin/jump-cut",
+   "skill": "jump-cut",
+   "installs": 2,
+   "installsText": "2",
+   "url": "https://skills.sh/lagudafuadtosin/jump-cut/jump-cut",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/jump-cut/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "a923e2ade1e9a1407592af9173ff92adbbe0eb9e",
+   "skillMdSha": "e5dbe76d0850f9ca16d42e16ede71c147f07bb5b",
+   "repository": {
+    "stars": 0,
+    "pushedAt": "2026-10-23T19:40:33Z",
+    "archived": false
+   },
+   "files": 3,
+   "bytes": 38170,
+   "scripts": 1,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "faster-whisper",
+     "imageio-ffmpeg"
+    ],
+    "login": null,
+    "description": "Jump cut editor that auto edits a creator's raw take into a finished video, for YouTube (16:9) or Shorts, TikTok and Reels (9:16). Use when someone has filmed themselves reading a script and wants the retakes, false starts, \"let me say that again\", dead air and silences cut out (jump cuts), with optional captions in their exact words. Needs the raw video file. The script they read from helps, and if there is none it is pulled from the take."
+   }
+  },
+  {
+   "source": "wismio/hyperframes-video-create",
+   "skill": "short-form-edit",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/wismio/hyperframes-video-create/short-form-edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".agents/skills/short-form-edit/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [
+    ".claude/skills/short-form-edit/SKILL.md"
+   ],
+   "contentId": "9616a84d1a4756cf7bf305b5166247dc9e8ef068",
+   "skillMdSha": "a584e6424363bce4e04813041179be39c783134b",
+   "repository": {
+    "stars": 1,
+    "pushedAt": "2026-09-08T18:40:40Z",
+    "archived": false
+   },
+   "files": 8,
+   "bytes": 45368,
+   "scripts": 2,
+   "keys": [],
+   "paidWords": [
+    "credits"
+   ],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Turn talking-head footage into a finished reel, YouTube Short, or short advertisement with curiosity-led openings, earned payoffs, story-driven cuts, transcript-synced motion graphics, moving B-roll, captions, subtle music, and synchronized sound effects. Use for short-form editing; use edit-video for long-form videos and cut-silences for pause removal alone."
+   }
+  },
+  {
+   "source": "anupamme/motion-graphics-skills",
+   "skill": "jump-cut-pacing",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/anupamme/motion-graphics-skills/jump-cut-pacing",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/jump-cut-pacing/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "85070f27f4dfea2672e80a4a6e3c7063ff1ac8b9",
+   "skillMdSha": "5bf3951030c1ed2fdb450bcc37d2cfab1d7b9f99",
+   "repository": {
+    "stars": 0,
+    "pushedAt": "2026-10-02T16:20:53Z",
+    "archived": false
+   },
+   "files": 4,
+   "bytes": 19184,
+   "scripts": 2,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Tighten raw talking-head footage with silence trimming and intentional face-safe jump cuts. Detects pauses with FFmpeg, preserves breath padding, alternates subtle reframing only when it helps continuity, and keeps the speaker face safe. Use for talking-head edits, voice pause cleanup, jump-cut pacing, or requests such as \"cut the silences\", \"tighten this video\", and \"smooth talking head zooms\"."
+   }
+  },
+  {
+   "source": "vincentventalon/my-claude-skills",
+   "skill": "edit",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/vincentventalon/my-claude-skills/edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "absent",
+   "skillFiles": 13
+  },
+  {
+   "source": "notivn/aiev",
+   "skill": "auto-cut",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/notivn/aiev/auto-cut",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": ".claude/skills/auto-cut/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "736bd60dc6a6328319976dd8485932437515889a",
+   "skillMdSha": "4c9900978d0a5b9249032515c07d766de4b7b5d1",
+   "repository": {
+    "stars": 154,
+    "pushedAt": "2026-11-04T09:02:41Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 13110,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Cut silences and dead weight (fillers, repeated takes, false starts) out of a talking-head video BEFORE building the edit - call the measured /auto-trim API instead of hand-rolling ffmpeg, review the dead-weight candidates it returns, and do the one job only a human/AI can do (spotting repeated POINTS). Read this when the brief enables \"Tự động cắt ngắn video\" (autoCut) or the user complains that the video still has dead weight/silences."
+   }
+  },
+  {
+   "source": "witcharon/video-edit-skills",
+   "skill": "longform-video-edit",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/witcharon/video-edit-skills/longform-video-edit",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/longform-video-edit/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "001bd45de35f51864bce9292860d033704d3de98",
+   "skillMdSha": "7e513a9be239366279418f83af4cf7f77f228e0e",
+   "repository": {
+    "stars": 1,
+    "pushedAt": "2026-10-30T09:43:45Z",
+    "archived": false
+   },
+   "files": 24,
+   "bytes": 69889,
+   "scripts": 8,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [],
+    "login": null,
+    "description": "Turn a raw long-form or talking-head recording (YouTube video, cafe talk, vlog, tutorial to camera, podcast with video) into a finished edit with a light motion layer. The pipeline cuts silences and retakes, then adds a few motion graphics on the key moments. Candidates are the speaker's product UI, a number they say, a named tool, a comparison, and the hook. Each graphic lands on its spoken word, with typed text, camera layouts (full, punch-in, side card), cut-aways, quiet sound effects and a measured master. Every project gets its own look (style_guide.md built from the brand, a reference or the footage), never a house style. Use it whenever someone hands over a raw recording and wants it edited, wants app visuals / b-roll / titles / motion graphics over a talking head, asks for an \"edit layer\", a \"YouTube edit\", \"videoyu editle\", \"ekrana görsel gelsin\", or wants an edit redone \"in the style of\" a reference video or guide. Use it even if they only say \"make it less boring\". Pairs with video-use (the cut), motion-studio (craft, sound, QC), copywriting (on-screen copy) and Remotion."
+   }
+  },
+  {
+   "source": "ai-orchestrators/video-editing-suite",
+   "skill": "long-form-editing",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/ai-orchestrators/video-editing-suite/long-form-editing",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "long-form-editing/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "aedf989c089498248bc43b41dd5f75036d4aa08d",
+   "skillMdSha": "4e1b07be240716b8f7ec23cad454e38ff039b8f1",
+   "repository": {
+    "stars": 0,
+    "pushedAt": "2026-08-20T05:35:03Z",
+    "archived": false
+   },
+   "files": 1,
+   "bytes": 16598,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [],
+   "hosts": [],
+   "runsAbsentFiles": [
+    "scripts/captions-to-srt.cjs"
+   ],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [],
+    "runs": [
+     "ffmpeg"
+    ],
+    "login": null,
+    "description": "Edit a raw horizontal long-form recording (VSL, YouTube video, podcast, webinar) into a clean horizontal MP4. Three modes - (A) clean a single recording (trim silences, transcribe, detect redo takes, denoise, optional chapters/intro-outro), (B) content-splice a multi-speaker recording (webinar, meeting, training call) into an evergreen teaching cut by removing banter, live-audience polls, off-topic tangents, and one speaker's interjections via a transcript EDL, and (C) assemble a publish-ready episode from parts (cold-open hook, branded intro/outro, normalised audio, matching SRT). Output stays horizontal. Captions and thumbnail are sibling skills. Triggers when the user says \"edit this VSL\", \"clean up the long form\", \"edit my YouTube recording\", \"edit this podcast\", \"cut this training video\", \"splice this recording\", \"cut out the banter\", \"assemble the episode\", \"add the intro and outro\", \"put a hook on the front\", or drops a horizontal MP4 into `$PROJ/01_raw/a_roll/`."
+   }
+  },
+  {
+   "source": "iacontheo/edita-con-ia-skills",
+   "skill": "short-editing",
+   "installs": 1,
+   "installsText": "1",
+   "url": "https://skills.sh/iacontheo/edita-con-ia-skills/short-editing",
+   "queries": [
+    "cut silences video"
+   ],
+   "status": "read",
+   "path": "skills/short-editing/SKILL.md",
+   "alsoAt": [],
+   "differsAt": [],
+   "contentId": "60a965982043d57c17c2fec5985a9f38c73cefee",
+   "skillMdSha": "485585e6418e5971984f997a04bdb7eb994431c5",
+   "repository": {
+    "stars": 0,
+    "pushedAt": "2026-10-17T03:09:40Z",
+    "archived": false
+   },
+   "files": 3,
+   "bytes": 32758,
+   "scripts": 0,
+   "keys": [],
+   "paidWords": [
+    "paid"
+   ],
+   "hosts": [],
+   "runsAbsentFiles": [
+    "sub.mjs"
+   ],
+   "keysInScriptsItRuns": [],
+   "requires": {
+    "cli": [
+     "node",
+     "git",
+     "ffmpeg",
+     "ffprobe",
+     "npx"
+    ],
+    "runs": [
+     "let",
+     "const"
+    ],
+    "login": null,
+    "description": "Edits a complete talking-head video end to end with free tools (Remotion, whisper.cpp, ffmpeg) - a vertical short (1080x1920) or a full horizontal YouTube video (1920x1080). Use when the user says edit, cut, captions, subtitles, motion design, montage, \"make it a short\", \"edit my YouTube video\", render, or gives a recording from video-agent/takes/. Transcribes locally with word timings, cuts silences and retakes against the script, adds punch-in zooms, word-by-word captions in the creator's accent color, a hook card, callouts and a progress bar, levels the voice to -14 LUFS, and writes an .srt, a cut list for CapCut or Premiere, chapters for a long video, and the post copy."
+   }
   }
  ]
 }

@@ -29,6 +29,7 @@ const pulse: PulseView["pulse"] = {
     paidWords: [],
     hosts: [],
     runsAbsentFiles: ["scripts/transcribe-elevenlabs.mjs"],
+    keysInScriptsItRuns: [],
     requires: {cli: [], runs: ["ffmpeg"], login: null, description: null},
 };
 

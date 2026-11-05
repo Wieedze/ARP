@@ -42,11 +42,14 @@ export type SkillFacts = {
     paidWords: string[];
     /** Hosts the file names, GitHub and placeholder domains left out. */
     hosts: string[];
-    /**
-     * Files its instructions run that the repository does not hold. `cut-silences` runs
-     * `scripts/transcribe-elevenlabs.mjs`, and no key name in its file says what that needs.
-     */
+    /** Files its instructions run that the repository does not hold. */
     runsAbsentFiles: string[];
+    /**
+     * Key names in the repository's scripts its instructions run. `cut-silences` names no key, and
+     * `scripts/transcribe-elevenlabs.mjs`, its stated prerequisite, stops without
+     * `ELEVENLABS_API_KEY` (read 2026-11-05). `readSkillFacts` leaves this empty: it takes a read.
+     */
+    keysInScriptsItRuns: {file: string; keys: string[]}[];
     requires: SkillRequires;
 };
 
@@ -98,6 +101,7 @@ export type PulseSource = {
 
 /** Beyond this a repository is a collection, and reading each file's name costs too much per ask. */
 export const MAX_SKILL_FILES_READ = 200;
+const MAX_SCRIPTS_READ = 5;
 
 /**
  * Where the installer looks first, in its order (`skills` 1.7.4, `PRIORITY_PREFIXES`). It keeps the
@@ -219,6 +223,19 @@ const SCRIPT = /\.(sh|bash|py|js|mjs|cjs|ts|rb|pl)$/i;
 const RUNS_FILE = /\b(?:node|bun|deno|tsx|python3?|bash|sh)\s+((?:~|\.{1,2})?\/?[\w.@-]+(?:\/[\w.@-]+)*\.(?:mjs|cjs|js|ts|py|sh))\b/g;
 const PLACEHOLDER = /(^|\/)(path|your|my|foo|example|script|file|input|output)(\/|\.|$)/i;
 
+/** The repository files the text runs, by the same suffix match. Placeholders are left out. */
+function filesItRuns(markdown: string, repositoryFiles: readonly {path: string}[]): string[] {
+    const named = [...markdown.matchAll(RUNS_FILE)].map((match) => match[1] ?? "");
+    const found = new Set<string>();
+    for (const name of named) {
+        if (name.startsWith("/") || name.startsWith("~") || PLACEHOLDER.test(name)) continue;
+        const tail = name.replace(/^(\.{1,2}\/)+/, "");
+        const hit = repositoryFiles.find((file) => file.path === tail || file.path.endsWith(`/${tail}`));
+        if (hit !== undefined) found.add(hit.path);
+    }
+    return [...found];
+}
+
 /** Scripts the text runs that no file in the repository could be. Suffix match, so a layout cannot fool it. */
 function absentFiles(markdown: string, repositoryFiles: readonly {path: string}[]): string[] {
     const named = [...markdown.matchAll(RUNS_FILE)].map((match) => match[1] ?? "");
@@ -246,6 +263,7 @@ export function readSkillFacts(
         paidWords: [...new Set((markdown.match(PAID_WORD) ?? []).map((word) => word.toLowerCase()))],
         hosts: [...new Set(hosts)],
         runsAbsentFiles: absentFiles(markdown, repositoryFiles),
+        keysInScriptsItRuns: [],
         requires: readRequires(markdown),
     };
 }
@@ -333,6 +351,15 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource):
     const directory = parentOf(located.file.path);
     const prefix = directory === "" ? "" : `${directory}/`;
     const inDirectory = listing.files.filter((file) => file.path.startsWith(prefix));
+    const scripts = filesItRuns(located.markdown, listing.files).slice(0, MAX_SCRIPTS_READ);
+    const keysInScriptsItRuns = (
+        await Promise.all(
+            scripts.map(async (file) => ({
+                file,
+                keys: [...new Set((await source.file(result.source, file))?.match(KEY_NAME) ?? [])],
+            })),
+        )
+    ).filter((entry) => entry.keys.length > 0);
     return {
         ...result,
         status: "read",
@@ -343,6 +370,7 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource):
         skillMdSha: located.file.sha,
         repository: await source.repository(result.source),
         ...readSkillFacts(located.markdown, inDirectory, listing.files),
+        keysInScriptsItRuns,
     };
 }
 

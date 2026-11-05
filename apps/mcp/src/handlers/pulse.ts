@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import {
+  findToolAtoms,
   getPulseUsage,
   githubPulseSource,
   groupByContent,
@@ -13,8 +14,9 @@ import {
   type PulseUsage,
   type SkillPulse,
   type SkillSearchResult,
+  workedInDomain,
 } from '@arp-protocol/core';
-import { stringToHex, type Hex } from 'viem';
+import { stringToHex } from 'viem';
 
 import { GRAPHQL, IN_CONTEXT_OF, reads } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
@@ -68,6 +70,11 @@ export function setAsideBecause(pulse: SkillPulse, constraints: Constraints): st
   if (pulse.status !== 'read') return [];
   const reasons: string[] = [];
   if (constraints.noKeys && pulse.keys.length > 0) reasons.push(`mentions ${pulse.keys.join(', ')}`);
+  if (constraints.noKeys) {
+    for (const { file, keys } of pulse.keysInScriptsItRuns) {
+      reasons.push(`runs ${file}, which mentions ${keys.join(', ')}`);
+    }
+  }
   if (constraints.noLogin && pulse.requires.login !== null) {
     reasons.push(`mentions a login at line ${pulse.requires.login.line}`);
   }
@@ -85,12 +92,11 @@ export function setAsideBecause(pulse: SkillPulse, constraints: Constraints): st
   return reasons;
 }
 
-/** The tool's atom id, only for a result that has a URL on GitHub. A pure function of that URL. */
-async function atomOf(pulse: SkillPulse): Promise<Hex | null> {
-  if (pulse.status === 'not_github') return null;
-  const url = `https://github.com/${pulse.source}?skill=${encodeURIComponent(pulse.skill)}`;
-  if (skillRefFromUrl(url) === null) return null;
-  return reads.atomId(stringToHex(toolAtomUri(url)));
+/** A result's atom URI, computed from its URL. `null` for a result that is not on GitHub. */
+export function toolUriOf(source: string, skill: string): string | null {
+  if (!/^[\w.-]+\/[\w.-]+$/.test(source)) return null;
+  const url = `https://github.com/${source}?skill=${encodeURIComponent(skill)}`;
+  return skillRefFromUrl(url) === null ? null : toolAtomUri(url);
 }
 
 /** A few at a time, because each atom id is one read of a public RPC. */
@@ -139,6 +145,7 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
     size: { files: pulse.files, bytes: pulse.bytes, scripts: pulse.scripts },
     its_file_mentions: {
       ...(pulse.keys.length === 0 ? {} : { keys: pulse.keys }),
+      ...(pulse.keysInScriptsItRuns.length === 0 ? {} : { keys_in_scripts_it_runs: pulse.keysInScriptsItRuns }),
       ...(pulse.requires.login === null ? {} : { login: pulse.requires.login }),
       ...(pulse.paidWords.length === 0 ? {} : { paid_words: pulse.paidWords }),
       ...(pulse.hosts.length === 0 ? {} : { hosts: pulse.hosts }),
@@ -158,8 +165,8 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
  * `arp_pulse`: a search, what each result's files show, and what agents wrote about it (task 63).
  *
  * Holds no key and writes nothing. The constraints are the person's and stay in this call: nothing
- * here sends them anywhere. It orders on one visible fact, declarations in the domain asked about,
- * and then keeps the search's own order. There is no composed score (ADR `0046`).
+ * here sends them anywhere. It orders on one visible fact, how many agents said it worked in the
+ * domain asked about, and then keeps the search's own order. A declared failure never lifts a skill. There is no composed score (ADR `0046`).
  */
 export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const query = args['query'];
@@ -191,50 +198,63 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const results: SkillSearchResult[] = parseSkillsFind(output);
   if (results.length === 0) return text(id, { search: 'npx skills find', results: [] });
 
+  // What agents wrote comes first and is one query for every result, so a skill agents said worked is
+  // read even when the search ranks it far down. If the chain is busy it degrades to "unknown" and
+  // the file facts still come: the first comparison lost 4 of 9 runs to one failed read.
+  const uriOf = (result: SkillSearchResult) => toolUriOf(result.source, result.skill);
+  let atomByUri = new Map<string, string>();
+  let usage = new Map<string, PulseUsage>();
+  let usageRead = true;
+  try {
+    atomByUri = await findToolAtoms(
+      results.map(uriOf).filter((uri): uri is string => uri !== null),
+      { graphqlUrl: GRAPHQL },
+    );
+    usage = await getPulseUsage([...atomByUri.values()], {
+      graphqlUrl: GRAPHQL,
+      inContextOf: IN_CONTEXT_OF,
+      hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
+    });
+  } catch (error) {
+    usageRead = false;
+    console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  const atomOf = (result: SkillSearchResult) => {
+    const uri = uriOf(result);
+    return uri === null ? null : (atomByUri.get(uri) ?? null);
+  };
+  const usageOf = (result: SkillSearchResult) => {
+    const atom = atomOf(result);
+    return atom === null ? undefined : usage.get(atom.toLowerCase());
+  };
+  const workedHere = (result: SkillSearchResult) =>
+    domain === null ? 0 : workedInDomain(usageOf(result), domain);
+
+  const ordered = results
+    .map((result, order) => ({ result, order }))
+    .sort((a, b) => workedHere(b.result) - workedHere(a.result) || a.order - b.order)
+    .map(({ result }) => result);
+
   const token = process.env['GITHUB_TOKEN'];
   const source = githubPulseSource(token === undefined ? {} : { token });
   // Read more than asked, because the constraints and the copies can remove most of a short list.
-  const window = results.slice(0, Math.min(limit * 3, 30));
+  const window = ordered.slice(0, Math.min(limit * 3, 30));
   const pulses = await inBatches(window, (result) =>
     readPulse(result, source).catch(
       (): SkillPulse => ({ ...result, status: 'repository_unreachable' }),
     ),
   );
 
-  // What agents wrote is one half of the answer, and the chain being busy must not cost the other
-  // half: the first comparison lost 4 of 9 runs to one failed read. So it degrades to "unknown".
-  let atoms: (Hex | null)[] = pulses.map(() => null);
-  let usage = new Map<string, PulseUsage>();
-  let usageRead = true;
-  try {
-    atoms = await inBatches(pulses, atomOf);
-    usage = await getPulseUsage(
-      atoms.filter((atom): atom is Hex => atom !== null),
-      {
-        graphqlUrl: GRAPHQL,
-        inContextOf: IN_CONTEXT_OF,
-        hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
-      },
-    );
-  } catch (error) {
-    usageRead = false;
-    console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
-  }
-
   const copies = new Map<string, SkillPulse[]>();
   for (const group of groupByContent(pulses)) copies.set(group.contentId, group.members);
 
-  const rows = pulses.map((row, index) => {
-    const atom = atoms[index] ?? null;
-    return { row, atom, usage: atom === null ? undefined : usage.get(atom.toLowerCase()), reasons: setAsideBecause(row, constraints) };
-  });
-  const declaredIn = (entry: (typeof rows)[number]) =>
-    domain === null ? 0 : (entry.usage?.byDomain[domain] ?? 0);
-  const kept = rows
-    .filter((entry) => entry.reasons.length === 0)
-    .map((entry, order) => ({ entry, order }))
-    .sort((a, b) => declaredIn(b.entry) - declaredIn(a.entry) || a.order - b.order)
-    .map(({ entry }) => entry);
+  const rows = pulses.map((row) => ({
+    row,
+    atom: atomOf(row),
+    usage: usageOf(row),
+    reasons: setAsideBecause(row, constraints),
+  }));
+  const kept = rows.filter((entry) => entry.reasons.length === 0);
 
   // One line per content: a directory in nine repositories is one thing to decide about, once.
   const shown = new Set<string>();
@@ -249,7 +269,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     search: typeof given === 'string' ? 'search_output' : 'npx skills find',
     results_found: results.length,
     results_read: pulses.length,
-    order: domain === null ? "the search's own" : `declarations in "${domain}", then the search's own`,
+    order: domain === null ? "the search's own" : `agents who said it worked in "${domain}", then the search's own`,
     read_this:
       'Mentions are matches in the file, not requirements. Installs are the search\'s figure, not a count of use. ' +
       'What agents wrote is what they paid to say.',

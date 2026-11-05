@@ -5,6 +5,7 @@ import {
     type FetchLike,
     type GraphqlTransport,
     isRecord,
+    PULSE_ATOMS_QUERY,
     PULSE_QUALIFIERS_QUERY,
     PULSE_USES_QUERY,
     readRecord,
@@ -59,6 +60,40 @@ const DEFAULT_LIMIT = 500;
 
 const rowsOf = (data: Record<string, unknown>): Record<string, unknown>[] =>
     Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
+
+/**
+ * The atoms that exist for these URIs, as a map from URI to id. One query, so a long list of search
+ * results costs no chain read per result. A URI with no atom is simply absent: nobody wrote about it.
+ */
+export async function findToolAtoms(
+    uris: readonly string[],
+    config: Pick<PulseUsageConfig, "graphqlUrl" | "fetch" | "timeoutMs" | "transport">,
+): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    if (uris.length === 0) return out;
+    const transport =
+        config.transport ??
+        createGraphqlTransport({
+            url: config.graphqlUrl,
+            fetch: config.fetch ?? defaultFetch(),
+            timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        });
+    const data = await transport.request(PULSE_ATOMS_QUERY, {uris: [...uris], limit: uris.length});
+    const rows = Array.isArray(data["atoms"]) ? data["atoms"].filter(isRecord) : [];
+    for (const row of rows) {
+        const id = readString(row, "term_id");
+        const uri = readString(row, "data");
+        if (id !== null && uri !== null) out.set(uri, id);
+    }
+    return out;
+}
+
+/** How many declarers named this domain and said it worked. The one fact a list is ordered on. */
+export function workedInDomain(usage: PulseUsage | undefined, domain: string): number {
+    return (usage?.declarations ?? []).filter(
+        (row) => row.domains.includes(domain) && row.outcomes.includes("worked"),
+    ).length;
+}
 
 /** Read every tool's usage in two queries. A tool nobody declared comes back empty, not missing. */
 export async function getPulseUsage(

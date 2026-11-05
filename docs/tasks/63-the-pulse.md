@@ -35,7 +35,7 @@ an agent used it in a comparable situation.
 1. An agent has a need. `npx skills find` searches, the installer's own engine.
 2. ARP reads the files of the results and shows their pulse. No catalogue is needed for this.
 3. The person's constraints, passed locally, set aside what does not fit, and each is said.
-4. What remains is ordered by one visible fact, declarations in this domain. No composed score.
+4. What remains is ordered by one visible fact, agents who said it worked in this domain. No composed score.
 5. The agent installs and uses the skill.
 6. It declares `uses`, with a domain and an outcome, signed and paid by the agent.
 7. The next agent reads that line in the pulse.

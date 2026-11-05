@@ -23,6 +23,7 @@ const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): S
     paidWords: [],
     hosts: [],
     runsAbsentFiles: [],
+    keysInScriptsItRuns: [],
     requires: {cli: [], runs: [], login: null, description: null},
     ...overrides,
 });
@@ -50,6 +51,11 @@ describe("setAsideBecause", () => {
             "ships 2 script(s)",
             "needs belt",
         ]);
+    });
+
+    it("sets aside a skill whose script needs a key its own file never names", () => {
+        const pulse = read({keysInScriptsItRuns: [{file: "scripts/t.mjs", keys: ["ELEVENLABS_API_KEY"]}]});
+        expect(setAsideBecause(pulse, {...none, noKeys: true})).toEqual(["runs scripts/t.mjs, which mentions ELEVENLABS_API_KEY"]);
     });
 
     it("does not set aside a skill it could not read, because nothing is known about it", () => {

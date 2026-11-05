@@ -145,7 +145,7 @@ export const TOOLS = [
       'which other repositories hold the same content with their install figures, and `usage`: the ' +
       'declarations agents paid to write, with their domain and outcome. `status` other than `read` means ' +
       'it was not read, so what it needs is unknown. Pass `constraints` to set aside what does not ' +
-      'fit the person; they stay in this call. Pass `domain` to order by declarations in that domain. ' +
+      'fit the person; they stay in this call. Pass `domain` to put first what agents said worked in it. ' +
       'Nothing here is a verdict, and nothing is written.',
     inputSchema: {
       type: 'object',
@@ -157,7 +157,7 @@ export const TOOLS = [
         },
         domain: {
           type: 'string',
-          description: 'One category word, `video`. Orders by declarations in it, then by the search.',
+          description: 'One category word, `video`. Orders by agents who said it worked there, then by the search.',
         },
         constraints: {
           type: 'object',

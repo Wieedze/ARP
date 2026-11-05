@@ -28,7 +28,7 @@ import {join, resolve} from "node:path";
 import {githubPulseSource, readPulse} from "../../packages/protocol/src/pulse.ts";
 
 type Arm = "A" | "B";
-type Need = {id: string; ask: string; domain: string; query: string; have: string[]};
+type Need = {id: string; ask: string; domain: string; have: string[]};
 
 const MACHINE = ["ffmpeg", "ffprobe", "python3", "node", "npx", "git"];
 const NEEDS: Need[] = [
@@ -36,21 +36,18 @@ const NEEDS: Need[] = [
         id: "silences",
         ask: "Remove the silent passages from a local video file, clip.mp4, and write the result to output.mp4.",
         domain: "video",
-        query: "remove silence video",
         have: MACHINE,
     },
     {
         id: "voiceover",
         ask: "Turn a short text script, script.txt, into a narrated video with a voice-over, output.mp4.",
         domain: "video",
-        query: "narrated video voiceover",
         have: MACHINE,
     },
     {
         id: "markdown",
         ask: "Turn a list of public web pages into clean Markdown files, one per page.",
         domain: "web",
-        query: "web page to markdown",
         have: MACHINE,
     },
 ];
@@ -135,7 +132,8 @@ async function judge(need: Need, chosen: {source: string; skill: string}) {
         paidWords: pulse.paidWords,
         missingCommands: missing,
         runsAbsentFiles: pulse.runsAbsentFiles,
-        clean: pulse.runsAbsentFiles.length === 0 && pulse.keys.length === 0 && pulse.requires.login === null && pulse.paidWords.length === 0 && missing.length === 0,
+        keysInScripts: pulse.keysInScriptsItRuns,
+        clean: pulse.keysInScriptsItRuns.length === 0 && pulse.runsAbsentFiles.length === 0 && pulse.keys.length === 0 && pulse.requires.login === null && pulse.paidWords.length === 0 && missing.length === 0,
     };
 }
 

@@ -133,9 +133,8 @@ describe("runsAbsentFiles", () => {
     ];
 
     it("names a script the instructions run and the repository does not hold", () => {
-        // The shape of nateherkai/herk-edit-kit's cut-silences, 2026-11-05.
-        const facts = readSkillFacts("node scripts/transcribe-elevenlabs.mjs raw.mp4", listed);
-        expect(facts.runsAbsentFiles).toEqual(["scripts/transcribe-elevenlabs.mjs"]);
+        const facts = readSkillFacts("node scripts/transcribe.mjs raw.mp4", listed);
+        expect(facts.runsAbsentFiles).toEqual(["scripts/transcribe.mjs"]);
     });
 
     it("does not name a script the repository holds, whatever the layout", () => {
@@ -203,6 +202,21 @@ describe("readPulse", () => {
         for (let index = 0; index < 30; index += 1) files[`f${index}/SKILL.md`] = skillMd(`f${index}`);
         files["last/SKILL.md"] = skillMd("wanted", "two");
         expect(await readPulse(result("a/b", "wanted"), sourceOf(files))).toMatchObject({differsAt: ["last/SKILL.md"]});
+    });
+
+    it("finds a key in a script its instructions run, when its own file names none", async () => {
+        // The shape of nateherkai/herk-edit-kit's cut-silences, 2026-11-05.
+        const source = sourceOf({
+            ".claude/skills/wanted/SKILL.md": skillMd("wanted", "node scripts/transcribe-elevenlabs.mjs raw.mp4"),
+            "scripts/transcribe-elevenlabs.mjs": "let k = env.ELEVENLABS_API_KEY; if (!k) die()",
+        });
+        const pulse = await readPulse(result("a/b", "wanted"), source);
+        expect(pulse).toMatchObject({
+            status: "read",
+            keys: [],
+            runsAbsentFiles: [],
+            keysInScriptsItRuns: [{file: "scripts/transcribe-elevenlabs.mjs", keys: ["ELEVENLABS_API_KEY"]}],
+        });
     });
 
     it("gives a root skill the repository's tree id", async () => {
