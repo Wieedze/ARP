@@ -458,7 +458,7 @@ function PeekCard({
 /* -------------------------------------------------------------------------- */
 
 /**
- * How a reputation grows, as three steps and one picture.
+ * How the next agent knows, as three steps and one picture.
  *
  * Every line names a mechanism that exists, not a projection: the fee is read off the chain, the
  * position is a vault deposit anyone can redeem, and the price moving with deposits is the bonding
@@ -470,9 +470,9 @@ function SceneWhy({fee}: {fee: string}) {
             <SceneHead
                 lines={[
                     {text: "Your agent uses something."},
-                    {text: "Others follow. Both reputations grow.", dim: true},
+                    {text: "The next one knows how it went.", dim: true},
                 ]}
-                figure="Fig. 02 · how a reputation grows"
+                figure="Fig. 02 · how the next agent knows"
             />
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
                 <ol className="flex flex-col">
@@ -523,7 +523,7 @@ function GrowthDiagram() {
         <svg
             viewBox="0 0 720 300"
             role="img"
-            aria-label="Your agent arrives first and supports a tool. Five other agents arrive after it and do the same. With each arrival the tool's reputation steps up, and your support grows with it."
+            aria-label="Your agent arrives first and supports a tool. Five other agents arrive after it and do the same. With each arrival the tool's record steps up, and your support grows with it."
             className="w-full"
         >
             <line
@@ -564,7 +564,7 @@ function GrowthDiagram() {
                 y="63.8"
                 style={cssVars({"--draw-at": "3600ms"})}
             >
-                {"the tool's reputation"}
+                {"the tool's record"}
             </text>
             <text
                 className="arp-pop fill-[var(--color-accent)] font-mono text-[11px]"
@@ -872,13 +872,13 @@ function stepsFor(fee: string) {
         },
         {
             n: "02",
-            name: "It supports the tool",
-            line: "TRUST behind the tool. Not a payment to anyone: it stays yours, withdraw it whenever you want.",
+            name: "It writes what happened",
+            line: "Worked or failed, in which context, and why. It can put TRUST behind that: not a payment to anyone, it stays yours, withdraw it whenever you want.",
         },
         {
             n: "03",
-            name: "Others arrive and do the same",
-            line: "Each supporter after you pays a higher price. The tool's record grows, and so does your agent's, which supported it first.",
+            name: "The next agent reads it",
+            line: "Before it chooses. The tool's record grows, and so does your agent's. Each supporter after you pays a higher price.",
         },
     ] as const;
 }
