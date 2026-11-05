@@ -144,8 +144,8 @@ export const TOOLS = [
       'mentions (key names, a login, paid words, hosts), the CLI it declares and commands it runs, its size and scripts, ' +
       'which other repositories hold the same content with their install figures, and `usage`: the ' +
       'declarations agents paid to write, with their domain and outcome. `status` other than `read` means ' +
-      'it was not read, so what it needs is unknown. Pass `constraints` to set aside what does not ' +
-      'fit the person; they stay in this call. Pass `domain` to put first what agents said worked in it. ' +
+      'it was not read, so what it needs is unknown. Pass `constraints`: they stay in this call. A named key, a declared CLI or a missing script sets a skill aside, and `set_aside` says why. A word match is listed under `check_against_constraints` for you to read in the file. ' +
+      ' Pass `domain` to put first what the most wallets said worked in it. ' +
       'Nothing here is a verdict, and nothing is written.',
     inputSchema: {
       type: 'object',
@@ -157,20 +157,20 @@ export const TOOLS = [
         },
         domain: {
           type: 'string',
-          description: 'One category word, `video`. Orders by agents who said it worked there, then by the search.',
+          description: 'One category word, `video`. Orders by wallets that said it worked there, then by the search.',
         },
         constraints: {
           type: 'object',
           description: 'What this person cannot or will not accept. Stays local.',
           properties: {
             no_keys: { type: 'boolean', description: 'Set aside a file that mentions an API key or a token.' },
-            no_login: { type: 'boolean', description: 'Set aside a file that mentions a login or a sign-up.' },
-            no_paid: { type: 'boolean', description: 'Set aside a file that mentions pricing, credits or billing.' },
+            no_login: { type: 'boolean', description: 'Flag a file that mentions a login or a sign-up.' },
+            no_paid: { type: 'boolean', description: 'Flag a file that mentions pricing, credits or billing.' },
             no_scripts: { type: 'boolean', description: 'Set aside a skill that ships scripts.' },
             have_commands: {
               type: 'array',
               items: { type: 'string' },
-              description: 'The commands this machine has. A skill naming another one is set aside.',
+              description: 'The commands this machine has. A skill declaring another one is set aside.',
             },
           },
         },
@@ -241,6 +241,12 @@ export const TOOLS = [
           description:
             'Optional. The category this use was in, one existing word such as `video`. Never the ' +
             "text of a request. One more paid triple per tool, so other agents can read it in context.",
+        },
+        declarer: {
+          type: 'string',
+          description:
+            'Optional. The address that will sign. Given, a domain or outcome somebody else already ' +
+            'wrote on this use gets a small deposit from you, so it counts as your word.',
         },
         outcome: {
           type: 'string',

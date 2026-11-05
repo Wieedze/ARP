@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {setAsideBecause} from "../src/handlers/pulse.js";
+import {setAsideBecause, toCheck} from "../src/handlers/pulse.js";
 import type {SkillPulse} from "@arp-protocol/core";
 
 const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): SkillPulse => ({
@@ -35,21 +35,35 @@ describe("setAsideBecause", () => {
         expect(setAsideBecause(read({keys: ["A_API_KEY"], paidWords: ["credits"]}), none)).toEqual([]);
     });
 
-    it("says what matched, so the reader can check the file", () => {
+    it("sets aside on what the file states, and says what matched", () => {
         const pulse = read({
             keys: ["ELEVENLABS_API_KEY"],
-            paidWords: ["credits"],
             scripts: 2,
-            requires: {cli: ["belt"], runs: ["ffmpeg"], login: {line: 20, text: "belt login"}, description: null},
+            runsAbsentFiles: ["scripts/t.py"],
+            requires: {cli: ["belt"], runs: [], login: null, description: null},
         });
         expect(
-            setAsideBecause(pulse, {noKeys: true, noLogin: true, noPaid: true, noScripts: true, haveCommands: new Set(["ffmpeg"])}),
+            setAsideBecause(pulse, {noKeys: true, noLogin: false, noPaid: false, noScripts: true, haveCommands: new Set(["ffmpeg"])}),
         ).toEqual([
             "mentions ELEVENLABS_API_KEY",
-            "mentions a login at line 20",
-            "mentions credits",
             "ships 2 script(s)",
-            "needs belt",
+            "declares belt",
+            "runs scripts/t.py, which its repository does not hold",
+        ]);
+    });
+
+    it("only flags a word match, so a shell variable named end cannot set a skill aside", () => {
+        // The shape of agenticluke/claude-skill-video-editing-plus, set aside on 2026-11-05 over `end`.
+        const pulse = read({
+            paidWords: ["credits"],
+            requires: {cli: [], runs: ["end"], login: {line: 20, text: "login page"}, description: null},
+        });
+        const constraints = {noKeys: true, noLogin: true, noPaid: true, noScripts: false, haveCommands: new Set(["ffmpeg"])};
+        expect(setAsideBecause(pulse, constraints)).toEqual([]);
+        expect(toCheck(pulse, constraints)).toEqual([
+            "login, line 20: login page",
+            "paid words: credits",
+            "commands in its instructions: end",
         ]);
     });
 

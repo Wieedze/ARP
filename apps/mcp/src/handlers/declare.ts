@@ -100,6 +100,15 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   if (outcome !== undefined && !isUsageOutcome(outcome)) {
     return fail(id, -32602, 'outcome, when given, must be worked or failed');
   }
+  const declarerRaw = args['declarer'];
+  if (declarerRaw !== undefined && !isAddress(declarerRaw)) {
+    return fail(id, -32602, 'declarer, when given, must be a 20-byte hex address');
+  }
+  // ADR `0135`: testnet first. Mainnet would be a real fee on a vocabulary nobody has reviewed there,
+  // and 1155's record has no `in context of` predicate to write with.
+  if ((domainRaw !== undefined || outcome !== undefined) && chainId !== 13579) {
+    return fail(id, -32602, 'domain and outcome are written on testnet 13579 only for now');
+  }
   const plan = await prepareDeclareUsed({
     subject,
     tools: tools as string[],
@@ -111,6 +120,7 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
   // ADR `0135`: a qualifier is a triple about the edge, so it is planned after the edge's own call.
   const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
   const qualifiers: PreparedCall[] = [];
+  const alreadyWritten: string[] = [];
   for (const tool of plan.tools) {
     const planned = await prepareUsageContext({
       usesTripleId: tool.tripleId,
@@ -119,22 +129,32 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
       ...(outcome === undefined ? {} : { outcome }),
       inContextOf: IN_CONTEXT_OF,
       isCategory: async (label) => tree?.pathToRoot(label).found ?? false,
+      ...(declarerRaw === undefined ? {} : { declarer: declarerRaw }),
       reads,
     });
     if (planned.status === 'refused') return fail(id, -32602, planned.detail);
+    alreadyWritten.push(...planned.alreadyWritten);
     for (const call of planned.calls) {
       if (!qualifiers.some((seen) => seen.data === call.data)) qualifiers.push(call);
     }
   }
   const calls = [...plan.calls, ...qualifiers];
-  return text(
-    id,
-    serialiseDeclarePlan({
+  return text(id, {
+    ...serialiseDeclarePlan({
       ...plan,
       calls,
       totalValue: calls.reduce((sum, call) => sum + call.value, 0n),
     }),
-  );
+    // Said, because a line already on chain gets no call, and may be somebody else's word.
+    ...(alreadyWritten.length === 0
+      ? {}
+      : {
+          qualifiers_already_written: alreadyWritten,
+          ...(declarerRaw === undefined
+            ? { qualifiers_note: 'pass `declarer` to stand behind them; until then they are not your word' }
+            : {}),
+        }),
+  });
 }
 
 /**

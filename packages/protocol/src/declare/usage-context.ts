@@ -1,6 +1,6 @@
-import {stringToHex, type Hex} from "viem";
+import {stringToHex, type Address, type Hex} from "viem";
 
-import {encodeCreateAtom, encodeCreateTriple, type MultiVaultReads} from "./multivault.js";
+import {encodeCreateAtom, encodeCreateTriple, encodeDeposit, type MultiVaultReads} from "./multivault.js";
 import type {PreparedCall} from "./types.js";
 
 /**
@@ -37,6 +37,12 @@ export type UsageContextPlan = {
     contextTripleId: Hex | null;
     outcomeTripleId: Hex | null;
     calls: PreparedCall[];
+    /**
+     * Qualifiers already on chain, which this plan does not create. Without a `declarer` nobody can
+     * say this wallet stands behind them, so a caller has to tell the agent: a line somebody else
+     * wrote first is not the agent's word until it holds a position on it.
+     */
+    alreadyWritten: Hex[];
     totalValue: bigint;
 };
 
@@ -59,6 +65,11 @@ export async function prepareUsageContext(params: {
     inContextOf: Hex;
     /** Whether a label is a category under `tool`, read from the index. */
     isCategory(label: string): Promise<boolean>;
+    /**
+     * The wallet that will sign. Given, a qualifier somebody else already wrote gets a `minDeposit`
+     * deposit from it, so an earlier writer cannot silence the declarer (`intuition-integrator`, task 63).
+     */
+    declarer?: Address;
     reads: MultiVaultReads;
 }): Promise<UsageContextPlan | UsageContextRefusal> {
     const {reads} = params;
@@ -77,6 +88,8 @@ export async function prepareUsageContext(params: {
     const atomAssets = atomCost + stake;
     const tripleAssets = tripleCost + stake;
     const calls: PreparedCall[] = [];
+    const alreadyWritten: Hex[] = [];
+    const curve = await reads.defaultCurveId();
 
     const atom = async (label: string, why: string): Promise<Hex> => {
         const data = stringToHex(label);
@@ -105,6 +118,18 @@ export async function prepareUsageContext(params: {
                 data: encodeCreateTriple(params.usesTripleId, predicate, object, tripleAssets),
                 why,
             });
+        } else {
+            alreadyWritten.push(id);
+            if (params.declarer !== undefined && (await reads.sharesOf(params.declarer, id, curve)) === 0n) {
+                calls.push({
+                    kind: "deposit",
+                    chainId: reads.chainId,
+                    to: reads.address,
+                    value: stake,
+                    data: encodeDeposit(params.declarer, id, curve, 0n),
+                    why: `${why}: already written, so stand behind it`,
+                });
+            }
         }
         return id;
     };
@@ -126,6 +151,7 @@ export async function prepareUsageContext(params: {
         contextTripleId,
         outcomeTripleId,
         calls,
+        alreadyWritten,
         totalValue: calls.reduce((sum, call) => sum + call.value, 0n),
     };
 }

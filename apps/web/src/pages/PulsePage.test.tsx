@@ -62,7 +62,7 @@ describe("PulsePage", () => {
     it("says unknown, not unused, when nobody declared", () => {
         read = {
             status: "ok",
-            view: {pulse, atomId: "0x1", usage: {declarations: [], agents: 0, byDomain: {}, byOutcome: {}, byOthers: [], truncated: false}},
+            view: {pulse, atomId: "0x1", usage: {declarations: [], agents: 0, wallets: 0, byDomain: {}, byOutcome: {}, byOthers: [], truncated: false}},
         };
         open();
         expect(screen.getByText(/Unknown, not unused/)).toBeTruthy();
@@ -79,10 +79,10 @@ describe("PulsePage", () => {
         const declaration = {tripleId: "0x2", agent: {atomId: "0x3", label: "agent six"}, writer: "0x4", declaredAt: null, domains: ["video"], outcomes: ["failed"]};
         read = {
             status: "ok",
-            view: {pulse, atomId: "0x1", usage: {declarations: [declaration], agents: 1, byDomain: {video: 1}, byOutcome: {failed: 1}, byOthers: [], truncated: false}},
+            view: {pulse, atomId: "0x1", usage: {declarations: [declaration], agents: 1, wallets: 1, byDomain: {video: 1}, byOutcome: {failed: 1}, byOthers: [], truncated: false}},
         };
         open();
-        expect(screen.getByText(/1, by 1 agent/)).toBeTruthy();
+        expect(screen.getByText(/1, by 1 agent and 1 wallet/)).toBeTruthy();
         expect(screen.getByText(/agent six · failed · video/)).toBeTruthy();
     });
 

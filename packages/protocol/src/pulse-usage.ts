@@ -12,15 +12,21 @@ import {
     readString,
 } from "@arp-protocol/graphql";
 
+import {USAGE_OUTCOMES} from "./declare/usage-context.js";
 import {USES} from "./sources/intuition/terms.js";
 
 /**
  * What agents wrote about a tool: the lines of a pulse that come from them (task 63, ADR `0135`).
  *
- * **A qualifier counts for an agent only when the wallet that declared the use wrote it.** A triple's
- * subject carries no authorisation (ADR `0032`), so anybody can write `(your edge, has outcome,
- * failed)` for the price of a triple. Those are returned apart in `byOthers` rather than dropped,
- * because who wrote what is the fact, and a reader may want them.
+ * **A qualifier counts for an agent only when the wallet that declared the use stands behind it**:
+ * it created the triple or holds a position on it. A triple's subject carries no authorisation (ADR
+ * `0032`), so anybody can write `(your edge, has outcome, failed)` for the price of a triple, and
+ * anybody who writes it first holds the creator's slot. Positions are why that slot does not silence
+ * the declarer. Others' lines are returned apart in `byOthers`, because who wrote what is the fact.
+ *
+ * **Nothing here proves a wallet controls the agent it writes about.** So the count a list is ordered
+ * on is of distinct wallets, and one wallet buying lines about ten agents counts once. Several wallets
+ * can still buy several lines (ADR `0135`).
  *
  * Nothing here says a use happened or that a skill is good. It is what wallets paid to write.
  */
@@ -35,8 +41,10 @@ export type PulseDeclaration = {
 
 export type PulseUsage = {
     declarations: PulseDeclaration[];
-    /** Distinct subjects. A wallet can still hold several, so this is not a count of operators. */
+    /** Distinct subjects. A wallet can write about several, so read it with `wallets`. */
     agents: number;
+    /** Distinct wallets that declared. A person can hold several, so this is not a count of people. */
+    wallets: number;
     /** Declarations per domain the declarer named. */
     byDomain: Record<string, number>;
     /** Declarations per outcome the declarer stated. */
@@ -88,11 +96,12 @@ export async function findToolAtoms(
     return out;
 }
 
-/** How many declarers named this domain and said it worked. The one fact a list is ordered on. */
+/** How many distinct wallets named this domain and said it worked. The one fact a list is ordered on. */
 export function workedInDomain(usage: PulseUsage | undefined, domain: string): number {
-    return (usage?.declarations ?? []).filter(
+    const rows = (usage?.declarations ?? []).filter(
         (row) => row.domains.includes(domain) && row.outcomes.includes("worked"),
-    ).length;
+    );
+    return new Set(rows.map((row) => row.writer.toLowerCase())).size;
 }
 
 /** Read every tool's usage in two queries. A tool nobody declared comes back empty, not missing. */
@@ -112,6 +121,7 @@ export async function getPulseUsage(
     const empty = (): PulseUsage => ({
         declarations: [],
         agents: 0,
+        wallets: 0,
         byDomain: {},
         byOutcome: {},
         byOthers: [],
@@ -162,7 +172,11 @@ export async function getPulseUsage(
         const edge = subjectId === null ? undefined : edges.get(key(subjectId));
         if (edge === undefined || predicateId === null || writer === null || value === null) continue;
         const predicate = key(predicateId) === key(config.hasOutcome) ? "outcome" : "context";
-        if (key(writer) === key(edge.declaration.writer)) {
+        // A label outside the two words is not part of this vocabulary, whoever wrote it.
+        if (predicate === "outcome" && !USAGE_OUTCOMES.some((word) => word === value)) continue;
+        const holders = Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [];
+        const backed = holders.some((holder) => key(readString(holder, "account_id") ?? "") === key(edge.declaration.writer));
+        if (key(writer) === key(edge.declaration.writer) || backed) {
             (predicate === "outcome" ? edge.declaration.outcomes : edge.declaration.domains).push(value);
         } else {
             out.get(edge.tool)?.byOthers.push({
@@ -178,6 +192,7 @@ export async function getPulseUsage(
     for (const usage of out.values()) {
         usage.truncated = truncated;
         usage.agents = new Set(usage.declarations.map((declaration) => key(declaration.agent.atomId))).size;
+        usage.wallets = new Set(usage.declarations.map((declaration) => key(declaration.writer))).size;
         for (const declaration of usage.declarations) {
             for (const domain of declaration.domains) usage.byDomain[domain] = (usage.byDomain[domain] ?? 0) + 1;
             for (const outcome of declaration.outcomes) usage.byOutcome[outcome] = (usage.byOutcome[outcome] ?? 0) + 1;

@@ -27,23 +27,27 @@ export function PulsePage() {
                 </div>
             ) : read.status === "failed" ? (
                 <p className="mt-6 text-[color:var(--color-silver)]" role="status">
-                    Could not read this skill. GitHub or the chain did not answer.
+                    Could not read this skill. Try again later.
                 </p>
             ) : (
                 <div className="mt-8 grid items-start gap-x-12 gap-y-7 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
                     <div className="min-w-0">
                         <FileFacts pulse={read.view.pulse} />
-                        <Install command={`npx skills add ${source} --skill ${skill}`} />
+                        {read.view.pulse.status === "read" ? (
+                            <Install command={`npx skills add ${source} --skill ${skill}`} />
+                        ) : null}
                     </div>
                     <div className="grid gap-4">
                         <Usage usage={read.view.usage} />
                         <Repository pulse={read.view.pulse} />
-                        <Link
-                            className="font-mono text-[12px] text-[color:var(--color-silver)]"
-                            to={`/atom/${read.view.atomId}`}
-                        >
-                            Open its entry
-                        </Link>
+                        {read.view.atomId === null || read.view.usage === null || read.view.usage.declarations.length === 0 ? null : (
+                            <Link
+                                className="font-mono text-[12px] text-[color:var(--color-silver)]"
+                                to={`/atom/${read.view.atomId}`}
+                            >
+                                Open its entry
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}
@@ -86,10 +90,10 @@ function FileFacts({pulse}: {pulse: SkillPulse}) {
                 )}
                 <Fact term="Login">{pulse.requires.login === null ? none : `line ${pulse.requires.login.line}: ${pulse.requires.login.text}`}</Fact>
                 <Fact term="Paid words">{listOrNone(pulse.paidWords)}</Fact>
-                <Fact term="Commands">{listOrNone(commands)}</Fact>
-                <Fact term="Scripts it runs and does not ship">{listOrNone(pulse.runsAbsentFiles)}</Fact>
+                <Fact term="Commands in its shell blocks">{listOrNone(commands)}</Fact>
+                <Fact term="Scripts it runs, not in its repository">{listOrNone(pulse.runsAbsentFiles)}</Fact>
                 <Fact term="Hosts">{listOrNone(pulse.hosts)}</Fact>
-                <Fact term="Size">{`${pulse.files} files, ${formatBytes(pulse.bytes)}, ${pulse.scripts} scripts`}</Fact>
+                <Fact term="Size">{`${count(pulse.files, "file")}, ${formatBytes(pulse.bytes)}, ${count(pulse.scripts, "script")}`}</Fact>
                 <Fact term="Content">
                     <span className="font-mono [overflow-wrap:anywhere]">{pulse.contentId}</span>
                 </Fact>
@@ -120,7 +124,7 @@ function Usage({usage}: {usage: PulseUsage | null}) {
             ) : (
                 <>
                     <dl className="m-0 mt-3">
-                        <Fact term="Declarations">{`${usage.declarations.length}, by ${usage.agents} ${usage.agents === 1 ? "agent" : "agents"}`}</Fact>
+                        <Fact term="Declarations">{`${usage.truncated ? "at least " : ""}${usage.declarations.length}, by ${count(usage.agents, "agent")} and ${count(usage.wallets, "wallet")}`}</Fact>
                         <Fact term="Domains">{countsOrNone(usage.byDomain)}</Fact>
                         <Fact term="Outcomes">{countsOrNone(usage.byOutcome)}</Fact>
                     </dl>
@@ -133,6 +137,11 @@ function Usage({usage}: {usage: PulseUsage | null}) {
                             </li>
                         ))}
                     </ul>
+                    {usage.declarations.length > 10 ? (
+                        <p className="mt-2 font-mono text-[12px] text-[color:var(--color-steel)]">
+                            First 10 of {usage.declarations.length}
+                        </p>
+                    ) : null}
                 </>
             )}
         </section>
@@ -160,9 +169,9 @@ const none = <span className="text-[color:var(--color-steel)]">none</span>;
 
 function Fact({term, children}: {term: string; children: ReactNode}) {
     return (
-        <div className="grid grid-cols-[minmax(7rem,11rem)_minmax(0,1fr)] gap-x-4 border-t border-[color:var(--color-rule)] py-2 text-[length:var(--text-body-sm)]">
-            <dt className="text-[color:var(--color-steel)]">{term}</dt>
-            <dd className="m-0 [overflow-wrap:anywhere]">{children}</dd>
+        <div className="grid grid-cols-[minmax(6rem,9rem)_minmax(0,1fr)] gap-x-4 border-t border-[color:var(--color-rule)] py-2 text-[length:var(--text-body-sm)]">
+            <dt className="font-mono text-[12px] text-[color:var(--color-steel)]">{term}</dt>
+            <dd className="m-0 font-mono text-[12px] [overflow-wrap:anywhere]">{children}</dd>
         </div>
     );
 }
@@ -174,6 +183,10 @@ function listOrNone(items: readonly string[]): ReactNode {
 function countsOrNone(counts: Readonly<Record<string, number>>): ReactNode {
     const entries = Object.entries(counts);
     return entries.length === 0 ? none : entries.map(([name, count]) => `${name} ${count}`).join(", ");
+}
+
+function count(value: number, noun: string): string {
+    return `${value} ${noun}${value === 1 ? "" : "s"}`;
 }
 
 function formatBytes(bytes: number): string {

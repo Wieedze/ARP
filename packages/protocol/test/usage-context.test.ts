@@ -63,7 +63,19 @@ describe("prepareUsageContext", () => {
             [EDGE, atomIdFor("has outcome"), atomIdFor("worked"), first.outcomeTripleId],
             {outcome: "worked"},
         );
-        expect(again).toMatchObject({status: "planned", calls: [], totalValue: 0n});
+        expect(again).toMatchObject({status: "planned", calls: [], totalValue: 0n, alreadyWritten: [first.outcomeTripleId]});
+    });
+
+    it("deposits on a qualifier somebody else wrote first, so they cannot silence the declarer", async () => {
+        const first = await plan([EDGE], {outcome: "failed"});
+        if (first.status !== "planned" || first.outcomeTripleId === null) throw new Error("expected a plan");
+        const again = await plan(
+            [EDGE, atomIdFor("has outcome"), atomIdFor("failed"), first.outcomeTripleId],
+            {outcome: "failed", declarer: `0x${"11".repeat(20)}`},
+        );
+        expect(again.status).toBe("planned");
+        if (again.status !== "planned") return;
+        expect(again.calls.map((call) => [call.kind, call.value])).toEqual([["deposit", 1n]]);
     });
 
     it("accepts an edge created earlier in the same plan", async () => {

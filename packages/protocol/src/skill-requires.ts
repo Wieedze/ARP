@@ -86,7 +86,7 @@ function declaredDescription(lines: readonly string[]): string | null {
 /** On every machine, or a language's own runner: naming these tells a reader nothing. */
 const COMMON = new Set(
     (
-        "awk bash break bun case cat cd chmod command continue cp curl cut date diff do done echo else env " +
+        "awk bash break bun case cat cd chmod command continue cp curl cut date diff do done echo else end env " +
         "esac exit export false fi find for function git grep head if kill ln local ls mkdir mv node npm npx open pip pip3 pnpm printf pwd " +
         "python python3 read return rm sed set sh shift sleep sort source sudo tail tar tee test then time " +
         "touch tr true uniq unset unzip wait wc wget which while xargs yarn zip"

@@ -65,7 +65,12 @@ function readConstraints(raw: unknown): Constraints {
   };
 }
 
-/** Why this person's constraints set a skill aside, in words a reader can check against the file. */
+/**
+ * Why this person's constraints set a skill aside. Only what the file states outright: a key's name,
+ * a CLI it declares, a script it runs that needs a key or is not in its repository. The comparison of
+ * 2026-11-05 showed why: filtering on `runs` set aside the one skill agents had said worked, over a
+ * shell variable named `end`.
+ */
 export function setAsideBecause(pulse: SkillPulse, constraints: Constraints): string[] {
   if (pulse.status !== 'read') return [];
   const reasons: string[] = [];
@@ -75,21 +80,30 @@ export function setAsideBecause(pulse: SkillPulse, constraints: Constraints): st
       reasons.push(`runs ${file}, which mentions ${keys.join(', ')}`);
     }
   }
-  if (constraints.noLogin && pulse.requires.login !== null) {
-    reasons.push(`mentions a login at line ${pulse.requires.login.line}`);
-  }
-  if (constraints.noPaid && pulse.paidWords.length > 0) reasons.push(`mentions ${pulse.paidWords.join(', ')}`);
   if (constraints.noScripts && pulse.scripts > 0) reasons.push(`ships ${pulse.scripts} script(s)`);
-  if (constraints.haveCommands !== null && pulse.runsAbsentFiles.length > 0) {
-    reasons.push(`runs ${pulse.runsAbsentFiles.join(', ')}, which its repository does not hold`);
-  }
   if (constraints.haveCommands !== null) {
-    const missing = [...pulse.requires.cli, ...pulse.requires.runs].filter(
-      (name) => !constraints.haveCommands?.has(name),
-    );
-    if (missing.length > 0) reasons.push(`needs ${missing.join(', ')}`);
+    const missing = pulse.requires.cli.filter((name) => !constraints.haveCommands?.has(name));
+    if (missing.length > 0) reasons.push(`declares ${missing.join(', ')}`);
+    if (pulse.runsAbsentFiles.length > 0) {
+      reasons.push(`runs ${pulse.runsAbsentFiles.join(', ')}, which its repository does not hold`);
+    }
   }
   return reasons;
+}
+
+/** Word matches, which can be wrong either way. They do not set a skill aside: the reader checks them. */
+export function toCheck(pulse: SkillPulse, constraints: Constraints): string[] {
+  if (pulse.status !== 'read') return [];
+  const lines: string[] = [];
+  if (constraints.noLogin && pulse.requires.login !== null) {
+    lines.push(`login, line ${pulse.requires.login.line}: ${pulse.requires.login.text}`);
+  }
+  if (constraints.noPaid && pulse.paidWords.length > 0) lines.push(`paid words: ${pulse.paidWords.join(', ')}`);
+  if (constraints.haveCommands !== null) {
+    const missing = pulse.requires.runs.filter((name) => !constraints.haveCommands?.has(name));
+    if (missing.length > 0) lines.push(`commands in its instructions: ${missing.join(', ')}`);
+  }
+  return lines;
 }
 
 /** A result's atom URI, computed from its URL. `null` for a result that is not on GitHub. */
@@ -115,6 +129,7 @@ function usageLine(usage: PulseUsage | undefined, domain: string | null) {
   return {
     declarations: usage.declarations.length,
     agents: usage.agents,
+    wallets: usage.wallets,
     ...(domain === null ? {} : { in_this_domain: usage.byDomain[domain] ?? 0 }),
     by_domain: usage.byDomain,
     by_outcome: usage.byOutcome,
@@ -165,7 +180,7 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
  * `arp_pulse`: a search, what each result's files show, and what agents wrote about it (task 63).
  *
  * Holds no key and writes nothing. The constraints are the person's and stay in this call: nothing
- * here sends them anywhere. It orders on one visible fact, how many agents said it worked in the
+ * here sends them anywhere. It orders on one visible fact, how many wallets said it worked in the
  * domain asked about, and then keeps the search's own order. A declared failure never lifts a skill. There is no composed score (ADR `0046`).
  */
 export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
@@ -269,12 +284,13 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     search: typeof given === 'string' ? 'search_output' : 'npx skills find',
     results_found: results.length,
     results_read: pulses.length,
-    order: domain === null ? "the search's own" : `agents who said it worked in "${domain}", then the search's own`,
+    order: domain === null ? "the search's own" : `wallets that said it worked in "${domain}", then the search's own`,
     read_this:
       'Mentions are matches in the file, not requirements. Installs are the search\'s figure, not a count of use. ' +
       'What agents wrote is what they paid to say.',
     skills: distinct.slice(0, limit).map((entry) => ({
       ...factsOf(entry.row, copies),
+      ...(toCheck(entry.row, constraints).length === 0 ? {} : { check_against_constraints: toCheck(entry.row, constraints) }),
       ...(entry.atom === null ? {} : { atom_id: entry.atom }),
       usage: usageRead ? usageLine(entry.usage, domain) : { unknown: 'the public record did not answer' },
     })),

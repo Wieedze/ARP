@@ -28,10 +28,18 @@ import {join, resolve} from "node:path";
 import {githubPulseSource, readPulse} from "../../packages/protocol/src/pulse.ts";
 
 type Arm = "A" | "B";
-type Need = {id: string; ask: string; domain: string; have: string[]};
+type Need = {id: string; ask: string; domain: string; have: string[]; words?: string};
 
 const MACHINE = ["ffmpeg", "ffprobe", "python3", "node", "npx", "git"];
 const NEEDS: Need[] = [
+    {
+        // Fixed words, because free ones did not reach the declared skill in round `after`.
+        id: "silences-fixed",
+        ask: "Remove the silent passages from a local video file, clip.mp4, and write the result to output.mp4.",
+        domain: "video",
+        have: MACHINE,
+        words: "video editing ffmpeg",
+    },
     {
         id: "silences",
         ask: "Remove the silent passages from a local video file, clip.mp4, and write the result to output.mp4.",
@@ -66,7 +74,7 @@ const budget = Number(arg("budget") ?? 6);
 const model = arg("model") ?? "sonnet";
 const out = arg("out") ?? `data/measurements/pulse-eval-${new Date().toISOString().slice(0, 10)}.jsonl`;
 const only = arg("only")?.split(",");
-const needs = NEEDS.filter((need) => only === undefined || only.includes(need.id));
+const needs = NEEDS.filter((need) => (only === undefined ? need.words === undefined : only.includes(need.id)));
 
 if (process.argv.includes("--plan")) {
     console.log(`${needs.length} needs x 2 arms x ${reps} reps = ${needs.length * 2 * reps} runs, stops at $${budget}`);
@@ -74,10 +82,11 @@ if (process.argv.includes("--plan")) {
 }
 
 function prompt(need: Need, arm: Arm): string {
+    const words = need.words ?? "<words>";
     const search =
         arm === "A"
-            ? `Search with: npx skills find "<words>".`
-            : `Search with the arp_pulse tool: query "<words>", domain "${need.domain}", and the constraints this person gave.`;
+            ? `Search with: npx skills find "${words}".`
+            : `Search with the arp_pulse tool: query "${words}", domain "${need.domain}", and the constraints this person gave.`;
     return [
         `A person asks: ${need.ask}`,
         `They will not create an account, pay for a service or provide an API key.`,
@@ -239,7 +248,7 @@ if (existsSync(out)) {
         if (line.trim() !== "") spent += (JSON.parse(line) as {costUsd?: number}).costUsd ?? 0; // this file's own rows
     }
 }
-const arms: Arm[] = round === "before" ? ["A", "B"] : ["B"];
+const arms: Arm[] = round === "before" || round === "fixed" ? ["A", "B"] : ["B"];
 for (let rep = 1; rep <= reps; rep += 1) {
     for (const need of needs) {
         const row = await Promise.all(

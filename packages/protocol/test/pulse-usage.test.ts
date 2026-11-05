@@ -78,6 +78,36 @@ describe("getPulseUsage", () => {
     });
 });
 
+describe("who stands behind a qualifier", () => {
+    it("counts the declarer's position on a line somebody else wrote first", async () => {
+        const row = {...qualifier("0x1", OUTCOME, "failed", "0xGriefer"), positions: [{account_id: writer.toLowerCase()}]};
+        const usage = (await read([use("0x1", "a")], [row])).get(TOOL);
+        expect(usage?.byOutcome).toEqual({failed: 1});
+        expect(usage?.byOthers).toEqual([]);
+    });
+
+    it("ignores an outcome outside the two words", async () => {
+        const usage = (await read([use("0x1", "a")], [qualifier("0x1", OUTCOME, "best skill ever")])).get(TOOL);
+        expect(usage?.byOutcome).toEqual({});
+    });
+
+    it("counts wallets, so one wallet writing about several agents counts once", async () => {
+        const usage = (
+            await read(
+                [use("0x1", "a"), use("0x2", "b")],
+                [
+                    qualifier("0x1", CONTEXT, "video"),
+                    qualifier("0x1", OUTCOME, "worked"),
+                    qualifier("0x2", CONTEXT, "video"),
+                    qualifier("0x2", OUTCOME, "worked"),
+                ],
+            )
+        ).get(TOOL);
+        expect([usage?.agents, usage?.wallets]).toEqual([2, 1]);
+        expect(workedInDomain(usage, "video")).toBe(1);
+    });
+});
+
 describe("workedInDomain", () => {
     it("counts a stated success in that domain, so a declared failure does not lift a skill", async () => {
         const usage = (

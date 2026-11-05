@@ -24,11 +24,14 @@ that proposed this; not re-measured here).
    two words. Free text never reaches the chain, and a request's own words never do.
 2. **`in context of` is the predicate already on this chain's deployment record**
    (`arp.endpointBinding.inContextOf`). `has outcome`, `worked` and `failed` are plain-string atoms.
-3. **A qualifier counts for an agent only if the wallet that wrote the `uses` edge wrote it.** A subject
-   carries no authorisation (ADR `0032`), so anyone can write `(your edge, has outcome, failed)`.
-   `getPulseUsage` returns those apart, as `byOthers`.
+3. **A qualifier counts for an agent only if the wallet that wrote the `uses` edge stands behind it**:
+   it created the triple or holds a position. A subject carries no authorisation (ADR `0032`), so
+   anyone can write `(your edge, has outcome, failed)` first. `getPulseUsage` returns others' lines
+   apart, as `byOthers`, and a plan given a `declarer` deposits on a line that already exists.
+   Lists order on distinct wallets, not agents.
 4. **An outcome is an agent's word about its own use, never ARP's verdict on a tool** (ADR `0049`).
-5. **Testnet only, and direct signing only, for now.** The sponsored path is not extended by this ADR.
+5. **Testnet only, and direct signing only, for now.** `arp_declare_used` refuses a qualifier off
+   13579. The sponsored path is not extended by this ADR.
 
 ## Alternatives considered
 
@@ -48,7 +51,16 @@ plus the first-time atoms. `(edge, has outcome, worked)` and `(edge, has outcome
 stand, since an agent can use a tool twice; a reader sees both. A triple has one creator and later
 writers only deposit, so reading the creator misses a later backer.
 
-**Neutral (worth knowing):** the first writer of `(edge, has outcome, failed)` other than the declarer
-takes the triple's creator slot, so the declarer's own later statement would be a deposit that this
-reader does not see. Reading positions instead of creators closes that, and is left for when anybody
-but ARP writes these.
+**Latent, none reached today (`intuition-integrator`, 2026-11-05; all `has outcome` triples on 13579
+were written by their edge's creator):**
+
+- **Nothing proves a wallet controls the agent it writes about.** Anyone can write `(Agent 6, uses,
+  tool)` first and it reads as that agent's word. The ordering counts wallets, so several wallets
+  still buy several lines, at about 0.004 tTRUST of fees per line. Checking the writer against the
+  agent's owner closes it where a registry is readable.
+- **A sponsored edge's creator is the treasury** (31 of 184 `uses` edges on 13579), so an agent's own
+  qualifier on it lands in `byOthers`.
+- **A domain and an outcome are sibling triples**, so one edge with `audio`, `video` and `worked` counts
+  as worked in both.
+- **Unlike a declaration's plan, this one reads no preview**, as `category.ts` does not. It relies on
+  `cost + minDeposit`; all six qualifiers read back with a position.

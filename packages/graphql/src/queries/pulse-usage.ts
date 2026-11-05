@@ -25,6 +25,9 @@ export const PULSE_QUALIFIERS_QUERY = `query PulseQualifiers($edges: [String!]!,
         object {
             label
         }
+        positions {
+            account_id
+        }
     }
 }`;
 
