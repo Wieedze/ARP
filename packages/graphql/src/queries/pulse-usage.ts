@@ -12,6 +12,9 @@ export const PULSE_USES_QUERY = `query PulseUses($tools: [String!]!, $uses: Stri
             term_id
             label
         }
+        positions(where: {shares: {_gt: "0"}}) {
+            account_id
+        }
     }
 }`;
 
@@ -41,7 +44,7 @@ export const PULSE_ATOMS_QUERY = `query PulseAtoms($uris: [String!]!, $limit: In
 
 /** The `uses` edges qualified with these domains. Their tools come from `PULSE_EDGE_TOOLS_QUERY`. */
 export const PULSE_DOMAIN_EDGES_QUERY = `query PulseDomainEdges($domains: [String!]!, $predicate: String!, $limit: Int!) {
-    triples(where: {predicate_id: {_eq: $predicate}, object: {label: {_in: $domains}}}, limit: $limit) {
+    triples(where: {predicate_id: {_eq: $predicate}, object: {label: {_in: $domains}}}, order_by: {created_at: desc}, limit: $limit) {
         subject_id
     }
 }`;
@@ -51,6 +54,59 @@ export const PULSE_EDGE_TOOLS_QUERY = `query PulseEdgeTools($edges: [String!]!, 
         object {
             term_id
             label
+            data
+        }
+    }
+}`;
+
+/** The `same as` edges of these atoms: an atom with one is an agent's identity, and its object names it. */
+export const AGENT_IDENTITIES_QUERY = `query AgentIdentities($atoms: [String!]!, $sameAs: String!, $limit: Int!) {
+    triples(where: {subject_id: {_in: $atoms}, predicate_id: {_eq: $sameAs}}, limit: $limit) {
+        subject_id
+        subject {
+            data
+        }
+        object {
+            label
+            value {
+                thing {
+                    name
+                }
+            }
+        }
+    }
+}`;
+
+/**
+ * What these wallets attached to one term by `in context of`, oldest first, with the document the index
+ * resolved. Keyed on the writer because a stranger's older attachments would otherwise fill the window.
+ * `others` counts the rest, so a reader can say they were not read.
+ */
+export const ATTACHED_DOCUMENTS_QUERY = `query AttachedDocuments($term: String!, $inContextOf: String!, $creators: [String!]!, $limit: Int!) {
+    others: triples_aggregate(where: {predicate_id: {_eq: $inContextOf}, object_id: {_eq: $term}, creator_id: {_nin: $creators}}) {
+        aggregate {
+            count
+        }
+    }
+    triples(where: {predicate_id: {_eq: $inContextOf}, object_id: {_eq: $term}, creator_id: {_in: $creators}}, order_by: {created_at: asc}, limit: $limit) {
+        creator_id
+        subject {
+            data
+            value {
+                json_object {
+                    data
+                }
+            }
+        }
+    }
+}`;
+
+/** Every atom claiming an identity by `same as`, with who wrote each claim. Anyone can write one. */
+export const IDENTITY_CLAIMS_QUERY = `query IdentityClaims($caip19: String!, $sameAs: String!, $limit: Int!) {
+    triples(where: {predicate_id: {_eq: $sameAs}, object: {label: {_eq: $caip19}}}, limit: $limit) {
+        creator_id
+        subject {
+            term_id
             data
         }
     }

@@ -16,6 +16,7 @@ import {
 
 import {USAGE_OUTCOMES} from "./declare/usage-context.js";
 import {USES} from "./sources/intuition/terms.js";
+import {readIpfsJson} from "./verify/probe.js";
 
 /**
  * What agents wrote about a tool: the lines of a pulse that come from them (task 63, ADR `0135`).
@@ -36,6 +37,8 @@ export type PulseDeclaration = {
     tripleId: string;
     agent: {atomId: string; label: string | null};
     writer: string;
+    /** Wallets holding a position on the line. A triple has one creator, so a later declarer is here. */
+    holders: string[];
     declaredAt: string | null;
     domains: string[];
     outcomes: string[];
@@ -143,8 +146,7 @@ export async function findDeclaredTools(
 export async function readThingUrl(uri: string, fetcher: FetchLike = defaultFetch()): Promise<string | null> {
     if (!uri.startsWith("ipfs://")) return null;
     try {
-        const response = await fetcher(`https://ipfs.io/ipfs/${uri.slice("ipfs://".length)}`);
-        const body: unknown = JSON.parse(await response.text());
+        const body = await readIpfsJson(uri, fetcher, DEFAULT_TIMEOUT_MS);
         const url = isRecord(body) ? readString(body, "url") : null;
         return url !== null && url.includes("?skill=") ? url : null;
     } catch {
@@ -201,6 +203,9 @@ export async function getPulseUsage(
                 tripleId,
                 agent: {atomId, label: readString(subject, "label")},
                 writer,
+                holders: (Array.isArray(row["positions"]) ? row["positions"].filter(isRecord) : [])
+                    .map((holder) => readString(holder, "account_id"))
+                    .filter((account): account is string => account !== null),
                 declaredAt: readString(row, "created_at"),
                 domains: [],
                 outcomes: [],

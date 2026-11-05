@@ -191,6 +191,8 @@ export {
     // Every hop checked, redirects followed by hand, one deadline, a capped body.
     guardedFetchText,
     IPFS_GATEWAY,
+    IPFS_GATEWAYS,
+    readIpfsJson,
     MAX_DOCUMENT_HOPS,
     nextDocumentHop,
     privateAddress,
@@ -588,6 +590,19 @@ export {
     type PulseUsage,
     type PulseUsageConfig,
 } from "./pulse-usage.js";
+export {
+    atomIsCanonicalFor,
+    findAgentsInDomains,
+    readLineReceipts,
+    receiptHolds,
+    resolveAgentAtom,
+    walletControlsSubject,
+    type SubjectControl,
+    type AgentInDomain,
+    type LineReceipt,
+    type LineReceipts,
+    type PaymentFacts,
+} from "./agent-pulse.js";
 export {
     HAS_OUTCOME_LABEL,
     isUsageOutcome,

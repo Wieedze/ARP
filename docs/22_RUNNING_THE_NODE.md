@@ -111,7 +111,7 @@ would stop accepting your receipts.
 
 ## Every outbound connection
 
-Five fixed hosts, the first two configurable. The sponsored mode also reaches two more, both
+Six fixed hosts, the first two configurable, and agents' own signed addresses. The sponsored mode also reaches two more, both
 configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`),
 both local by default.
 
@@ -120,7 +120,11 @@ the Intuition graph    reads. Set by ARP_TARGET, or INTUITION_GRAPHQL_URL
 the Intuition RPC      reads. Set by ARP_TARGET, or INTUITION_RPC_URL
 api.github.com         one file listing per repository, cached ten minutes
 raw.githubusercontent.com   the skill's own bytes, passed through, never cached
-ipfs.io                an agent's registration document, when it published an `ipfs://` one
+gateway.pinata.cloud   a pinned document: an agent's registration file when it published an
+                       `ipfs://` one, a proof the index does not hold, or a skill atom's document
+ipfs.io                the same, when Pinata does not serve it
+the signed addresses   `arp_agent_endpoints` asks `/` of an agent's three newest signed addresses,
+                       somebody else's servers, through the same guard as any probe
 ```
 
 **`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
@@ -230,18 +234,9 @@ twice above as a configurable fixed host and it will not appear in the script's 
 bun run scripts/measure/node-outbound.ts
 ```
 
-It reads the six modules a running server actually loads and prints every host literal with its line,
-every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is
-ours. On 2026-10-30, after the move to `apps/mcp` and `packages/graphql`,
-`data/measurements/node-outbound-2026-10-30T0220.json`: **6 host literals, 9 call sites of which 6 are
-outbound, 0 of the hosts ours** — the same figures as the 2026-10-29 run, at new paths. (The
-script keeps its old name. `node-outbound-2026-10-30.json`, from the same day, has the same
-figures, and its prose still calls the MCP server "the node".) It exits non-zero if that last number is ever not
-zero.
+It reads the modules a running server actually loads, named in a list, and prints every host literal with its line, every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is ours. On 2026-11-05, `data/measurements/node-outbound-2026-11-05.json`: **18 modules, 9 host literals, 16 call sites of which 9 are labelled outbound, 0 of the hosts ours.** It exits non-zero if that last number is ever not zero. (It counts `guardedFetchText` since that date, so the earlier runs of 2026-10-29 and 2026-10-30, with 6 outbound over fewer modules, are not comparable.)
 
-The six outbound ones are the whole of it: two on the registration route (the document and a
-redirect hop), two on the content route (a repository listing and the skill's bytes), the probe's,
-and the shared transport every graph read funnels through.
+Seven of the nine leave the machine: a signed address (`handlers/agents.ts`), a registration document (`registration-document.ts`), a repository listing and a skill's bytes (`content.ts`), the probe (`probe.ts:514`), a pinned document (`readIpfsJson`, `probe.ts:882`), and the shared transport every graph read funnels through (`http.ts`). The other two are the classifier's over-count: `serveFetch` starts this server's listener, and the line in `agent-pulse.ts` passes a fetch to the transport. The script also omits what is not called `fetch`: `arp_pulse`'s package, described above, and viem's RPC transport.
 
 This is a script rather than a sentence because the sentence was **wrong twice**. One draft said
 four hosts and "the only literals in the code"; the next said six literals and offered a grep over
@@ -252,9 +247,10 @@ cannot check for itself, and it says so.
 
 Three things it shows that a count alone would hide:
 
-- Two of the six literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody, and
-  `github.com` is in the probe's **user-agent**, which identifies the server and sends nothing. Three
-  of the six are destinations.
+- Two of the nine literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody,
+  `github.com` is in the probe's **user-agent**, which identifies the server and sends nothing, and in the URI `arp_pulse` builds for a skill's atom, which it fetches nowhere, and two
+  (`127.0.0.1:3002`, `127.0.0.1:3200`) are local defaults of the sponsored mode. Four are destinations:
+  `api.github.com`, `raw.githubusercontent.com`, `gateway.pinata.cloud` and `ipfs.io`.
 - The Intuition graph and RPC are **absent from the literals and present in the server** — they come
   from `data/deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the
   server, which is the trap a literal count sets.
@@ -288,7 +284,7 @@ ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only
-ARP_TOOLS              read: the four reads only. desktop or sponsored: the reads plus arp_get_skill
+ARP_TOOLS              read: the five reads only, one of which asks agents' signed addresses. desktop or sponsored: the reads plus arp_get_skill
                        and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
                        over stdio only: the server refuses to start them over HTTP (ADR 0116).
                        Unset: every tool
@@ -502,7 +498,7 @@ directory is hosted yet: `--directory` names one.
 What makes an agent reachable: it listens at the address the agent publishes in its ERC-8004
 registration file, checks on chain that the requester paid it before doing any work, and returns a
 receipt signed with the agent's key (ADR `0045`, format ADR `0083`). The work itself is yours — `ARP_NODE_HANDLER`
-names a module exporting `handle(payload, context)`; without one it echoes.
+names a module exporting `handle(payload, context)`; without one it echoes. An optional `offer` export, three short strings (`description`, `input`, `output`), is served at `GET /` so a caller can read what it sells before paying. It is your word, unsigned.
 
 **It signs receipts and never transactions.** The key signs because a hire receipt must be signed,
 and a signature is not a spend. It is also the address a hirer pays, since the payment check below

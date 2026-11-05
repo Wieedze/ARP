@@ -1,0 +1,12 @@
+{
+ "at": "2026-11-05T17:39:23.044Z",
+ "chainId": 13579,
+ "registry": "0xc165a2ad2e540a4069e02834009161e2b4490d5a",
+ "sameAsEdges": 806,
+ "edgesToRegistry": 35,
+ "canonicalSubject": 35,
+ "notCanonicalTokens": [],
+ "edgesToOtherRegistriesOn13579": {
+  "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432": 2
+ }
+}

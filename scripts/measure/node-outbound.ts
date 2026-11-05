@@ -72,10 +72,13 @@ const MODULES = [
   'apps/mcp/src/handlers/declare.ts',
   'apps/mcp/src/handlers/find-tools.ts',
   'apps/mcp/src/handlers/positions.ts',
+  'apps/mcp/src/handlers/pulse.ts',
   'apps/mcp/src/handlers/reachability.ts',
   'apps/mcp/src/handlers/reputation.ts',
   'apps/mcp/src/content.ts',
+  'apps/mcp/src/registration-document.ts',
   'apps/mcp/src/tools.ts',
+  'packages/protocol/src/agent-pulse.ts',
   'packages/protocol/src/content-path.ts',
   'packages/protocol/src/verify/probe.ts',
   'packages/graphql/src/http.ts',
@@ -128,8 +131,12 @@ for (const file of MODULES) {
     // this classifier, which is the same over-count the labels exist to make visible.
     const isInbound =
       /\b(async\s+)?fetch\s*\(\s*(request|req)\b/.test(line) || /\bhandler\.fetch\s*\(/.test(line);
-    const isDefinition = /\b(function|const|let)\s+\w*[Ff]etch\b/.test(line);
-    const isCall = /(?<![A-Za-z_$.])fetch\s*\(/.test(line) || /\b\w*[Ff]etch\s*\(/.test(line);
+    const isDefinition = /\b(function|const|let)\s+\w*[Ff]etch\w*\b/.test(line);
+    // `guardedFetchText` is a fetch of a URL somebody else supplied, whose name does not end in `fetch`.
+    const isCall =
+      /(?<![A-Za-z_$.])fetch\s*\(/.test(line) ||
+      /\b\w*[Ff]etch\s*\(/.test(line) ||
+      /\bguardedFetchText\s*\(/.test(line);
     if (isCall) {
       fetches.push(site(isInbound ? 'inbound' : isDefinition ? 'definition' : 'outbound'));
     }

@@ -1,4 +1,4 @@
-import { guardedFetchText, type FetchLike } from '@arp-protocol/core';
+import { guardedFetchText, IPFS_GATEWAYS, type FetchLike } from '@arp-protocol/core';
 
 import { hostGuard, type HostGuard } from './host-guard.js';
 
@@ -45,6 +45,19 @@ export async function readRegistrationDocument(
           : decodeURIComponent(payload),
       ),
     };
+  }
+  // A gateway that refuses says nothing about the document, so the next one is asked.
+  if (file.startsWith('ipfs://')) {
+    let last: RegistrationDocument = { status: 'unreadable', reason: 'no gateway answered' };
+    for (const gateway of IPFS_GATEWAYS) {
+      try {
+        last = await readRegistrationDocument(`${gateway}${file.slice('ipfs://'.length)}`, deps);
+      } catch (error) {
+        last = { status: 'unreadable', reason: error instanceof Error ? error.message : String(error) };
+      }
+      if (last.status === 'read') return last;
+    }
+    return last;
   }
   const guard = deps.guard ?? hostGuard();
   const answer = await guardedFetchText(

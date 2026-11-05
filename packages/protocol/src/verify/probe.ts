@@ -16,8 +16,14 @@ import type {DeclaredEndpoint, ProbeOutcome, ProbeRequest} from "./types.js";
  */
 export const DEFAULT_USER_AGENT = "ARP-verifier/0.1 (+https://github.com/Wieedze/ARP)";
 
-/** The IPFS gateway a `ipfs://` registration document is read through. */
-export const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
+/**
+ * The public gateways an `ipfs://` document is read through, in order. On 2026-11-05, from one machine,
+ * `ipfs.io`, `dweb.link`, `w3s.link` and `nftstorage.link` answered a script 429 and Pinata's served
+ * (`docs/tasks/65` §4). `ipfs.io` stays second in case its refusal is not permanent.
+ */
+export const IPFS_GATEWAYS = ["https://gateway.pinata.cloud/ipfs/", "https://ipfs.io/ipfs/"] as const;
+
+export const IPFS_GATEWAY = IPFS_GATEWAYS[0];
 
 export type FetchableUrl =
     /** Fetch this. For an `ipfs://` document it is the gateway URL, not the original. */
@@ -44,7 +50,7 @@ export type FetchableUrl =
  * The scheme is checked on **what was published**, before the gateway URL is built from it, so the
  * check cannot be fooled by what we construct.
  *
- * `ipfs://../../etc/passwd` becomes `https://ipfs.io/ipfs/../../etc/passwd` and that is harmless,
+ * `ipfs://../../etc/passwd` becomes the gateway's URL plus `../../etc/passwd` and that is harmless,
  * which is worth saying where somebody will later wonder: the authority is fixed by the prefix, so
  * nothing in the published string can move the host off the gateway. It is a path traversal against
  * a public gateway and it reads nothing local.
@@ -859,4 +865,32 @@ export async function probeEndpoint(
     if (endpoint.protocol === "mcp") return probeMcp(url, options);
     if (endpoint.protocol === "a2a") return probeA2a(url, options);
     return probePlain(url, options);
+}
+
+/** A pinned JSON document, from the first gateway that serves it, capped. Throws with what each one answered. */
+export async function readIpfsJson(
+    uri: string,
+    fetcher: FetchLike,
+    timeoutMs: number,
+    maxBytes = 256 * 1024,
+): Promise<unknown> {
+    if (!uri.startsWith("ipfs://")) throw new Error(`not an ipfs:// document: ${uri}`);
+    const failures: string[] = [];
+    for (const gateway of IPFS_GATEWAYS) {
+        const host = new URL(gateway).host;
+        try {
+            const answer = await guardedFetchText(
+                fetcher,
+                `${gateway}${uri.slice("ipfs://".length)}`,
+                {},
+                {timeoutMs, maxBytes},
+            );
+            if (answer.status === "refused") failures.push(`${host} refused: ${answer.reason}`);
+            else if (answer.response.ok) return JSON.parse(answer.text);
+            else failures.push(`${host} answered ${answer.response.status}`);
+        } catch (error) {
+            failures.push(`${host}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+    throw new Error(failures.join("; "));
 }

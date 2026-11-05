@@ -7,6 +7,7 @@ const line = (writer: string, domains: string[], outcomes: string[]) => ({
     tripleId: "0x1",
     agent: {atomId: writer, label: null},
     writer,
+    holders: [],
     declaredAt: null,
     domains,
     outcomes,

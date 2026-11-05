@@ -97,7 +97,7 @@ describe("fetchableDocumentUrl", () => {
     it("rewrites an ipfs document onto the gateway", () => {
         expect(fetchableDocumentUrl("ipfs://bafkreistub")).toEqual({
             status: "fetch",
-            url: "https://ipfs.io/ipfs/bafkreistub",
+            url: "https://gateway.pinata.cloud/ipfs/bafkreistub",
         });
     });
 

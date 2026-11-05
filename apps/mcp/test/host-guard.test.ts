@@ -133,3 +133,29 @@ describe('the probe, with the same guard', () => {
     expect(asked).toEqual([]);
   });
 });
+
+describe('readRegistrationDocument on an ipfs document', () => {
+  const guard = { allowPrivate: false, resolveHost: async () => ['93.184.216.34'] };
+
+  it('asks the next gateway when one refuses', async () => {
+    const urls: string[] = [];
+    const read = await readRegistrationDocument('ipfs://cid', {
+      guard,
+      fetch: (async (url: string) => {
+        urls.push(url);
+        return urls.length === 1 ? new Response('no', { status: 429 }) : Response.json({ name: 'agent' });
+      }) as never, // the two-argument fetch, this stub reads the first
+    });
+    expect(read).toEqual({ status: 'read', document: { name: 'agent' } });
+    expect(urls).toEqual(['https://gateway.pinata.cloud/ipfs/cid', 'https://ipfs.io/ipfs/cid']);
+  });
+
+  it('says it could not read when no gateway serves it', async () => {
+    const read = await readRegistrationDocument('ipfs://cid', {
+      guard,
+      fetch: (async () => new Response('no', { status: 429 })) as never, // as above
+    });
+    expect(read.status).toBe('unreadable');
+  });
+});
+

@@ -232,6 +232,37 @@ describe("getAgentEndpoints", () => {
         expect(seen).toHaveLength(1);
     });
 
+    it("takes a proof from the index and fetches nothing, and still checks it", async () => {
+        const chain = chainOf({owner: owner.address});
+        const good = await bind("https://a.example", chain);
+        const forged = {...good, endpoint: "https://evil.example"};
+        const answer = (document: unknown) => ({
+            request: async (query: string) =>
+                query.includes("EndpointBindings")
+                    ? {triples: [{term_id: "0xa1", object: {data: "https://a.example"}}]}
+                    : {triples: [{object_id: "0xa1", subject: {data: "ipfs://held", value: {json_object: {data: document}}}}]},
+        });
+        const fetch = async () => {
+            throw new Error("nothing should be fetched");
+        };
+        const config = {
+            graphqlUrl: "https://testnet.intuition.sh/v1/graphql",
+            predicates: {hasEndpoint: "0xe1", inContextOf: "0xc1"},
+            chain,
+            fetch,
+        };
+        const held = await getAgentEndpoints(SUBJECT, {
+            ...config,
+            transport: answer(JSON.parse(endpointBindingDocument(good))),
+        } as unknown as DirectoryConfig); // the stub transport answers only the two queries used here
+        expect(held[0]?.status).toBe("bound");
+        const lied = await getAgentEndpoints(SUBJECT, {
+            ...config,
+            transport: answer(JSON.parse(endpointBindingDocument(forged))),
+        } as unknown as DirectoryConfig); // same
+        expect(lied[0]?.status).toBe("unproven");
+    });
+
     it("fetches a pinned document through the gateway by default", async () => {
         const chain = chainOf({owner: owner.address});
         const good = await bind("https://a.example", chain);
@@ -255,7 +286,12 @@ describe("getAgentEndpoints", () => {
                     : new Response("gone", {status: 404});
             },
         });
-        expect(urls).toEqual(["https://ipfs.io/ipfs/bafygood", "https://ipfs.io/ipfs/bafygone"]);
+        // The first gateway serves one; the other is asked of both before it reads as unreadable.
+        expect(urls).toEqual([
+            "https://gateway.pinata.cloud/ipfs/bafygood",
+            "https://gateway.pinata.cloud/ipfs/bafygone",
+            "https://ipfs.io/ipfs/bafygone",
+        ]);
         expect(listed[0]?.proofs.map((proof) => proof.status)).toEqual([
             "bound",
             "unreadable",

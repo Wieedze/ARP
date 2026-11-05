@@ -18,7 +18,7 @@ import {
     type HandshakeAgent,
     type HandshakeChain,
 } from "./handshake.js";
-import {IPFS_GATEWAY} from "./verify/probe.js";
+import {readIpfsJson} from "./verify/probe.js";
 
 /**
  * The directory's read (task 39d): an agent's endpoint, from the binding on Intuition, checked
@@ -71,7 +71,7 @@ const CONTEXTS_QUERY = `query EndpointProofs($triple: String!, $inContextOf: Str
     limit: $limit
   ) {
     object_id
-    subject { term_id data }
+    subject { term_id data value { json_object { data } } }
   }
 }`;
 
@@ -115,14 +115,7 @@ export type ListedEndpoint = {
 const RANK = {bound: 0, transferred: 1, unknown: 2, unproven: 3} as const;
 
 function gatewayFetch(fetchLike: FetchLike, timeoutMs: number): (uri: string) => Promise<unknown> {
-    return async (uri) => {
-        if (!uri.startsWith("ipfs://")) throw new Error(`not an ipfs:// document: ${uri}`);
-        const response = await fetchLike(`${IPFS_GATEWAY}${uri.slice("ipfs://".length)}`, {
-            signal: AbortSignal.timeout(timeoutMs),
-        });
-        if (!response.ok) throw new Error(`gateway answered ${response.status}`);
-        return response.json();
-    };
+    return (uri) => readIpfsJson(uri, fetchLike, timeoutMs);
 }
 
 type ParsedAgent = {chainId: number; registry: string; agentId: bigint};
@@ -193,7 +186,9 @@ export async function getAgentEndpoints(
                 inContextOf: config.predicates.inContextOf,
                 limit: maxProofs,
             });
-            const uris: string[] = [];
+            // The index holds what it resolved, so most proofs need no gateway. It is not trusted for
+            // this: a binding stands on its two signatures and the registry's owner, whoever served it.
+            const uris: {uri: string; indexed: unknown}[] = [];
             for (const row of Array.isArray(contexts["triples"]) ? contexts["triples"] : []) {
                 if (!isRecord(row)) continue;
                 const objectId = readString(row, "object_id");
@@ -201,13 +196,20 @@ export async function getAgentEndpoints(
                 const uri = document === null ? null : readString(document, "data");
                 if (objectId === null || uri === null) continue;
                 if (objectId.toLowerCase() !== claim.tripleId.toLowerCase()) continue;
-                uris.push(uri);
+                const held = readRecord(readRecord(document, "value") ?? {}, "json_object")?.["data"];
+                uris.push({uri, indexed: held ?? null});
             }
             const proofs = await Promise.all(
                 uris
                     .slice(0, maxProofs)
-                    .map((uri) =>
-                        checkProof(uri, subject, claim.endpoint, fetchDocument, config.chain),
+                    .map(({uri, indexed}) =>
+                        checkProof(
+                            uri,
+                            subject,
+                            claim.endpoint,
+                            indexed === null ? fetchDocument : async () => indexed,
+                            config.chain,
+                        ),
                     ),
             );
             let status: ListedEndpoint["status"] = "unproven";

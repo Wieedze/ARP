@@ -872,10 +872,10 @@ describe("read-only mode", () => {
         reader?.kill();
     });
 
-    it("lists the four registry reads and nothing else", async () => {
+    it("lists the five registry reads and nothing else", async () => {
         const body = await call("tools/list");
         const names = (body["result"] as {tools: {name: string}[]}).tools.map((t) => t.name);
-        expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_pulse", "arp_tool_reputation"]);
+        expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_pulse", "arp_tool_reputation", "arp_agent_endpoints"]);
     });
 
     it("refuses a planner called by name", async () => {
@@ -936,7 +936,7 @@ describe("read-only mode", () => {
         }
     });
 
-    it("keeps the chain's vocabulary out of the three descriptions it serves", async () => {
+    it("keeps the chain's vocabulary out of the descriptions it serves", async () => {
         const body = await call("tools/list");
         const tools = (body["result"] as {tools: {description: string}[]}).tools;
         for (const tool of tools) {
