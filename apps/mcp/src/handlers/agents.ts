@@ -596,13 +596,18 @@ export async function findAgents(id: JsonRpcId, args: Record<string, unknown>) {
  * because one is what others wrote and the other is what an agent says of itself.
  */
 async function findAgentsByNeed(id: JsonRpcId, domain: string) {
+  return text(id, await agentsForDomain(domain));
+}
+
+/** What `arp_find_agents` answers for a domain, and what `arp_pulse` adds beside the skills (ADR `0139`). */
+export async function agentsForDomain(domain: string): Promise<Record<string, unknown>> {
   // No `in context of` on this chain's record, so nothing can be read: not the same as nobody.
   if (/^0x0+$/.test(IN_CONTEXT_OF)) {
-    return text(id, {
+    return {
       domain,
       used_here: null,
       note: `Lines by domain are not read on chain ${chainId} yet.`,
-    });
+    };
   }
   const tree = await readDomainTree(domainWalk());
   const scope = [...new Set([domain, ...tree.subtree(domain)])];
@@ -681,21 +686,21 @@ async function findAgentsByNeed(id: JsonRpcId, domain: string) {
       matched: agent.matched.label,
     }));
   } catch (error) {
-    return text(id, {
+    return {
       domain,
       searched: scope,
       used_here: counted,
       truncated: usageCut,
       say_they_do_this: null,
       error: error instanceof Error ? error.message : String(error),
-    });
+    };
   }
-  return text(id, {
+  return {
     domain,
     searched: scope,
     used_here: counted,
     truncated: usageCut,
     say_they_do_this: tagged,
     note: 'used_here counts lines written by the wallet controlling the agent they name; lines_not_counted are the others. A wallet is not a person. say_they_do_this is an agent describing itself.',
-  });
+  };
 }

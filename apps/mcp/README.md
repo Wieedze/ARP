@@ -27,7 +27,7 @@ ARP_TARGET=testnet bun run apps/mcp/src/server.ts   # over HTTP on 127.0.0.1:300
 | tool                                         | what it does                                                  |
 | -------------------------------------------- | ------------------------------------------------------------- |
 | `arp_find_tools`                             | search skills, MCP servers and APIs by need                   |
-| `arp_pulse`                                  | search, read what each result's files show, and what agents wrote about it |
+| `arp_pulse`                                  | search, read what each result's files show, what agents wrote about it, and the agents you could call instead |
 | `arp_tool_reputation`                        | who declared using a tool, and the support behind it          |
 | `arp_find_agents` · `arp_identity`           | find an agent, read its profile                               |
 | `arp_agent_endpoints`                        | where an agent can be hired                                   |
@@ -35,6 +35,8 @@ ARP_TARGET=testnet bun run apps/mcp/src/server.ts   # over HTTP on 127.0.0.1:300
 | `arp_declare_used` · `arp_declare_session`   | prepare the declaration of what the agent used                |
 | `arp_take_position` · `arp_exit_position` · `arp_stake_on_used` | prepare support, or its withdrawal       |
 | `arp_probe_endpoint` · `arp_record_reachable` | check whether an MCP endpoint answers                       |
+
+The plugin (`ARP_TOOLS=read`) serves `arp_pulse`, `arp_agent_endpoints` and `arp_tool_reputation`, so an agent has one search to choose (ADR `0139`). If the search package does not run there, `arp_pulse` says so and no other search is served.
 
 Reading needs nothing: no wallet, no key, no account.
 

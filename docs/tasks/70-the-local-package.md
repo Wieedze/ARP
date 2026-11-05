@@ -60,3 +60,16 @@ cd apps/mcp && ARP_TARGET=testnet ARP_NO_RECEIPTS=1 bunx vitest run test/server.
  Tests  2 passed | 39 skipped (41)
 ```
 
+**Item 4, one search.** `arp_pulse` returns `agents` beside `skills`. `ARP_TOOLS=read` serves `arp_pulse`, `arp_agent_endpoints` and `arp_tool_reputation`. `arp_find_tools` and `arp_find_agents` stay in the full, Desktop and sponsored modes, since those two do not run the search package. **What this gives up:** the plugin has no catalogue search left to fall back on, so when `npx skills` does not run, `arp_pulse` says the search did not run and the agent has nothing else to search with. That dependence on one vendor stays open. An agent is found only through a declared line in a domain, or by describing itself with the word.
+
+```
+ARP_TARGET=testnet ARP_TOOLS=read ... arp_pulse {search_output: "", domain: "document"}, on 13579, 2026-11-05
+tools/list: ['arp_pulse', 'arp_tool_reputation', 'arp_agent_endpoints']
+results: [], agents.used_here: agent 2, wallets_worked 2, wallets_failed 1
+arp_find_tools: unknown tool
+cd apps/mcp && ARP_TARGET=testnet ARP_NO_RECEIPTS=1 bunx vitest run
+ Tests  139 passed (139)
+```
+
+The real search package was not run in this check, and no agent in a session has used the narrowed set yet. The local walk does that.
+

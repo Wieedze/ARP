@@ -36,7 +36,8 @@ import {
 import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
 
-import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, reads } from '../config.js';
+import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, READ_ONLY, reads } from '../config.js';
+import { agentsForDomain } from './agents.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
 const run = promisify(execFile);
@@ -268,6 +269,19 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
  * order, and each result shows the parts of its score. `ARP_PULSE_SCORE=off` keeps the earlier order, for
  * the comparison of `docs/tasks/64`.
  */
+/**
+ * What you call, beside what you install: one search with two kinds of result (ADR `0139`). A failure here
+ * says so and takes nothing from the skills.
+ */
+async function agentsPart(domain: string | null): Promise<Record<string, unknown>> {
+  if (domain === null) return { agents: null, agents_note: 'no domain was read from the need, so no agent was looked for. Pass `domain`' };
+  try {
+    return { agents: await agentsForDomain(domain) };
+  } catch (error) {
+    return { agents: null, agents_note: `not read: ${error instanceof Error ? error.message : String(error)}` };
+  }
+}
+
 export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const query = args['query'];
   const given = args['search_output'];
@@ -296,7 +310,11 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       return text(id, {
         search: 'unavailable',
         detail: first !== undefined && 'error' in first ? first.error : 'no search ran',
-        next: 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`',
+        // In the plugin this is the only search there is, so nothing here may point at another tool.
+        next: READ_ONLY
+          ? 'run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory'
+          : 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`',
+        ...(await agentsPart(askedDomain)),
       });
     }
     lists = answered.map(parseSkillsFind);
@@ -353,7 +371,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     usageRead = false;
     console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
   }
-  if (results.length === 0) return text(id, { search: 'npx skills find', results: [] });
+  if (results.length === 0) return text(id, { search: 'npx skills find', results: [], ...(await agentsPart(domain)) });
 
   const atomOf = (result: SkillSearchResult) => {
     const uri = toolUriOf(result.source, result.skill);
@@ -366,10 +384,11 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const rankOf = new Map(searched.map((row, rank) => [`${row.source}@${row.skill}`, rank]));
   const signal: SignalContext = { domain, near, canProvide: constraints.canProvide };
   const scoreOf = (result: SkillSearchResult) => {
-    const { worked, failed, failuresThatDoNotApply } = signalOf(usageOf(result), signal);
+    const { worked, failed, failuresThatDoNotApply, heard } = signalOf(usageOf(result), signal);
     return {
       ...scoreSkill({ rank: rankOf.get(`${result.source}@${result.skill}`) ?? null, total: searched.length, worked, failed }),
       ...(failuresThatDoNotApply === 0 ? {} : { failures_that_do_not_apply: failuresThatDoNotApply }),
+      ...(heard.worked === 0 && heard.failed === 0 ? {} : { too_few_wallets_to_move_the_order: heard }),
     };
   };
   const workedHere = (result: SkillSearchResult) =>
@@ -442,5 +461,6 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       .filter((entry) => entry.reasons.length > 0)
       .slice(0, 10)
       .map((entry) => ({ name: entry.row.skill, source: entry.row.source, because: entry.reasons })),
+    ...(await agentsPart(domain)),
   });
 }

@@ -22,7 +22,7 @@ vi.mock('@arp-protocol/core', async (original) => ({
   readLineReceipts: async () => ({ receipts: [], unreadable: [], othersNotRead: 0 }),
   findAgentsInDomains: mocks.findAgentsInDomains,
   findAgents: async () => ({ agents: [] }),
-  readDomainTree: async () => ({ subtree: () => [] }),
+  readDomainTree: async () => ({ subtree: () => [], pathToRoot: () => ({ found: true, path: [] }) }),
   walletControlsSubject: mocks.walletControlsSubject,
 }));
 
@@ -35,6 +35,7 @@ vi.mock('../src/config.js', async (original) => ({
 }));
 
 const { agentEndpoints, findAgents } = await import('../src/handlers/agents.js');
+const { pulse } = await import('../src/handlers/pulse.js');
 
 async function answer(response: Response): Promise<Record<string, unknown>> {
   const body = (await response.json()) as { result: { content: { text: string }[] } }; // what `text` writes
@@ -112,6 +113,19 @@ describe('arp_find_agents with a domain', () => {
   it('leaves out an agent with no line in the domain', async () => {
     mocks.getPulseUsage.mockReset().mockResolvedValue(usageOf([{ ...line, domains: [], lines: [] }]));
     expect(await rows()).toEqual([]);
+  });
+
+  it('comes back from arp_pulse beside the skills, as one search', async () => {
+    mocks.getPulseUsage.mockReset().mockResolvedValue(usageOf([line]));
+    mocks.walletControlsSubject.mockResolvedValue('yes');
+    const out = await pulse(1, { search_output: '', domain: 'document' }).then(answer);
+    expect((out['agents'] as { used_here: unknown[] }).used_here).toHaveLength(1);
+  });
+
+  it('says plainly when arp_pulse has no domain to look for agents in', async () => {
+    const out = await pulse(1, { search_output: '' }).then(answer);
+    expect(out['agents']).toBeNull();
+    expect(String(out['agents_note'])).toContain('domain');
   });
 
   it('says lines are not read on a chain whose record has no predicate for them', async () => {

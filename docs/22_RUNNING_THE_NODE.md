@@ -289,7 +289,8 @@ ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only
-ARP_TOOLS              read: the five reads only, one of which asks agents' signed addresses. desktop or sponsored: the reads plus arp_get_skill
+ARP_TOOLS              read: the plugin's set, arp_pulse, arp_agent_endpoints and arp_tool_reputation, and
+                       arp_agent_endpoints asks agents' signed addresses. desktop or sponsored: the reads plus arp_get_skill
                        and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
                        over stdio only: the server refuses to start them over HTTP (ADR 0116).
                        Unset: every tool

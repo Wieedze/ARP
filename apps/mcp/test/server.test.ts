@@ -468,6 +468,46 @@ describe("arp_tool_reputation", () => {
     });
 });
 
+describe("arp_find_tools, outside the plugin's set", () => {
+    it("answers a word the registry does not use with the words it does", async () => {
+        // "business" was the word a live run used on 2026-11-02, and it found nothing. The answer
+        // has to carry somewhere to go next, or the agent stops looking.
+        const body = (await rpc("tools/call", {name: "arp_find_tools", arguments: {domain: "business"}})).body!;
+        const answer = JSON.parse(
+            (body["result"] as {content: {text: string}[]}).content[0]!.text,
+        ) as {tools: unknown[]; domains_available?: string[]};
+        expect(answer.tools).toEqual([]);
+        expect(answer.domains_available).toEqual(["marketing"]);
+    });
+
+    const findTools = async (args: Record<string, unknown>) => {
+        const body = (await rpc("tools/call", {name: "arp_find_tools", arguments: args})).body!;
+        return JSON.parse((body["result"] as {content: {text: string}[]}).content[0]!.text) as {
+            total: number;
+            offset: number;
+            next_offset: number | null;
+            domains_available?: string[];
+            tools: Record<string, unknown>[];
+        };
+    };
+
+    it("answers a query that matches nothing with nothing to ask next (task 51)", async () => {
+        const none = await findTools({query: "zzzz-nothing-matches"});
+        expect(none.total).toBe(0);
+        expect(none.tools).toEqual([]);
+        expect(none.domains_available).toBeUndefined();
+    });
+
+    // The row shape, the paging and the collapsing are tested on literals in tool-search.test.ts:
+    // this stub answers no tool rows, so assertions over them here would pass on an empty list.
+    it("refuses a negative offset and an unknown detail", async () => {
+        for (const args of [{offset: -1}, {detail: "everything"}]) {
+            const body = (await rpc("tools/call", {name: "arp_find_tools", arguments: args})).body!;
+            expect(body["error"]).toBeDefined();
+        }
+    });
+});
+
 describe("arp_declare_used", () => {
     const call = (args: Record<string, unknown>) =>
         rpc("tools/call", {name: "arp_declare_used", arguments: args});
@@ -872,6 +912,7 @@ describe("read-only mode", () => {
                 ARP_HOME: SCRATCH,
                 PORT: String(READ_PORT),
                 ARP_TOOLS: "read",
+                ARP_PULSE_SEARCH: "off",
                 ARP_TARGET: "testnet",
                 ARP_NO_RECEIPTS: "1",
                 INTUITION_GRAPHQL_URL: `http://127.0.0.1:${PORT + 1}/v1/graphql`,
@@ -900,10 +941,10 @@ describe("read-only mode", () => {
         reader?.kill();
     });
 
-    it("lists the five registry reads and nothing else", async () => {
+    it("lists the one search and its two reads, and nothing else", async () => {
         const body = await call("tools/list");
         const names = (body["result"] as {tools: {name: string}[]}).tools.map((t) => t.name);
-        expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_pulse", "arp_tool_reputation", "arp_agent_endpoints"]);
+        expect(names).toEqual(["arp_pulse", "arp_tool_reputation", "arp_agent_endpoints"]);
     });
 
     it("refuses a planner called by name", async () => {
@@ -919,49 +960,29 @@ describe("read-only mode", () => {
         });
         const instructions = String((body["result"] as Record<string, unknown>)["instructions"]);
         expect(instructions).toContain("LOOK HERE FIRST");
-        expect(instructions).toContain("arp_find_tools");
+        expect(instructions).toContain("arp_pulse");
+        expect(instructions).not.toContain("arp_find_tools");
         expect(instructions).toContain("BEFORE you pick one yourself");
         for (const word of ["TRUST", "chain", "wallet", "stake", "vault", "atom", "ERC-8004"]) {
             expect(instructions).not.toContain(word);
         }
     });
 
-    it("answers a word the registry does not use with the words it does", async () => {
-        // "business" was the word a live run used on 2026-11-02, and it found nothing. The answer
-        // has to carry somewhere to go next, or the agent stops looking.
-        const body = await call("tools/call", {name: "arp_find_tools", arguments: {domain: "business"}});
-        const answer = JSON.parse(
-            (body["result"] as {content: {text: string}[]}).content[0]!.text,
-        ) as {tools: unknown[]; domains_available?: string[]};
-        expect(answer.tools).toEqual([]);
-        expect(answer.domains_available).toEqual(["marketing"]);
-    });
-
-    const findTools = async (args: Record<string, unknown>) => {
-        const body = await call("tools/call", {name: "arp_find_tools", arguments: args});
-        return JSON.parse((body["result"] as {content: {text: string}[]}).content[0]!.text) as {
-            total: number;
-            offset: number;
-            next_offset: number | null;
-            domains_available?: string[];
-            tools: Record<string, unknown>[];
-        };
-    };
-
-    it("answers a query that matches nothing with nothing to ask next (task 51)", async () => {
-        const none = await findTools({query: "zzzz-nothing-matches"});
-        expect(none.total).toBe(0);
-        expect(none.tools).toEqual([]);
-        expect(none.domains_available).toBeUndefined();
-    });
-
-    // The row shape, the paging and the collapsing are tested on literals in tool-search.test.ts:
-    // this stub answers no tool rows, so assertions over them here would pass on an empty list.
-    it("refuses a negative offset and an unknown detail", async () => {
-        for (const args of [{offset: -1}, {detail: "everything"}]) {
-            const body = await call("tools/call", {name: "arp_find_tools", arguments: args});
-            expect(body["error"]).toBeDefined();
+    it("refuses the search tools it replaced", async () => {
+        for (const name of ["arp_find_tools", "arp_find_agents"]) {
+            const body = await call("tools/call", {name, arguments: {}});
+            expect((body["error"] as {message: string}).message).toBe(`unknown tool: ${name}`);
         }
+    });
+
+    it("says plainly when the search did not run, and points at no other tool", async () => {
+        // This server runs with ARP_PULSE_SEARCH=off, which stands for `npx skills` failing.
+        const body = await call("tools/call", {name: "arp_pulse", arguments: {queries: ["video editing"]}});
+        const answer = JSON.parse((body["result"] as {content: {text: string}[]}).content[0]!.text) as Record<string, string>;
+        expect(answer["search"]).toBe("unavailable");
+        expect(answer["next"]).toContain("search_output");
+        expect(answer["next"]).toContain("did not run");
+        expect(answer["next"]).not.toContain("arp_find_tools");
     });
 
     it("keeps the chain's vocabulary out of the descriptions it serves", async () => {

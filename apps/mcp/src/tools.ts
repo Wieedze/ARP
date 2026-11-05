@@ -153,6 +153,7 @@ export const TOOLS = [
       'declarations agents paid to write, with their domain and outcome. `status` other than `read` means ' +
       'it was not read, so what it needs is unknown. Pass `constraints`: they stay in this call. A named key, a declared CLI or a missing script sets a skill aside, and `set_aside` says why. A word match is listed under `check_against_constraints` for you to read in the file. ' +
       ' Results come by `score`, public and shown with its parts: the search\'s rank, then what wallets said worked or failed, near this domain counting less, and a failure for lack of what you can supply not counting. The amount deposited never counts. It ranks and does not say a skill works. `domain` is read from your words when you leave it out. ' +
+      '`agents` lists what you could call instead of install, in the same domain: `used_here` is who others declared using, and `arp_agent_endpoints` says how to reach one and what stands behind it. ' +
       '`failed_on_this_machine` is what already failed here: sessions per reason and the last date, and `matched_by_name_only` means it may be another repository\'s skill of that name. Check it before installing or running the skill again. Nothing here is a verdict, and nothing is written.',
     inputSchema: {
       type: 'object',
@@ -625,6 +626,17 @@ export const DESKTOP_TOOL_NAMES: ReadonlySet<string> = new Set(
  * fetches a skill it found (task 45b'). It signs a receipt for having served the bytes, which is
  * a record of access and moves no value (ADR `0080`).
  */
+/**
+ * What `ARP_TOOLS=read` serves, the plugin's set: one search, and the two reads that follow it (ADR `0139`).
+ * `READ_TOOL_NAMES` below stays for the Desktop and sponsored modes, which do not run the search package
+ * (`canSearch`), so they keep `arp_find_tools` and `arp_find_agents`.
+ */
+export const PLUGIN_TOOL_NAMES: ReadonlySet<string> = new Set([
+  'arp_agent_endpoints',
+  'arp_pulse',
+  'arp_tool_reputation',
+]);
+
 export const READ_TOOL_NAMES: ReadonlySet<string> = new Set([
   'arp_agent_endpoints',
   'arp_find_agents',
