@@ -58,10 +58,12 @@ were written by their edge's creator):**
 
 - **Nothing proves a wallet controls the agent it writes about.** Anyone can write `(Agent 6, uses,
   tool)` first and it reads as that agent's word. The ordering counts wallets, so several wallets
-  still buy several lines, at about 0.004 tTRUST of fees per line. Checking the writer against the
+  still buy several lines. Row 4 of the walk spent 0.00617 tTRUST on three triples, 0.00297 of it held
+  as positions, so about 0.0032 tTRUST of fees, on a testnet whose costs are 100 times below mainnet's. Checking the writer against the
   agent's owner closes it where a registry is readable.
-- **A sponsored edge's creator is the treasury** (31 of 184 `uses` edges on 13579), so an agent's own
-  qualifier on it lands in `byOthers`.
+- **A sponsored edge's creator is the treasury**, so an agent's own qualifier on it lands in `byOthers`.
+  The treasury's address created 31 of 184 `uses` edges on 13579 (2026-11-05), one of them this walk's,
+  signed directly.
 - **The reader filters outcomes to the two words and not domains**, so any wallet can put free text in
   `by_domain` or `written_by_others`. An ordering only compares the domain asked about.
 - **A domain and an outcome are sibling triples**, so one edge with `audio`, `video` and `worked` counts

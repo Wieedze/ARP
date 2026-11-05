@@ -24,8 +24,9 @@ first result, whose repository also carries translated copies.
 3. **The content id is git's tree id of the skill's directory.** It covers every file and anyone can
    recompute it with `git rev-parse HEAD:<directory>`.
 4. **Every failure is a status.** A skill not read is never shown as a skill needing nothing.
-5. **The search is the official CLI, and no `/api/` route of skills.sh is called**: its `robots.txt`
-   disallows them.
+5. **The search is the official CLI, pinned, with four environment variables, and no `/api/` route of
+   skills.sh is called**: its `robots.txt` disallows them. It does not run where an agent key is kept, and
+   `ARP_PULSE_SEARCH=off` stops it. `search_output` takes the command's text and runs nothing.
 
 ## Alternatives considered
 

@@ -34,10 +34,10 @@ const Landing = lazy(() => import("./pages/Landing").then((module) => ({default:
 const AtomPanel = lazy(() =>
     import("./pages/AtomPanel").then((module) => ({default: module.AtomPanel})),
 );
-/** Reads both indexes, so it is lazy like the pages it searches (task 48). */
 const PulsePage = lazy(() =>
     import("./pages/PulsePage").then((module) => ({default: module.PulsePage})),
 );
+/** Reads both indexes, so it is lazy like the pages it searches (task 48). */
 const SearchPage = lazy(() =>
     import("./pages/SearchPage").then((module) => ({default: module.SearchPage})),
 );

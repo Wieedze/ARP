@@ -49,7 +49,7 @@ an agent used it in a comparable situation.
 | 3 | Context and outcome on a declaration | Planned by the connector, written on 13579 by an existing wallet, and read back |
 | 4 | The loop closes | A second agent's pulse shows what the first wrote, on 13579, recorded |
 | 5 | Two agents, without and with the pulse | Measured on one request, the result stated whichever way it goes |
-| 6 | The page | The same facts on one public URL per skill |
+| 6 | The page | The same facts at `/pulse/:owner/:repo/:skill`. A route in the app, which is not hosted, so not yet public |
 
 The catalogue stops growing and is not deleted: the site, the existing declarations and the search
 fallback still read it. No mainnet write is part of this task.
@@ -65,8 +65,8 @@ One directory (`d896bd88cedd`) is `ai-video-generation` in several repositories,
 installs to 11. Nothing here establishes why, and the pulse states the figures without judging them.
 
 **The walk on 13579.** `data/measurements/pulse-walk-2026-11-05.jsonl`, by `scripts/demo/pulse-walk.ts`,
-wallets `0x906f…f91f` (agent 13579/6) and `0xE596…1AA1` (agent 13579/2). Same session, same operator:
-these are not independent witnesses, and no third party has declared anything.
+wallets `0x906f…f91f` (agent 13579/6) and `0xE596…1AA1`, ARP's deployer and treasury (agent 13579/2). Same
+session, same operator: these are not independent witnesses, and no third party has declared anything.
 
 | Agent | Skill | Domain | Outcome | What happened |
 | --- | --- | --- | --- | --- |
@@ -76,8 +76,9 @@ these are not independent witnesses, and no third party has declared anything.
 
 That file's row for the failure carries a wrong note, corrected by a later row: the script is in the
 repository, and it was read rather than run. The first call of the first walk reverted out of gas; the
-retry passed, and the cause is not established. The tool atoms are not pinned, so a graph reader sees
-`Unknown` as their label; the id still follows from the URL.
+retry passed, and the cause is not established. The walk created `video-editing`'s atom without pinning
+it, so a graph reader sees `Unknown` as its label; the id still follows from the URL. `cut-silences`'s atom
+already existed, pinned, on 2026-11-04.
 
 **The comparison.** `scripts/measure/pulse-eval.ts`, figures from `scripts/measure/pulse-eval-summary.ts`,
 raw output `data/measurements/pulse-eval-2026-11-05.jsonl`, sonnet, 48 sessions, $2.37. An agent chooses a
@@ -115,9 +116,15 @@ What that table can and cannot carry:
   `declarer` now deposits on it, and the reader counts a position as well as a creator. What stays open is
   in ADR `0135`.
 
-## 7. Safety of the tests
+## 7. Safety
 
-The comparison allows two commands and an MCP tool, so nothing a search returns can run. One real attempt
+**The search package.** `arp_pulse` runs `skills@1.7.4` from npm with four environment variables and not in
+the modes that keep an agent key. The first version ran it unpinned with the server's whole environment,
+which `task-verifier` found and neither review had raised. Reachable on every call with a `query`; no misuse
+is known. It still runs as the operator's OS user, which `docs/22` says.
+
+**The tests.
+** The comparison allows two commands and an MCP tool, so nothing a search returns can run. One real attempt
 ran a skill's script in `bubblewrap`, with no network and no home directory. The harness's classifier then
 refused a downloaded binary, and that refusal was respected: the other uses are commands typed by hand
 with the machine's ffmpeg.

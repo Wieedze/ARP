@@ -1,4 +1,6 @@
 import { execFile } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import {
@@ -18,24 +20,51 @@ import {
 } from '@arp-protocol/core';
 import { stringToHex } from 'viem';
 
-import { GRAPHQL, IN_CONTEXT_OF, reads } from '../config.js';
+import { DESKTOP, GRAPHQL, IN_CONTEXT_OF, reads } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
 const run = promisify(execFile);
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 20;
 
+/** The version `parseSkillsFind`'s format was captured from. A newer one is a change to review. */
+export const SKILLS_CLI = 'skills@1.7.4';
+
 /**
- * The official CLI, with its telemetry off, and never through a shell: the query is one argument.
- * A failure is a value, because a host without `npx` can still pass `search_output` itself.
+ * How the search runs, as data so a test can hold it to this: a pinned package, the query as one
+ * argument and never through a shell, and an environment of four variables. It is somebody else's
+ * package, and `task-verifier` found the first version handing it the server's whole environment.
+ * `HOME` points away from the operator's, so a default path to a key is not one. It still runs as the
+ * same OS user, which is why a server holding an agent key does not run it (`canSearch`) and `docs/22`
+ * says so.
  */
+export function searchInvocation(query: string, path: string | undefined) {
+  const home = join(tmpdir(), 'arp-skills-cli');
+  return {
+    file: 'npx',
+    args: ['--yes', SKILLS_CLI, 'find', query],
+    env: {
+      ...(path === undefined ? {} : { PATH: path }),
+      HOME: home,
+      DISABLE_TELEMETRY: '1',
+      NO_COLOR: '1',
+    },
+  };
+}
+
+/** Off when the operator says so, and in the modes that keep an agent key on this machine (ADR `0110`). */
+export function canSearch(env: { holdsAgentKey: boolean; setting: string | undefined }): boolean {
+  return !env.holdsAgentKey && env.setting !== 'off';
+}
+
+/** A failure is a value, because a host without `npx` can still pass `search_output` itself. */
 async function search(query: string): Promise<{ output: string } | { error: string }> {
+  if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env['ARP_PULSE_SEARCH'] })) {
+    return { error: 'this server does not run the search package' };
+  }
   try {
-    const { stdout } = await run('npx', ['--yes', 'skills', 'find', query], {
-      env: { ...process.env, DISABLE_TELEMETRY: '1', NO_COLOR: '1' },
-      timeout: 90_000,
-      maxBuffer: 4_000_000,
-    });
+    const { file, args, env } = searchInvocation(query, process.env['PATH']);
+    const { stdout } = await run(file, args, { env, timeout: 90_000, maxBuffer: 4_000_000 });
     return { output: stdout };
   } catch (error) {
     return { error: error instanceof Error ? error.message.split('\n')[0] ?? 'failed' : String(error) };

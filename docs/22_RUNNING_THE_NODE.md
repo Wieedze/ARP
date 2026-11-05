@@ -59,7 +59,7 @@ testnet 13579, `register()` and one MultiVault approval, and refuses every other
 nothing: the request a content receipt is issued to, and the request for a sponsored deposit. ARP's
 sponsoring service pays everything that carries value. Without one of those two values, the paragraph above holds.
 
-**It executes nothing it fetches.** A skill's file is Markdown. It is returned with
+**It executes no skill it fetches.** The one package it runs is below (`arp_pulse`). A skill's file is Markdown. It is returned with
 `content-type: text/plain`, `x-content-type-options: nosniff` and
 `content-disposition: attachment`, never rendered, never parsed, never written to disk by the server
 (`apps/mcp/src/content.ts`, the response at the end of `serveContentRequest`). Your agent reads it;
@@ -121,10 +121,14 @@ raw.githubusercontent.com   the skill's own bytes, passed through, never cached
 ipfs.io                an agent's registration document, when it published an `ipfs://` one
 ```
 
-`arp_pulse` adds one more, only when it is called with a `query`: it runs `npx skills find` with that
-query as one argument and its telemetry off, so **your search words reach skills.sh**, and `npx` may
-reach the npm registry. Pass `search_output` and it does not run. It also asks `api.github.com` for each
-repository's listing and metadata, and uses `GITHUB_TOKEN` when one is set.
+**`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
+it runs `npx --yes skills@1.7.4 find <query>`: the pinned npm package executes on your machine, as your
+OS user, so it can read what that user can read. It gets four environment variables (`PATH`, `HOME` set to
+a temporary directory, and two that turn off telemetry and colour), none of your secrets, and the query as
+one argument with no shell. **Your search words reach skills.sh**, and `npx` reaches the npm registry.
+`ARP_PULSE_SEARCH=off` stops it, and it never runs in `desktop` or `sponsored`, which keep an agent key on
+the machine. An agent can always pass the command's text as `search_output`, which runs nothing. Either way
+the tool asks `api.github.com` for each repository's listing and metadata, using `GITHUB_TOKEN` when set.
 
 **And two that are not fixed, which you should know about before you install this.** Both exist for
 the same reason and ADR `0045` is explicit about it: ARP can **verify** another agent's endpoint and
@@ -281,7 +285,8 @@ ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's read
 ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
-ARP_TOOLS              read: the three reads only. desktop or sponsored: the reads plus arp_get_skill
+ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only
+ARP_TOOLS              read: the four reads only. desktop or sponsored: the reads plus arp_get_skill
                        and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
                        over stdio only: the server refuses to start them over HTTP (ADR 0116).
                        Unset: every tool

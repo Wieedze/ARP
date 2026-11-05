@@ -872,7 +872,7 @@ describe("read-only mode", () => {
         reader?.kill();
     });
 
-    it("lists the three registry reads and nothing else", async () => {
+    it("lists the four registry reads and nothing else", async () => {
         const body = await call("tools/list");
         const names = (body["result"] as {tools: {name: string}[]}).tools.map((t) => t.name);
         expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_pulse", "arp_tool_reputation"]);

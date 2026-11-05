@@ -10,6 +10,8 @@
  */
 import {execFileSync} from "node:child_process";
 import {writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 
 import {
     githubPulseSource,
@@ -28,8 +30,8 @@ if (queries.length === 0) {
 
 const found = new Map<string, SkillSearchResult & {queries: string[]}>();
 for (const query of queries) {
-    const output = execFileSync("npx", ["--yes", "skills", "find", query], {
-        env: {...process.env, DISABLE_TELEMETRY: "1", NO_COLOR: "1"},
+    const output = execFileSync("npx", ["--yes", "skills@1.7.4", "find", query], {
+        env: {PATH: process.env["PATH"], HOME: join(tmpdir(), "arp-skills-cli"), DISABLE_TELEMETRY: "1", NO_COLOR: "1"},
         encoding: "utf8",
         timeout: 90_000,
     });

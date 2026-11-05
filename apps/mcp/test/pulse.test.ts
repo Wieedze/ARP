@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {setAsideBecause, toCheck} from "../src/handlers/pulse.js";
+import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, toCheck} from "../src/handlers/pulse.js";
 import type {SkillPulse} from "@arp-protocol/core";
 
 const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): SkillPulse => ({
@@ -29,6 +29,26 @@ const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): S
 });
 
 const none = {noKeys: false, noLogin: false, noPaid: false, noScripts: false, haveCommands: null};
+
+describe("the search package", () => {
+    it("runs pinned, with the query as one argument", () => {
+        const {file, args} = searchInvocation('video; rm -rf "$HOME"', "/usr/bin");
+        expect(SKILLS_CLI).toMatch(/^skills@\d+\.\d+\.\d+$/);
+        expect([file, ...args]).toEqual(["npx", "--yes", SKILLS_CLI, "find", 'video; rm -rf "$HOME"']);
+    });
+
+    it("hands it no secret, and not the operator's home", () => {
+        const {env} = searchInvocation("x", "/usr/bin");
+        expect(Object.keys(env).sort()).toEqual(["DISABLE_TELEMETRY", "HOME", "NO_COLOR", "PATH"]);
+        expect(env.HOME).toContain("arp-skills-cli");
+    });
+
+    it("does not run where an agent key is kept, or where the operator turned it off", () => {
+        expect(canSearch({holdsAgentKey: false, setting: undefined})).toBe(true);
+        expect(canSearch({holdsAgentKey: true, setting: undefined})).toBe(false);
+        expect(canSearch({holdsAgentKey: false, setting: "off"})).toBe(false);
+    });
+});
 
 describe("setAsideBecause", () => {
     it("sets nothing aside without a constraint, whatever the file mentions", () => {
