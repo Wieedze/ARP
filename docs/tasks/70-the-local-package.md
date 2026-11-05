@@ -3,7 +3,7 @@
 **Status:** started 2026-11-05 on `feat/agent-pulse`. Nothing is pushed, published or hosted.
 **Decision:** the user, 2026-11-05: « on finit tout le package en local, et quand toute la checklist est vérifiée, que tous les services sont confirmés, on avance » (spelling corrected).
 **Rules:** `code.md`, `portability.md`, `security.md`, `claims.md`, `workflow.md`.
-**Reviewers:** `intuition-integrator`, `task-verifier`, each item and at the end.
+**Reviewers:** `intuition-integrator` where an item touches a graph read; `task-verifier` once, at the end of the checklist.
 
 ## The goal
 
