@@ -81,3 +81,21 @@ broad as `video`.
 **The trial's reading.** The score's mechanism does what it was built to do, carrying a declaration to an agent whose words did not
 reach it. This says nothing about whether the system learns or a line is right. The next test is `docs/tasks/63`'s open one:
 agents in sequence, running skills, on checked results. It needs Docker, which the user has to start.
+
+## 4. A simulation: does the best skill rise?
+
+`bun run scripts/measure/pulse-sim.ts`, 2026-11-05. Invented skills with a known true success rate: no agent, no network, no chain, and nothing
+from it reaches a graph. It tests the ranking logic under its stated assumptions (30 skills, each agent takes the first result, popularity is
+quality plus noise) and says nothing about real skills. Last 20% of agents, 400 worlds per cell, against a ceiling of 87%.
+
+| Scenario, 1,000 agents | Search only: success, took the best | Score | Thompson sampling |
+| --- | --- | --- | --- |
+| Every agent declares | 75%, 15% | 84%, 33% | 83%, 46% |
+| 1 agent in 5 declares | 75%, 15% | 83%, 28% | 73%, 21% |
+| 1 in 20 declares | 75%, 15% | 82%, 28% | 66%, 12% |
+| Popularity says nothing | 53%, 6% | 80%, 20% | 73%, 20% |
+| 50 false wallets on the worst | 75%, 15% | 83%, 29% | 71%, 18% |
+
+In this model the score moves agents to a skill that works well more than to the true best, and it recovers from 50 false wallets at the cost of the
+agents who come first: 15% success among the last 10 of 50 agents, against 76% for the search. **Thompson sampling did worse than the score in every
+row but the first**, so the recommendation to add it to the sequential test is withdrawn. All of this depends on the assumptions.
