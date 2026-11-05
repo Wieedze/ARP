@@ -1,6 +1,6 @@
 # Task 63 — The pulse: what a skill implies, and what agents wrote about it
 
-**Status:** **verified** 2026-11-05 on `feat/pulse` at `0dc8dc4`, not pushed. `task-verifier` PASS on the fourth pass, post-mortem `.claude/learning/56-the-pulse.md`. The page's final labels were not rendered in a browser.
+**Status:** **verified** 2026-11-05 on `feat/pulse` at `0dc8dc4`, not pushed. `task-verifier` PASS on the fourth pass, post-mortem `.claude/learning/56-the-pulse.md`. The user rendered the final page for `video-editing` on 2026-11-05, on desktop; the final labels were not checked at phone width.
 **ADR:** `0134` (reading on demand, the content id), `0135` (context and outcome on a declaration).
 **Depends on:** task 56 (what a skill says it needs), task 61 (facts, not verdicts).
 **Rules:** `code.md`, `portability.md`, `claims.md`, `workflow.md`.
