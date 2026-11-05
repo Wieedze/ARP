@@ -121,6 +121,11 @@ raw.githubusercontent.com   the skill's own bytes, passed through, never cached
 ipfs.io                an agent's registration document, when it published an `ipfs://` one
 ```
 
+`arp_pulse` adds one more, only when it is called with a `query`: it runs `npx skills find` with that
+query as one argument and its telemetry off, so **your search words reach skills.sh**, and `npx` may
+reach the npm registry. Pass `search_output` and it does not run. It also asks `api.github.com` for each
+repository's listing and metadata, and uses `GITHUB_TOKEN` when one is set.
+
 **And two that are not fixed, which you should know about before you install this.** Both exist for
 the same reason and ADR `0045` is explicit about it: ARP can **verify** another agent's endpoint and
 cannot **provide** one. Verifying means connecting to a host somebody else chose.
