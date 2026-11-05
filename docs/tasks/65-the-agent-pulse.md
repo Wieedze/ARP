@@ -232,6 +232,8 @@ The reader, holding no key, after them: `document` has 2 lines reaching agent 2,
 
 Cost of these 4 runs and the node: $1.05 of model, and 0.030 tTRUST before gas: 0.008 for the address, 0.004 of payments, 0.018 for the lines.
 
+**Decided, by the user, 2026-11-05, as relayed by the session coordinating ARP (`arp-f3`):** a line is a state for now, and not a history. The limit stands as it is: one wallet can read `worked` and `failed` in one domain with no order. Nothing more is built for this.
+
 **What it exposes.**
 
 - **A state and not a history, as stated before the run.** One wallet now reads both `worked` and `failed` for one agent in one domain, with no order. The reader cannot tell which came last, or that they were about different notes.
