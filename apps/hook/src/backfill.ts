@@ -11,11 +11,14 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 
+import { readRequires } from '@arp-protocol/core';
+
 import { isCancelled } from './classify.ts';
 import {
   appendFailure,
   arpHome,
   askedBySkill,
+  contextOf,
   type FailureLine,
   failureReason,
   skillDirectory,
@@ -57,9 +60,10 @@ export function readTranscript(text: string, fallback: string): { uses: number; 
   const pending = new Map<string, string>();
   const failures: FailureLine[] = [];
   let uses = 0;
+  let words = '';
 
   for (const line of text.split('\n')) {
-    if (!/tool_use|tool_result|Base directory for this skill/.test(line)) continue;
+    if (!/tool_use|tool_result|Base directory for this skill|"user"/.test(line)) continue;
     let entry: Record<string, unknown>;
     try {
       entry = JSON.parse(line) as Record<string, unknown>; // read field by field below
@@ -90,6 +94,9 @@ export function readTranscript(text: string, fallback: string): { uses: number; 
     }
     if (entry['type'] !== 'user') continue;
 
+    const typed = textOf(content);
+    if (entry['isMeta'] !== true && typed.trim() !== '' && !typed.trimStart().startsWith('<')) words = typed;
+
     const directory = BODY.exec(textOf(content))?.[1]?.trim();
     if (entry['isMeta'] === true && directory !== undefined) {
       const folder = basename(directory);
@@ -115,7 +122,9 @@ export function readTranscript(text: string, fallback: string): { uses: number; 
       const reason = failureReason(output);
       if (reason === null) continue;
       const skill = active.find((candidate) => askedBySkill(command, candidate.markdown, candidate.directory));
-      if (skill !== undefined) failures.push({ at, session, skill: skill.name, source: null, reason });
+      if (skill === undefined) continue;
+      const domain = contextOf(words, readRequires(skill.markdown).description);
+      failures.push({ at, session, skill: skill.name, source: null, ...(domain === null ? {} : { domain }), reason });
     }
   }
   return { uses, failures };

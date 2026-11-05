@@ -41,3 +41,5 @@ The hook never writes `worked`, because no error does not show that the job was 
 
 The hook also keeps what `arp_pulse` answered, in `.arp/searches.jsonl`: the session, the domain and the skills found with their source, never the query. A failure of a skill that a search of that session found takes that domain and source. With no such search it has no domain: none is invented. The skill's own category was not used, because it says what a skill is for and not the context in which it failed, and the catalogue does not hold what `npx skills find` returns.
 
+**Second amendment, same day.** The user: « il y a toujours un contexte ». With no search, the domain comes from the person's latest words in the session's transcript, then from the skill's own description, by whole-word match on the tree's labels (`inferDomain`). The words are read and dropped. Words that name no category still give no domain: the context exists, but no closed word says it.
+

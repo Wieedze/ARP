@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, expect, test } from 'bun:test';
 
-import { askedBySkill, failureReason, programsOf } from '../src/skill-failure.ts';
+import { askedBySkill, contextOf, failureReason, lastUserWords, programsOf } from '../src/skill-failure.ts';
 
 const HOOK = join(import.meta.dir, '..', 'src', 'hook.ts');
 const SKILL = '---\nname: clip\n---\nRun this:\n\n```bash\nvidcut --in a.mp4\npython3 scripts/render.py\n```\n';
@@ -118,6 +118,37 @@ test('a failure takes the domain and source of the search that found the skill, 
   bashFails('vidcut a', 'vidcut: command not found');
   expect(failures()[0]).toMatchObject({ skill: 'clip', source: 'a/b', domain: 'video', reason: 'missing-program' });
   expect(readFileSync(join(dir, 'searches.jsonl'), 'utf8')).not.toContain('private');
+});
+
+test('with no search, the context comes from what the person asked, and their words stay here', () => {
+  const transcript = join(dir, 't.jsonl');
+  writeFileSync(
+    transcript,
+    [
+      { type: 'user', message: { content: 'old request about audio' } },
+      { type: 'user', message: { content: 'please cut this video for my private client' } },
+      { type: 'user', isMeta: true, message: { content: 'about design' } },
+      { type: 'user', message: { content: [{ type: 'tool_result', content: 'about database' }] } },
+    ]
+      .map((row) => JSON.stringify(row))
+      .join('\n'),
+  );
+  useSkill();
+  fire({ hook_event_name: 'PostToolUseFailure', tool_name: 'Bash', tool_input: { command: 'vidcut a' }, error: 'vidcut: command not found', transcript_path: transcript });
+  expect(failures()[0]).toMatchObject({ domain: 'video' });
+  expect(JSON.stringify(failures()[0])).not.toContain('private');
+});
+
+test('the context words win over the description, and the description is the last resort', () => {
+  expect(contextOf('cut a video', 'turns any document into text')).toBe('video');
+  expect(contextOf('do the thing', 'turns any document into text')).toBe('document');
+  expect(contextOf('do the thing', 'helps with stuff')).toBeNull();
+  expect(contextOf('videos', null)).toBeNull();
+});
+
+test('lastUserWords skips what the person did not type', () => {
+  const text = JSON.stringify({ type: 'user', message: { content: '<command-name>/x</command-name>' } });
+  expect(lastUserWords(text)).toBe('');
 });
 
 test('no domain is invented: no search, a search with none, or one that did not find this skill', () => {

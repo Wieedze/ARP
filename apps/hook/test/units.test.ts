@@ -33,6 +33,7 @@ function call(over: Partial<ToolCall> = {}): ToolCall {
     interrupted: false,
     ms: null,
     cwd: null,
+    transcript: null,
     ...over,
   };
 }

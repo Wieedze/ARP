@@ -85,7 +85,7 @@ The first two tries were refused in clear words, `"software" is not a category u
 
 ## Item 2, what shows it so far
 
-**Not ticked: no line has been written.** The domain rule awaits the user (ADR `0140`, amendment), and the chain write belongs to the walk, as the sponsor's key is the user's to start.
+**Not ticked: no line has been written.** The user accepted the domain rule and starting the sponsor on 2026-11-05, adding « il y a toujours un contexte ». The chain write belongs to the walk.
 
 Sharing off, shown by `apps/cli/test/share.test.ts`: the writer is never called, and `arp share send` stops before loading it.
 
@@ -101,19 +101,19 @@ A real session, 2026-11-05, Claude Code, `sonnet`, $0.09, in a throwaway home an
 
 The hook gets an MCP answer as a list of `{type, text}` blocks, seen in that kind of session.
 
+With no search, 2026-11-05, a second real session (`haiku`, $0.004) said « I am preparing a document » and gave `domain: document` from those words, and none of them is in the file. A hand-installed skill with no search has no source, so it stays on the machine, as a private skill must. After a real `npx skills add` in a throwaway `HOME`, the same failure showed as a line that would be public. Words that name no category still give no domain.
+
 ### For step 4 of the walk
 
-With a clean `HOME` and the plugin installed, the sponsor running, and `command -v web2md` printing nothing. In a project, put the skill in place:
+With a clean `HOME` and the plugin installed, the sponsor running, and `command -v web2md` printing nothing. Install the skill the normal way, because its lock file gives the source even if `arp_pulse` is refused in the session:
 
-    mkdir -p .claude/skills/web-to-markdown
-    curl -sL https://raw.githubusercontent.com/softaworks/agent-toolkit/HEAD/skills/web-to-markdown/SKILL.md -o .claude/skills/web-to-markdown/SKILL.md
+    npx --yes skills@1.7.6 add softaworks/agent-toolkit --skill web-to-markdown -g -y --agent claude-code
 
-Then a session, whose failure is real:
+Then a session, whose failure is real, and whose words name the context:
 
-    claude -p 'First call arp_pulse once with limit 1, domain "document" and search_output set to exactly: softaworks/agent-toolkit@web-to-markdown 773 installs
-    Then use the skill web-to-markdown to convert https://example.com to markdown. Install nothing. Skip the install check and run the web2md command once, with --print, then report what happened and stop.' --allowedTools "mcp__arp__arp_pulse,Skill,Bash(web2md:*)" --model sonnet --max-budget-usd 0.5
+    claude -p 'I am preparing a document. Use the skill web-to-markdown to convert https://example.com to markdown. Install nothing. Skip the install check and run the web2md command once, with --print, then report what happened and stop.' --plugin-dir <plugin> --allowedTools "Skill,Bash(web2md:*)" --model sonnet --max-budget-usd 0.5
 
-The plugin may name its tool differently from `mcp__arp__arp_pulse`: check it first. Then, reading each output:
+Then, reading each output:
 
     arp share            # says sharing is off, and sends nothing
     arp share on         # shows the one line that would be public

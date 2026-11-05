@@ -41,6 +41,12 @@ test('a skill opened by slash command counts, and a broken line stops nothing', 
   expect(read.failures[0]?.skill).toBe('clip');
 });
 
+test('the context comes from what the person asked before the failure', () => {
+  const asked = JSON.stringify({ ...base, type: 'user', message: { content: 'cut this video please' } });
+  const lines = [asked, ...useClip, tool('b', 'Bash', { command: 'vidcut' }), result('b', 'vidcut: command not found')];
+  expect(readTranscript(lines.join('\n'), 'f').failures[0]).toMatchObject({ domain: 'video' });
+});
+
 test('a Skill call that failed does not claim the next skill loaded', () => {
   const lines = [
     tool('g', 'Skill', { skill: 'ghost' }), result('g', 'Unknown skill: ghost'),

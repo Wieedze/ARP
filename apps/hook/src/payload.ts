@@ -35,6 +35,8 @@ export type ToolCall = {
   interrupted: boolean;
   ms: number | null;
   cwd: string | null;
+  /** The session's transcript, where the runtime names it. Read for closed words, never copied. */
+  transcript: string | null;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -83,5 +85,6 @@ export function toolCallOf(raw: unknown): ToolCall | null {
     interrupted: (camel ? first(raw, ['isInterrupt', 'is_interrupt']) : raw.is_interrupt) === true,
     ms: ms(camel ? first(raw, ['durationMs', 'duration_ms']) : raw.duration_ms),
     cwd: str(raw.cwd),
+    transcript: str(raw.transcript_path),
   };
 }

@@ -2,7 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { readRequires, type UsageReason } from '@arp-protocol/core';
+import { inferDomain, readRequires, type UsageReason } from '@arp-protocol/core';
 
 import { classifyCall, failureText } from './classify.ts';
 import type { ToolCall } from './payload.ts';
@@ -65,6 +65,46 @@ export function askedBySkill(command: string, markdown: string, directory: strin
 }
 
 const DOMAIN = /^[a-z0-9][a-z0-9-]*$/;
+
+/**
+ * The categories under `tool` on testnet 13579, read 2026-11-05. A copy, because a hook has no network:
+ * a category added later is simply not matched, and the writer refuses one that does not exist.
+ */
+const DOMAINS = [
+  'audio', 'video', 'api', 'method', 'writing', 'collaboration', 'blockchain', 'research', 'database', 'quality',
+  'scraping', 'automation', 'website', 'infrastructure', 'marketing', 'design', 'image', 'document', 'browser',
+  'payment', 'card', 'observability', 'development',
+];
+
+/** The latest words the person typed in a transcript. Only ever matched against closed words. */
+export function lastUserWords(transcript: string): string {
+  let words = '';
+  for (const line of transcript.split('\n')) {
+    if (!line.includes('"user"')) continue;
+    try {
+      const entry = JSON.parse(line) as { type?: unknown; isMeta?: unknown; message?: { content?: unknown } }; // read field by field
+      if (entry.type !== 'user' || entry.isMeta === true) continue;
+      const content = entry.message?.content;
+      const text = typeof content === 'string'
+        ? content
+        : Array.isArray(content)
+          ? (content as { type?: unknown; text?: unknown }[]).map((block) => (block?.type === 'text' && typeof block.text === 'string' ? block.text : '')).join(' ') // a message's blocks, checked here
+          : '';
+      if (text.trim() !== '' && !text.trimStart().startsWith('<')) words = text;
+    } catch {
+      continue;
+    }
+  }
+  return words;
+}
+
+/**
+ * The context of a failure, in the tree's words, or `null`. First what the person asked for, then what
+ * the skill says it is for. Whole words only, so it invents nothing, and the words stay here.
+ */
+export function contextOf(words: string, description: string | null): string | null {
+  return inferDomain(words, DOMAINS) ?? inferDomain(description ?? '', DOMAINS);
+}
 
 /** The JSON text of an MCP answer: Claude Code hands the hook a list of blocks (seen 2026-11-05, 2.1.318). */
 function answerOf(response: unknown): Record<string, unknown> | null {
@@ -173,7 +213,7 @@ export type FailureLine = {
   session: string;
   skill: string;
   source: string | null;
-  /** The domain of the search that found this skill in this session. Absent when none did. */
+  /** The search's domain in this session, else one the person's words or the skill's description name. */
   domain?: string;
   reason: DetectedReason;
 };
@@ -209,15 +249,18 @@ export function recordSkillFailure(call: ToolCall, cwd: string): void {
     for (const skill of skillsOfSession(log, call.session)) {
       const directory = skillDirectory(skill.name, cwd);
       if (directory === null) continue;
-      if (!askedBySkill(command, readFileSync(join(directory, 'SKILL.md'), 'utf8'), directory)) continue;
+      const markdown = readFileSync(join(directory, 'SKILL.md'), 'utf8');
+      if (!askedBySkill(command, markdown, directory)) continue;
 
       const search = foundBySearch(cwd, call.session, skill.name);
+      const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync(call.transcript, 'utf8')) : '';
+      const domain = search?.domain ?? contextOf(words, readRequires(markdown).description);
       appendFailure({
         at: new Date().toISOString(),
         session: call.session,
         skill: skill.name,
         source: skill.source ?? search?.source ?? null,
-        ...(search?.domain != null ? { domain: search.domain } : {}),
+        ...(domain === null ? {} : { domain }),
         reason,
       });
       return;

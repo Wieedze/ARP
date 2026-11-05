@@ -196,6 +196,12 @@ function readRequires(markdown) {
   }
   return { cli, runs, login: null, description };
 }
+// ../../packages/protocol/dist/pulse-score.js
+function inferDomain(query, labels) {
+  const words = ` ${query.toLowerCase().replace(/[^a-z0-9-]+/g, " ").trim()} `;
+  const matches = labels.filter((label) => words.includes(` ${label.toLowerCase()} `));
+  return [...matches].sort((a, b) => b.length - a.length)[0] ?? null;
+}
 // ../hook/src/classify.ts
 var CANCELLED = /\b(interrupted|cancel(l)?ed|aborted) by (the )?user\b|\buser (rejected|denied|declined)\b|\bpermission denied by user\b|\buser doesn't want to (proceed|take this action)\b/i;
 var AUTH = /\b(unauthori[sz]ed|forbidden|invalid (api )?(key|token)|authentication|not authenticated|expired token)\b/i;
@@ -477,7 +483,8 @@ function toolCallOf(raw) {
     error: str(raw.error),
     interrupted: (camel ? first(raw, ["isInterrupt", "is_interrupt"]) : raw.is_interrupt) === true,
     ms: ms(camel ? first(raw, ["durationMs", "duration_ms"]) : raw.duration_ms),
-    cwd: str(raw.cwd)
+    cwd: str(raw.cwd),
+    transcript: str(raw.transcript_path)
   };
 }
 
@@ -526,6 +533,54 @@ function askedBySkill(command, markdown, directory) {
   return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
 }
 var DOMAIN = /^[a-z0-9][a-z0-9-]*$/;
+var DOMAINS = [
+  "audio",
+  "video",
+  "api",
+  "method",
+  "writing",
+  "collaboration",
+  "blockchain",
+  "research",
+  "database",
+  "quality",
+  "scraping",
+  "automation",
+  "website",
+  "infrastructure",
+  "marketing",
+  "design",
+  "image",
+  "document",
+  "browser",
+  "payment",
+  "card",
+  "observability",
+  "development"
+];
+function lastUserWords(transcript) {
+  let words = "";
+  for (const line of transcript.split(`
+`)) {
+    if (!line.includes('"user"'))
+      continue;
+    try {
+      const entry = JSON.parse(line);
+      if (entry.type !== "user" || entry.isMeta === true)
+        continue;
+      const content = entry.message?.content;
+      const text = typeof content === "string" ? content : Array.isArray(content) ? content.map((block) => block?.type === "text" && typeof block.text === "string" ? block.text : "").join(" ") : "";
+      if (text.trim() !== "" && !text.trimStart().startsWith("<"))
+        words = text;
+    } catch {
+      continue;
+    }
+  }
+  return words;
+}
+function contextOf(words, description) {
+  return inferDomain(words, DOMAINS) ?? inferDomain(description ?? "", DOMAINS);
+}
 function answerOf(response) {
   const blocks = Array.isArray(response) ? response : typeof response === "object" && response !== null && Array.isArray(response.content) ? response.content : [response];
   for (const block of blocks) {
@@ -638,15 +693,18 @@ function recordSkillFailure(call, cwd) {
       const directory = skillDirectory(skill.name, cwd);
       if (directory === null)
         continue;
-      if (!askedBySkill(command, readFileSync2(join3(directory, "SKILL.md"), "utf8"), directory))
+      const markdown = readFileSync2(join3(directory, "SKILL.md"), "utf8");
+      if (!askedBySkill(command, markdown, directory))
         continue;
       const search = foundBySearch(cwd, call.session, skill.name);
+      const words = call.transcript !== null && existsSync(call.transcript) ? lastUserWords(readFileSync2(call.transcript, "utf8")) : "";
+      const domain = search?.domain ?? contextOf(words, readRequires(markdown).description);
       appendFailure({
         at: new Date().toISOString(),
         session: call.session,
         skill: skill.name,
         source: skill.source ?? search?.source ?? null,
-        ...search?.domain != null ? { domain: search.domain } : {},
+        ...domain === null ? {} : { domain },
         reason
       });
       return;
