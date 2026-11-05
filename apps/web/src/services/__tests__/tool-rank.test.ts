@@ -19,7 +19,6 @@ const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     href: "/atom/0x",
     declarations: 0,
     provenDeposits: null,
-    declaredDeposits: null,
     supportTrust: "0.001",
     opposeTrust: null,
     stakers: 0,
@@ -64,7 +63,7 @@ describe("rankTools", () => {
         facts.set("0xdead", {liveness: "dead", installs: 5_000_000});
         facts.set("0xalive", {liveness: "alive", installs: 1});
 
-        expect(rankTools([dead, alive], "declared", read).map((r) => r.key)).toEqual([
+        expect(rankTools([dead, alive], "usage", read).map((r) => r.key)).toEqual([
             "0xalive",
             "0xdead",
         ]);
@@ -73,64 +72,72 @@ describe("rankTools", () => {
         expect(rankTools([dead, alive], "stars", read)[0]?.key).toBe("0xalive");
     });
 
-    it("puts an unknown reading between alive and dead", () => {
-        const unknown = row({key: "0xunknown"});
-        const alive = row({key: "0xalive"});
-        const dead = row({key: "0xdead"});
+    it("ranks an unknown reading with the alive, above the dead", () => {
+        // A repository newer than the bundled readings, with the most deposits on the page.
+        const unknown = row({key: "0xunknown", provenDeposits: 30});
+        const alive = row({key: "0xalive", provenDeposits: 0});
+        const dead = row({key: "0xdead", provenDeposits: 99});
         facts.set("0xalive", {liveness: "alive", installs: null});
         facts.set("0xdead", {liveness: "dead", installs: null});
         facts.delete("0xunknown");
 
-        expect(rankTools([dead, unknown, alive], "declared", read).map((r) => r.key)).toEqual([
-            "0xalive",
+        expect(rankTools([dead, unknown, alive], "usage", read).map((r) => r.key)).toEqual([
             "0xunknown",
+            "0xalive",
             "0xdead",
         ]);
     });
 
     it("sorts by the axis the reader picked, inside the gate", () => {
-        const many = row({key: "0xmany", stakers: 1, declaredDeposits: 1});
-        const staked = row({key: "0xstaked", stakers: 9, declaredDeposits: 0});
-        facts.set("0xmany", {liveness: "alive", installs: 9_000});
-        facts.set("0xstaked", {liveness: "alive", installs: 2});
+        const many = row({key: "0xmany", stakers: 1, provenDeposits: 1});
+        const staked = row({key: "0xstaked", stakers: 9, provenDeposits: 0});
+        facts.set("0xmany", {liveness: "alive", installs: 2});
+        facts.set("0xstaked", {liveness: "alive", installs: 9_000});
 
-        expect(rankTools([staked, many], "installs", read)[0]?.key).toBe("0xmany");
-        // "Declared" is the Declared figure; the stake no longer has an order of its own.
-        expect(rankTools([staked, many], "declared", read)[0]?.key).toBe("0xmany");
+        expect(rankTools([many, staked], "installs", read)[0]?.key).toBe("0xstaked");
+        // Usage is the Usage figure; the stake has no order of its own.
+        expect(rankTools([staked, many], "usage", read)[0]?.key).toBe("0xmany");
     });
 
-    it("breaks a tie in agents on the stake behind them, positions before amount", () => {
-        const backed = row({key: "0xbacked", declaredDeposits: 2, stakers: 3, supportTrust: "0.5"});
-        const bare = row({key: "0xbare", declaredDeposits: 2, stakers: 0, supportTrust: "9"});
-        facts.set("0xbacked", {liveness: "alive", installs: null});
-        facts.set("0xbare", {liveness: "alive", installs: null});
-        expect(rankTools([bare, backed], "declared", read)[0]?.key).toBe("0xbacked");
+    it("breaks a tie in Usage on installs, and no deposit outside the sponsor moves it", () => {
+        const installed = row({
+            key: "0xinstalled",
+            name: "b",
+            provenDeposits: 2,
+            declarations: 0,
+            stakers: 0,
+            supportTrust: "0.1",
+        });
+        const backed = row({
+            key: "0xbacked",
+            name: "a",
+            provenDeposits: 2,
+            declarations: 99,
+            stakers: 99,
+            supportTrust: "99",
+        });
+        facts.set("0xinstalled", {liveness: "alive", installs: 5});
+        facts.set("0xbacked", {liveness: "alive", installs: 1});
+        expect(rankTools([backed, installed], "usage", read)[0]?.key).toBe("0xinstalled");
     });
 
-    it("orders Most declared by the Declared figure, not by the edge count no column shows", () => {
-        // Two edges with three deposits each print 6; three edges with one each print 3. Sorting on
-        // the edge count put the 3 above the 6 and the column did not read down in order.
-        const deep = row({key: "0xdeep", declarations: 2, declaredDeposits: 6});
-        const wide = row({key: "0xwide", declarations: 3, declaredDeposits: 3});
+    it("falls to the name when nothing else separates two tools, whatever their stake", () => {
+        const late = row({key: "0xlate", name: "zeta", stakers: 99, supportTrust: "99"});
+        const early = row({key: "0xearly", name: "alpha", stakers: 0, supportTrust: "0"});
+        facts.set("0xlate", {liveness: "alive", installs: null});
+        facts.set("0xearly", {liveness: "alive", installs: null});
+        expect(rankTools([late, early], "usage", read)[0]?.key).toBe("0xearly");
+    });
+
+    it("orders Most used by the Usage figure, not by the edge count no column shows", () => {
+        const deep = row({key: "0xdeep", declarations: 2, provenDeposits: 6});
+        const wide = row({key: "0xwide", declarations: 3, provenDeposits: 3});
         facts.set("0xdeep", {liveness: "alive", installs: null});
         facts.set("0xwide", {liveness: "alive", installs: null});
-        expect(rankTools([wide, deep], "declared", read).map((r) => r.key)).toEqual([
+        expect(rankTools([wide, deep], "usage", read).map((r) => r.key)).toEqual([
             "0xdeep",
             "0xwide",
         ]);
-    });
-
-    it("breaks a tie in Declared on Usage, and ranks an unknown below a known zero", () => {
-        const proven = row({key: "0xproven", declaredDeposits: 2, provenDeposits: 1});
-        const plain = row({key: "0xplain", declaredDeposits: 2, provenDeposits: 0});
-        const unknown = row({key: "0xunknown2", declaredDeposits: null, declarations: 9});
-        const zero = row({key: "0xzero2", declaredDeposits: 0});
-        for (const key of ["0xproven", "0xplain", "0xunknown2", "0xzero2"]) {
-            facts.set(key, {liveness: "alive", installs: null});
-        }
-        expect(
-            rankTools([unknown, plain, zero, proven], "declared", read).map((r) => r.key),
-        ).toEqual(["0xproven", "0xplain", "0xzero2", "0xunknown2"]);
     });
 
     it("sorts repositories by stars, and offers each index only the axes that mean something there", () => {
@@ -139,8 +146,31 @@ describe("rankTools", () => {
         facts.set("0xstarred", {liveness: "alive", installs: null, stars: 40_000});
         facts.set("0xused", {liveness: "alive", installs: null, stars: 10});
         expect(rankTools([used, starred], "stars", read)[0]?.key).toBe("0xstarred");
-        expect(toolSortAxesFor("skills").map((axis) => axis.id)).toEqual(["declared", "installs"]);
-        expect(toolSortAxesFor("repos").map((axis) => axis.id)).toEqual(["declared", "stars"]);
+        expect(toolSortAxesFor("skills", true).map((axis) => axis.id)).toEqual([
+            "usage",
+            "installs",
+        ]);
+        expect(toolSortAxesFor("repos", true).map((axis) => axis.id)).toEqual(["usage", "stars"]);
+    });
+
+    it("offers no order on Usage when Usage cannot be read", () => {
+        expect(toolSortAxesFor("skills", false).map((axis) => axis.id)).toEqual(["installs"]);
+        expect(toolSortAxesFor("repos", false).map((axis) => axis.id)).toEqual(["stars"]);
+    });
+
+    it("reads the Usage column down in order under Most used, unknown below a known zero", () => {
+        const proven = row({key: "0xproven", provenDeposits: 15});
+        const zero = row({key: "0xzero", provenDeposits: 0});
+        const unread = row({key: "0xunread", provenDeposits: null, declarations: 9});
+        for (const key of ["0xproven", "0xzero", "0xunread"]) {
+            facts.set(key, {liveness: "alive", installs: null});
+        }
+
+        expect(rankTools([unread, zero, proven], "usage", read).map((r) => r.key)).toEqual([
+            "0xproven",
+            "0xzero",
+            "0xunread",
+        ]);
     });
 
     it("ranks an unknown install count below a known zero", () => {
@@ -160,7 +190,7 @@ describe("rankTools", () => {
         facts.set("0xa", {liveness: "dead", installs: null});
         facts.set("0xb", {liveness: "alive", installs: null});
         const input = [first, second];
-        rankTools(input, "declared", read);
+        rankTools(input, "usage", read);
         expect(input.map((r) => r.key)).toEqual(["0xa", "0xb"]);
     });
 });

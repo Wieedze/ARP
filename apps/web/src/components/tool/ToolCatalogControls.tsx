@@ -42,7 +42,7 @@ function Segmented<T>({
             >
                 {label}
             </span>
-            <div role="group" aria-labelledby={labelId} className="flex gap-1">
+            <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-1">
                 {options.map((option) => (
                     <button
                         key={String(option.id)}

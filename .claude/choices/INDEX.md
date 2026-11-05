@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-136 decisions. Newest last. `choices/README.md` says when to write one.
+137 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -170,3 +170,4 @@ Read these before relying on them.
 | [0138](0138-a-line-is-form-b-and-money-does-not-weigh.md) | 2026-11-05 | Accepted | A line is written in form B, has a closed reason, and money does not weigh in the score |
 | [0140](0140-the-hook-records-a-skills-failure-and-only-that.md) | 2026-11-05 | Accepted | The hook records a skill's failure, in one file, and writes `worked` never |
 | [0142](0142-the-message-is-not-the-argument.md) | 2026-11-05 | Accepted | The public message is not the internal argument |
+| [0143](0143-tools-page-unknown-is-not-dead-and-most-used.md) | 2026-11-05 | Accepted | /tools counts only what the sponsor deposited for an agent |

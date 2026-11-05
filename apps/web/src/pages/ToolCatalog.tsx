@@ -11,7 +11,7 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useDomainTree} from "../hooks/use-domain-tree";
 import {useTagIndex} from "../hooks/use-tag-index";
-import {useToolCatalog} from "../hooks/use-tool-catalog";
+import {useReadsUsage, useToolCatalog} from "../hooks/use-tool-catalog";
 import {
     livenessOf,
     pageOfTools,
@@ -27,13 +27,13 @@ import {
 import {useSkillFacts} from "../hooks/use-skill-facts";
 
 /**
- * `/tools` — tools agents declared using, with what is staked behind each.
+ * `/tools` — tools, ordered by the deposits the sponsor made for an agent after checking a proof.
  *
  * Agent declarations only. The `uses` predicate is shared and most of what sits on it is ordinary
  * prose, filtered out in the query rather than shown under a caveat.
  *
- * It reads **Intuition mainnet**. The banner that used to say so is gone (ADR `0058`); the warning
- * now lives in the confirmation step, where a wallet is about to open.
+ * It reads the chain the toggle names, testnet by default (ADR `0105`). The banner that used to say
+ * mainnet is gone (ADR `0058`); the warning now lives in the confirmation step, where a wallet is about to open.
  *
  * This is the nav's "Tools" (user, 2026-10-20), so the `h1` is "Tools" and the subtitle carries the
  * population and the chain — `/` lists a different population on a different chain and still says
@@ -56,7 +56,7 @@ export function ToolCatalog() {
      * which nobody can pay to change, and above it the axis belongs to the reader with every
      * figure beside the others.
      */
-    const [chosenAxis, setChosenAxis] = useState<ToolSortAxis>("declared");
+    const [chosenAxis, setChosenAxis] = useState<ToolSortAxis>("usage");
     // Where the reader is in the ranked list. Every control that changes what is ranked sends it
     // back to the first page: page 9 of one order is not a place in another.
     const [offset, setOffset] = useState(0);
@@ -75,12 +75,15 @@ export function ToolCatalog() {
     const curveId = TOOL_CURVES[0]?.id ?? 1;
     const [searchParams, setSearchParams] = useSearchParams();
     const index: ToolIndex = searchParams.get("index") === "repos" ? "repos" : "skills";
-    const axes = toolSortAxesFor(index);
+    const query = useToolCatalog(order, curveId);
+    const view = query.data;
+    const axes = toolSortAxesFor(index, useReadsUsage());
     // Installs are a skill's figure and stars a repository's: switching index keeps the reader's
-    // axis when the other index has it, and falls back to "declared" when it does not.
+    // axis when the other index has it, and falls back to the index's first when it does not. Where
+    // Usage cannot be read, that is its installs or stars.
     const axis: ToolSortAxis = axes.some((entry) => entry.id === chosenAxis)
         ? chosenAxis
-        : "declared";
+        : (axes[0]?.id ?? "usage");
     const chooseIndex = (next: ToolIndex) => {
         setSearchParams(next === "skills" ? {} : {index: next}, {replace: true});
         setOffset(0);
@@ -107,8 +110,6 @@ export function ToolCatalog() {
     const domains = useDomainTree();
     const tags = useTagIndex(domains.tree);
     const inDomain = tags.index.idsUnder([...picked], domains.tree);
-    const query = useToolCatalog(order, curveId);
-    const view = query.data;
     /**
      * The filtered rows and what the filters could not answer, derived here rather than in the JSX.
      *
@@ -192,7 +193,7 @@ export function ToolCatalog() {
                     {view === undefined ? (
                         query.error === null ? (
                             <PageLoading label="Reading the tools">
-                                reading declared tools from the intuition graph
+                                reading tools from the intuition graph
                             </PageLoading>
                         ) : (
                             <Failure error={query.error} onRetry={() => void query.refetch()} />

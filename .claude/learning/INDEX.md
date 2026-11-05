@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-61 entries, one per completed task. Written by `task-verifier` on a pass.
+62 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -67,3 +67,4 @@
 | [57](57-the-signal.md) | `docs/tasks/66-the-signal.md` | PASS (third pass; the second and third checked only the changed sites) | The signal: what a line on chain is worth to the next search |
 | [58](58-the-positioning.md) | `docs/tasks/69-the-positioning.md` | part 1, PASS on the fourth pass, which checked only the two edits the third pass asked for | The positioning, parts 1 and 2: what ARP says in public |
 | [59](59-the-field-memory.md) | `docs/tasks/68-the-field-memory.md`, phases 1 to 4. Phases 5 and 6 are not started and are out of this close. | PASS on the fourth pass | The field memory: a failure the hook sees, read back at the next search |
+| [60](60-tools-page-sponsor-filter.md) | no task file; the spec is `.claude/choices/0143-tools-page-unknown-is-not-dead-and-most-used.md` | PASS, after earlier FAILs | /tools counts only what the sponsor deposited for an agent |

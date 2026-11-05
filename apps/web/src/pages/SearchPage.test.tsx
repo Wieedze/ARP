@@ -16,7 +16,6 @@ const tool = (name: string, label: string): ToolRow => ({
     href: `/atom/0x${name}`,
     declarations: 0,
     provenDeposits: null,
-    declaredDeposits: null,
     supportTrust: "0.001",
     opposeTrust: null,
     stakers: 0,
@@ -26,6 +25,8 @@ const CATALOG: ToolCatalogView = {
     rows: [
         tool("writing-plans", "github.com/obra/superpowers?skill=writing-plans"),
         tool("brainstorming", "github.com/obra/superpowers?skill=brainstorming"),
+        tool("wide-plans", "github.com/obra/superpowers?skill=wide-plans"),
+        {...tool("zeta-plans", "github.com/owner/zeta-plans"), source: null},
     ],
     truncated: false,
     curveId: 1,
@@ -65,10 +66,18 @@ vi.mock("../hooks/use-agent-cohort", async (importOriginal) => ({
     }),
 }));
 vi.mock("../hooks/use-tool-catalog", () => ({
+    useReadsUsage: () => false,
     useToolCatalog: () => ({data: CATALOG, error: null}),
 }));
 vi.mock("../hooks/use-skill-facts", () => ({
-    useSkillFacts: () => ({factFor: () => null, repoFactFor: () => null}),
+    useSkillFacts: () => ({
+        factFor: (label: string | null) =>
+            label?.endsWith("wide-plans") === true ? {description: "", installs: 9} : null,
+        repoFactFor: (label: string | null) =>
+            label?.endsWith("zeta-plans") === true
+                ? {stars: 5, archived: false, gone: false}
+                : null,
+    }),
 }));
 
 const search = (text: string) => {
@@ -92,6 +101,16 @@ describe("the search page (task 48)", () => {
         expect(screen.getByText("writing-plans")).toBeInTheDocument();
         expect(screen.queryByText("brainstorming")).toBeNull();
         expect(screen.getByText(/No agent by that name/)).toBeInTheDocument();
+    });
+
+    it("orders by installs where Usage cannot be read, then stars, then the name", () => {
+        renderWithProviders(<SearchPage />);
+        search("plans");
+        const names = screen.getAllByRole("link").map((link) => link.textContent ?? "");
+        const at = (name: string) => names.findIndex((text) => text.includes(name));
+        expect(at("wide-plans")).toBeGreaterThanOrEqual(0);
+        expect(at("wide-plans")).toBeLessThan(at("zeta-plans"));
+        expect(at("zeta-plans")).toBeLessThan(at("writing-plans"));
     });
 
     it("offers to open an agent typed by its ids", () => {
