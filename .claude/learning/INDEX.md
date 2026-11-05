@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-57 entries, one per completed task. Written by `task-verifier` on a pass.
+58 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -63,3 +63,4 @@
 | [53](53-the-prose-pass-against-the-positioning.md) | `docs/tasks/27-strip-the-ai-slop.md` — step 1 re-run, steps 4 and 5; step 6 dropped | PASS on the second run | The prose pass, judged against the positioning |
 | [54](54-one-path-per-profile.md) | `docs/tasks/53-one-path-per-profile.md` | PASS on the second pass | One path per profile, from the landing |
 | [55](55-one-door.md) | `docs/tasks/62-one-door.md` | PASS (second pass; first FAIL on a misplaced docstring and an ADR sentence the redirect contradicted) | One door: Register folds into Get started |
+| [56](56-the-pulse.md) | `docs/tasks/63-the-pulse.md` | PASS (fourth pass; the fourth checked only the third pass's three edits and the gates they touch) | The pulse: what a skill implies, and what agents wrote about it |
