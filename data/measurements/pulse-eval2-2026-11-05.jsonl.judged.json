@@ -1,0 +1,170 @@
+{
+ "cost": 0.2541783,
+ "judged": [
+  {
+   "need": "silences-fixed",
+   "source": "henkisdabro/wookstar-claude-plugins",
+   "skill": "ffmpeg-cli",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill is a general ffmpeg reference covering trim, filter_complex, concat and jump cuts, which is enough to detect silences and cut them out of clip.mp4 using only the installed ffmpeg, though it never names silencedetect or silenceremove."
+    },
+    {
+     "verdict": "unsure",
+     "why": "The skill covers ffmpeg basics, trimming and a 'jump cuts' topic in a reference file, but the visible SKILL.md never mentions silencedetect or silenceremove, and the reference files that might cover it were not shown."
+    }
+   ]
+  },
+  {
+   "need": "silences-fixed",
+   "source": "sundial-org/awesome-openclaw-skills",
+   "skill": "ffmpeg-video-editor",
+   "verdicts": [
+    {
+     "verdict": "off-task",
+     "why": "The skill only covers cut/trim, convert, resize, compress and similar edits with fixed timestamps, and has no silence detection or removal (silencedetect/silenceremove or segment stitching), so it does not cover removing silent passages."
+    },
+    {
+     "verdict": "off-task",
+     "why": "The skill only covers generic trim/convert/compress/etc. FFmpeg commands and has no silence detection or silence-removal guidance (e.g., silencedetect/silenceremove or segment stitching), so it does not cover removing silent passages."
+    }
+   ]
+  },
+  {
+   "need": "silences-fixed",
+   "source": "agenticluke/claude-skill-video-editing-plus",
+   "skill": "video-editing",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill covers silence detection with ffmpeg silencedetect and accurate cutting/concatenation with ffmpeg, which together with the available ffmpeg and python3 suffice to remove silent passages from clip.mp4 into output.mp4 without accounts, payment, or API keys."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill covers silencedetect to find silent passages and FFmpeg accurate cutting and concatenation to remove them and export, all doable with the installed ffmpeg and no account, payment or API key."
+    }
+   ]
+  },
+  {
+   "need": "silences-fixed",
+   "source": "affaan-m/ecc",
+   "skill": "video-editing",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill documents an ffmpeg silencedetect command to find silent segments and FFmpeg trim/concat commands to cut and join the rest, which together cover removing silence from clip.mp4 with only the installed ffmpeg, though it gives no single end-to-end silence-removal command."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill documents an ffmpeg silencedetect command to find silent segments and ffmpeg cut/concat commands to assemble the kept parts, which together cover removing silent passages from clip.mp4 into output.mp4 using only the installed ffmpeg and no account, payment or API key."
+    }
+   ]
+  },
+  {
+   "need": "silences",
+   "source": "makemyclip/editor",
+   "skill": "editor",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill documents a `silence_remove <input> [noiseDb] [minSilenceSec]` command that uses ffmpeg silencedetect, trims, and concatenates non-silent regions, runs locally via a free npx package with no account or API key, and the result can be written to output.mp4 (or copied from the tool's output path)."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill documents a `silence_remove` command (npx -y @makemyclip/editor silence_remove <input> [noiseDb] [minSilenceSec]) that trims silent regions with ffmpeg and concatenates the rest, needing no account, payment, or API key, and the output can be copied to output.mp4."
+    }
+   ]
+  },
+  {
+   "need": "silences",
+   "source": "kappaemme-git/codex-video-short-maker-skill",
+   "skill": "video-short-maker",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill's base workflow uses only ffmpeg silencedetect to cut silent passages and concatenate the non-silent segments with no account or API key, though it targets a ~45s duration by default (adjustable with --duration/--output) and has hardcoded macOS paths that would need adapting."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill's base workflow uses only ffmpeg/ffprobe silencedetect to cut silent passages and concatenate the rest into an MP4 (with --output for the path), needing no account, payment or API key, though it defaults to a 45s target duration that must be raised to keep all non-silent content and its hardcoded macOS script paths must be adapted."
+    }
+   ]
+  },
+  {
+   "need": "markdown",
+   "source": "easyzoom/aix-skills",
+   "skill": "webpage-to-markdown",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill covers converting a public URL to clean Markdown saved to a file, requires no account, payment or API key, and it can be applied per page across a list using fetch tools or free packages like python/node."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill covers converting a public URL to clean Markdown saved as a .md file, needs no account, payment or API key, and handling a list is just repeating the single-page workflow per URL using the agent's own fetch tools or a free package."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "minhhoangho/idea-to-video-skill",
+   "skill": "idea-to-video",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "Track B (narrated) turns a written script into a voice-over video using free edge-tts (no account, payment or API key; needs internet and pip install, which is allowed) plus Remotion/ffmpeg rendering to mp4, all covered within the stated limits."
+    },
+    {
+     "verdict": "usable",
+     "why": "Track B (narrated) turns a written script into a voice-over video via free edge-tts (no account, payment, or API key; just internet and a free pip install) and renders through Remotion/ffmpeg to an mp4, which fits the machine's tools."
+    }
+   ]
+  },
+  {
+   "need": "silences",
+   "source": "argus-metis/hermes-video-editing",
+   "skill": "video-editing",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill's `silence remove INPUT -o OUTPUT` command covers removing silent passages locally using free tools (ffmpeg, optionally Silero VAD via free pip install), and the API keys mentioned only apply to the optional paid cloud features, not this job."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill has a local `silence remove INPUT -o OUTPUT` command using free tools (ffmpeg, optional Silero VAD via pip), and the API-key mentions only concern optional paid cloud features that silence removal doesn't need."
+    }
+   ]
+  },
+  {
+   "need": "markdown",
+   "source": "frankxai/skills",
+   "skill": "defuddle",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "Defuddle CLI is a free npm package needing no account or key, and `defuddle parse <url> --md -o file.md` produces clean Markdown per page, which can be looped over a URL list."
+    },
+    {
+     "verdict": "usable",
+     "why": "Defuddle CLI is a free npm package (no account or API key) and `defuddle parse <url> --md -o file.md` produces clean Markdown per page, which can be looped over a URL list."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "boraoztunc/skills",
+   "skill": "hyperframes-media",
+   "verdicts": [
+    {
+     "verdict": "unsure",
+     "why": "The skill's TTS command (npx hyperframes tts script.txt --output narration.wav) uses a free local Kokoro model with no account or API key, but it covers only the voice-over audio, not assembling output.mp4 (likely a composition/render step documented in another 'hyperframes' skill not shipped here), though ffmpeg could combine audio with a generated video."
+    },
+    {
+     "verdict": "usable",
+     "why": "The `tts` command makes a voice-over from script.txt locally with Kokoro and needs no account, payment or API key, only free installs (hyperframes via npx, kokoro-onnx via pip) and a free model download, and ffmpeg can then mux the audio into output.mp4."
+    }
+   ]
+  }
+ ]
+}

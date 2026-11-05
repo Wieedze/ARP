@@ -95,8 +95,11 @@ What that table can and cannot carry:
 
 - **n is 3 to 9, on three needs, and B's rows use the later code.** It shows a direction, not a rate.
 - **The fixed-words row is a rehearsal of the mechanism.** All 3 runs of B chose the skill two ARP wallets
-  had declared. So a declaration steers a choice, and a false one would steer it just as well. That is
-  what `docs/14` says a declaration is worth.
+  had declared. ~~So a declaration steers a choice, and a false one would steer it just as well.~~ Corrected
+  by §10: a false line did not steer 5 of 5 runs, on a line a reader could catch by reading the file.
+- **~~Choosing a skill that names a key~~ is not a bad choice by itself.** §10: blind readers judged the most
+  chosen of those, `affaan-m/ecc`, usable within the person's limits. The column in the table above counts
+  a text match, and it does not measure quality.
 - **No chosen skill was run**, except the one in the walk. Choosing a skill that names no key does not
   show that it works, and naming a key does not show that it needs one.
 - **Free words often miss what is declared.** 6 of B's 9 free-word runs saw no declaration: the search is
@@ -177,3 +180,45 @@ if both readings say `usable`. Also: no choice, tool errors, whether a declarati
 
 **What this cannot answer**, whatever it shows: whether a chosen skill works, since none is run; whether an operator
 would write a line; whether a registry would read one.
+
+## 10. What the second comparison showed
+
+Read by the rules of §9, written before it ran. `bun run scripts/measure/pulse-eval/summary2.ts`, raw output
+`data/measurements/pulse-eval2-2026-11-05.jsonl` and its `.judged.json`. 65 sessions, $3.27, plus $0.25 for the
+readings. 11 distinct skills were read, and the two readings disagree on 2 of them.
+
+| Need | A, search only | B, file facts | C, real graph | D, invented lines |
+| --- | --- | --- | --- | --- |
+| Silences, fixed words | 3/5 (23-88%) | 0/5 (0-43%), 3 no choice | 5/5 (57-100%) | 5/5 (57-100%) |
+| Silences, free words | 5/5 (57-100%) | 5/5 (57-100%) | 5/5 (57-100%) | |
+| Voice-over, free words | 0/5 (0-43%), 4 no choice | 0/5 (0-43%), 5 no choice | 2/5 (12-77%), 3 no choice | |
+| Markdown, free words | 5/5 (57-100%) | 5/5 (57-100%) | 5/5 (57-100%) | |
+
+Good choices out of runs. Intervals are Wilson 95%.
+
+**Question 1, do file facts alone help?** Not established on any need, the intervals overlap. On fixed words B made
+no good choice and 3 runs refused, where A chose `affaan-m/ecc` 3 times and the readers call it usable. The setting
+aside of a named key may have removed a skill that fits, which would cut against ADR-level rule "a named key sets a
+skill aside". One need, n of 5: a lead to check, not a finding.
+
+**Question 2, do declarations add anything?** On fixed words the intervals of B and C do not overlap, the one
+separation in this table, and only on that need. It cannot carry much:
+
+- That search was chosen because it reaches the declared skill, which ARP's own wallets declared.
+- The skill was picked for the walk by reading files, so the line was seeded on a skill already known to be usable.
+- All 5 runs of C chose one skill, so this is 5 runs about one line, not 5 independent cases.
+- The likely mechanism is ordering: that skill was at position 52 of 99, outside the 15 results read without a line.
+
+On free words C saw no line that changed anything visible. On voice-over C and B differ with no declaration seen in
+either, which is a measure of the noise at this n.
+
+**Question 3, what does a false line do?** All 5 runs of D passed over the invented skill, ranked first with 3 wallets,
+for the real one with 2. This does not show that false lines are harmless: the falsity was easy to see by reading the
+file, a true line was beside it, and nothing tested a false line on a plausible skill.
+
+**Outside the questions set in §9.** Median turns and cost are lower with `arp_pulse` on all four needs (3 to 5 turns
+against 6 to 9, $0.03 to $0.04 against $0.05 to $0.09). Arm A also had more tool errors, 7 to 14 per need, not inspected;
+if they are refused commands, the harness inflates A's turns. This was not a question decided in advance.
+
+**Limits that hold for all of it.** No skill was run. A reading says what files show, and the readers called `usable` a
+skill whose file names a key. The tool errors of arm B and C were not inspected either.
