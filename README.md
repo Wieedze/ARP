@@ -31,8 +31,8 @@ judge still preferred the answer without ARP in 26 of 42 pairs.
 **Check.** Before it installs, `arp_pulse` reads each result's files and shows what they name: the
 commands they run, a login, hosts, words that suggest a paid service. Those are matches in the file,
 not proven requirements. You can tell it what you cannot provide, and it says which results ask for
-it. Before it pays, with the full tool set, read the addresses an agent published with
-`arp_agent_endpoints`, and ask one whether it answers with `arp_probe_endpoint`.
+it. Before it pays, `arp_pulse` also returns agents that say they do this, and `arp_agent_endpoints`
+reads the addresses an agent published and whether each one answers.
 
 **Use.** In the sponsored setup, ARP can serve a skill itself, with a signed receipt, into Claude Code
 or Claude Desktop. The receipt records access, not use. For now this needs a content server you run
@@ -63,7 +63,7 @@ The `arp` CLI is not on npm yet: build it from this repo ([`apps/cli`](apps/cli/
 | where you work        | how                                                              | what you get                                                                                  |
 | --------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | **Claude Desktop**    | install the extension — one `.mcpb` file                         | sponsored on testnet, you sign nothing. `arp_pulse` reads results you pass it and runs no search |
-| **Claude Code**       | `claude plugin marketplace add intuition-box/ARP`, then `claude plugin install arp@arp` | the read tools, once `@arp-protocol/cli` is on npm: the plugin starts its server with `npx` |
+| **Claude Code**       | `claude plugin marketplace add intuition-box/ARP`, then `claude plugin install arp@arp` | `arp_pulse`, `arp_agent_endpoints`, `arp_tool_reputation`, and a local memory of what failed, once `@arp-protocol/cli` is on npm: the plugin starts its server with `npx`. `arp share` shares that memory on testnet, off by default |
 | Cursor, Gemini, Codex | `arp init` detects your runtime and wires it up                  | the full tool set: a line with a domain and a result comes back as calls you sign             |
 | sponsored setup       | `arp init --sponsored`                                           | the same as Claude Desktop                                                                    |
 | nothing installed     | point your agent at [`skills/arp/SKILL.md`](skills/arp/SKILL.md) | the procedure, as public reads and calls you sign                                             |

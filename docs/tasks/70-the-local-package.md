@@ -1,6 +1,6 @@
 # Task 70 — The whole package, working locally
 
-**Status:** started 2026-11-05 on `feat/agent-pulse`. Nothing is pushed, published or hosted.
+**Status:** items 2, 4, 5, 6 and 7 done 2026-11-05 on `feat/agent-pulse`, nothing published or hosted. Item 1 works from the CLI and `--plugin-dir`; `claude plugin install` remains for the user's review. Item 3 holds for the score; what a displayed line does to a choice stays open (`docs/tasks/71`), and the user chose not to measure more.
 **Decision:** the user, 2026-11-05: « on finit tout le package en local, et quand toute la checklist est vérifiée, que tous les services sont confirmés, on avance » (spelling corrected).
 **Rules:** `code.md`, `portability.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator` where an item touches a graph read; `task-verifier` once, at the end of the checklist.
