@@ -184,3 +184,5 @@ So the first "4 or 5 searches" was too kind: 2 an hour from a fresh quota, which
 
 Live, with this address's quota at 0 on 2026-11-05 at 21:41: 15 recorded results, 6 read, 5 `read_file_only` and 1 `rate_limited`, 4 requests sent before the stop since a batch runs together. `npx skills` was not run, since the auto mode refused it to the agent session.
 
+From a fresh quota, the same day at 21:50 UTC, same script with `--live`, raw output `data/measurements/pulse-github-live-2026-11-05.txt`: two windows of recorded results, 5 read each, the remaining count going 60, 55, 50. So 5 requests a search with five new repositories, 12 searches an hour for one address with no token. Anything else on that address shares the 60.
+
