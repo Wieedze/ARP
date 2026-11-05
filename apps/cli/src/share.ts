@@ -90,7 +90,9 @@ export function describe(decision: ShareDecision & { on: boolean }): string {
   const out = [`sharing is ${decision.on ? 'on' : 'off'}`];
   if (decision.lines.length > 0) {
     out.push('', 'would be public on testnet 13579:');
-    for (const line of decision.lines) out.push(`  ${line.toolUrl}  failed  ${line.reason}`);
+    for (const line of decision.lines) {
+      out.push(`  ${line.toolUrl}  ${line.domain ?? '(no domain)'}  failed  ${line.reason}`);
+    }
   }
   if (decision.keptLocal.length > 0) {
     out.push('', 'stays on this machine:');

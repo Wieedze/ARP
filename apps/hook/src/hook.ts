@@ -77,7 +77,7 @@ import { type Classified, classifyCall } from './classify.ts';
 import { readMcpServers, serverUrlOf } from './mcp-config.ts';
 import { capture } from './capture.ts';
 import { type PayloadFormat, type ToolCall, toolCallOf } from './payload.ts';
-import { recordSkillFailure } from './skill-failure.ts';
+import { recordSearch, recordSkillFailure } from './skill-failure.ts';
 
 type Invocation = {
   at: string;
@@ -270,6 +270,8 @@ if (call.tool === 'Bash') {
   recordSkillFailure(call, cwd);
   process.exit(0);
 }
+
+if (call.tool.endsWith('__arp_pulse')) recordSearch(call, cwd);
 
 const what = whatOf(call, cwd, () => fetchedRefs(cwd));
 if (what === null) process.exit(0);

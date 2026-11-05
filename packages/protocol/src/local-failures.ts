@@ -1,7 +1,7 @@
 import {isUsageReason, type UsageReason} from "./declare/usage-context.js";
 
 /** One line of `<arpHome>/failures.jsonl`, which the runtime hook writes (`docs/tasks/68`). */
-export type LocalFailure = {at: string; skill: string; source: string | null; reason: UsageReason};
+export type LocalFailure = {at: string; skill: string; source: string | null; domain?: string; reason: UsageReason};
 
 /** What this machine already hit with a skill: sessions per reason. `byNameOnly`: a line named no source, so it may be a namesake. */
 export type YourFailures = {reasons: Partial<Record<UsageReason, number>>; last: string; byNameOnly: boolean};
@@ -13,10 +13,10 @@ export function parseLocalFailures(text: string): LocalFailure[] {
         if (line.trim() === "") continue;
         try {
             const row = JSON.parse(line) as Record<string, unknown>; // read field by field below
-            const {at, skill, source, reason} = row;
+            const {at, skill, source, domain, reason} = row;
             if (typeof at !== "string" || typeof skill !== "string" || typeof reason !== "string") continue;
             if (!isUsageReason(reason)) continue;
-            rows.push({at, skill, source: typeof source === "string" ? source : null, reason});
+            rows.push({at, skill, source: typeof source === "string" ? source : null, ...(typeof domain === "string" ? {domain} : {}), reason});
         } catch {
             continue;
         }

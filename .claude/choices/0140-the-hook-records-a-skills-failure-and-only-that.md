@@ -36,3 +36,8 @@ The hook never writes `worked`, because no error does not show that the job was 
 - Related task: `docs/tasks/68-the-field-memory.md`
 - Related ADR: `.claude/choices/0090-what-the-hook-records.md`
 - Related doc: `docs/22_RUNNING_THE_NODE.md`, `docs/28_THE_SIGNAL.md`
+
+## Amendment, 2026-11-05 (`docs/tasks/70` item 2; not yet validated by the user)
+
+The hook also keeps what `arp_pulse` answered, in `.arp/searches.jsonl`: the session, the domain and the skills found with their source, never the query. A failure of a skill that a search of that session found takes that domain and source. With no such search it has no domain: none is invented. The skill's own category was not used, because it says what a skill is for and not the context in which it failed, and the catalogue does not hold what `npx skills find` returns.
+

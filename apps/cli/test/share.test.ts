@@ -79,6 +79,6 @@ test('the summary says what would be public and what stays', () => {
   expect(off).not.toContain('would be public');
   setSharing(env, true);
   const on = describeShare(decide(env));
-  expect(on).toContain('https://github.com/a/b?skill=clip  failed  missing-key');
+  expect(on).toContain('https://github.com/a/b?skill=clip  (no domain)  failed  missing-key');
   expect(on).toContain('my-private-skill: no known public source');
 });

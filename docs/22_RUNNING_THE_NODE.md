@@ -84,10 +84,13 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 ~/.arp/receipt-key     the signing key. Generated on first run, mode 0600
 .arp/session.jsonl     what the hook recorded, if you wired the hook
 ~/.arp/failures.jsonl  a skill's failures the hook saw, or `arp backfill` read from old transcripts:
-                       the skill, its source, the session, the date and a closed reason. Never
+                       the skill, its source, the session, the date, a closed reason, and the domain
+                       of the search that found it, if any. Never
                        the command or its output. Stays on this machine unless you run `arp share on`
 ~/.arp/sharing.json    whether failures may become public lines. Absent means off
-~/.arp/shared-failures.jsonl  what has been made public: a skill's public URL, `failed`, a closed reason
+~/.arp/shared-failures.jsonl  what has been made public: a skill's public URL, `failed`, a closed reason, and a domain if known
+.arp/searches.jsonl    what `arp_pulse` answered, if you wired the hook: the session, the domain, the skills
+                       found and their source. Never your query. Stays on this machine
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
 ~/.arp/skills-cli/     the search package's home, mode 0700, with npm's cache of that package.

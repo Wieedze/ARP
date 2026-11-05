@@ -95,6 +95,15 @@ describe("decideShare", () => {
         expect(decided.lines).toEqual([]);
     });
 
+    it("carries the domain when there is one, as another sentence", () => {
+        const failures = [failure(), failure({domain: "video"})];
+        const {lines} = decideShare({on: true, failures, installed, alreadyShared: none});
+        expect(lines).toEqual([
+            {toolUrl: "https://github.com/a/b?skill=clip", outcome: "failed", reason: "missing-key"},
+            {toolUrl: "https://github.com/a/b?skill=clip", outcome: "failed", domain: "video", reason: "missing-key"},
+        ]);
+    });
+
     it("reads a plugin's skill by its last part", () => {
         const {lines} = decideShare({on: true, failures: [failure({skill: "tools:clip"})], installed, alreadyShared: none});
         expect(lines[0]?.toolUrl).toBe("https://github.com/a/b?skill=clip");

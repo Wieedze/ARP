@@ -64,6 +64,73 @@ export function askedBySkill(command: string, markdown: string, directory: strin
   );
 }
 
+const DOMAIN = /^[a-z0-9][a-z0-9-]*$/;
+
+/** The JSON text of an MCP answer: Claude Code hands the hook a list of blocks (seen 2026-11-05, 2.1.318). */
+function answerOf(response: unknown): Record<string, unknown> | null {
+  const blocks = Array.isArray(response)
+    ? response
+    : typeof response === 'object' && response !== null && Array.isArray((response as { content?: unknown }).content) // checked on this line
+      ? ((response as { content: unknown[] }).content)
+      : [response];
+  for (const block of blocks) {
+    const text = typeof block === 'string' ? block : (block as { text?: unknown } | null)?.text; // a block's text, or nothing
+    if (typeof text !== 'string') continue;
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (typeof parsed === 'object' && parsed !== null) return parsed as Record<string, unknown>; // checked on this line
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+const searchesPath = (cwd: string) =>
+  join(dirname(process.env['ARP_SESSION_LOG'] ?? join(cwd, '.arp', 'session.jsonl')), 'searches.jsonl');
+
+/**
+ * Keeps what `arp_pulse` answered in this session: its domain, a closed word, and the skills it
+ * found with their source. So a later failure can say in which context the skill was chosen. Never
+ * the query, which is the person's words. Nothing leaves here.
+ */
+export function recordSearch(call: ToolCall, cwd: string): void {
+  if (call.session === null) return;
+  const answer = answerOf(call.response);
+  if (answer === null || !Array.isArray(answer['skills'])) return;
+  const domain = typeof answer['domain'] === 'string' && DOMAIN.test(answer['domain']) ? answer['domain'] : null;
+  const skills = (answer['skills'] as { name?: unknown; source?: unknown }[]).flatMap((row) => // read field by field
+    typeof row?.name === 'string' && typeof row.source === 'string' ? [{ name: row.name, source: row.source }] : [],
+  );
+  if (skills.length === 0) return;
+  try {
+    const path = searchesPath(cwd);
+    mkdirSync(dirname(path), { recursive: true });
+    appendFileSync(path, `${JSON.stringify({ session: call.session, domain, skills })}\n`);
+  } catch {
+    // A session must not fail because a record could not be kept.
+  }
+}
+
+/** The latest search of this session that found this skill, or nothing. */
+function foundBySearch(cwd: string, session: string, skill: string): { domain: string | null; source: string } | null {
+  const path = searchesPath(cwd);
+  if (!existsSync(path)) return null;
+  const name = skill.split(':').pop() ?? skill;
+  let found: { domain: string | null; source: string } | null = null;
+  for (const line of readFileSync(path, 'utf8').split('\n')) {
+    try {
+      const row = JSON.parse(line) as { session?: unknown; domain?: unknown; skills?: { name: string; source: string }[] }; // our own file
+      if (row.session !== session) continue;
+      const hit = row.skills?.find((entry) => entry.name === name);
+      if (hit !== undefined) found = { domain: typeof row.domain === 'string' ? row.domain : null, source: hit.source };
+    } catch {
+      continue;
+    }
+  }
+  return found;
+}
+
 /** Skills this session used, the latest first. A missing or half-written log is an empty list. */
 function skillsOfSession(log: string, session: string): { name: string; source: string | null }[] {
   if (!existsSync(log)) return [];
@@ -106,6 +173,8 @@ export type FailureLine = {
   session: string;
   skill: string;
   source: string | null;
+  /** The domain of the search that found this skill in this session. Absent when none did. */
+  domain?: string;
   reason: DetectedReason;
 };
 
@@ -142,7 +211,15 @@ export function recordSkillFailure(call: ToolCall, cwd: string): void {
       if (directory === null) continue;
       if (!askedBySkill(command, readFileSync(join(directory, 'SKILL.md'), 'utf8'), directory)) continue;
 
-      appendFailure({ at: new Date().toISOString(), session: call.session, skill: skill.name, source: skill.source, reason });
+      const search = foundBySearch(cwd, call.session, skill.name);
+      appendFailure({
+        at: new Date().toISOString(),
+        session: call.session,
+        skill: skill.name,
+        source: skill.source ?? search?.source ?? null,
+        ...(search?.domain != null ? { domain: search.domain } : {}),
+        reason,
+      });
       return;
     }
   } catch {

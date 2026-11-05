@@ -525,6 +525,62 @@ function askedBySkill(command, markdown, directory) {
   const named = new Set([...cli, ...runs]);
   return programsOf(command).some((program) => named.has(program) || program.includes(".") && new RegExp(`(?:^|[\\s\`'"/(])${escaped(program)}(?=[\\s\`'")]|$)`, "m").test(markdown));
 }
+var DOMAIN = /^[a-z0-9][a-z0-9-]*$/;
+function answerOf(response) {
+  const blocks = Array.isArray(response) ? response : typeof response === "object" && response !== null && Array.isArray(response.content) ? response.content : [response];
+  for (const block of blocks) {
+    const text = typeof block === "string" ? block : block?.text;
+    if (typeof text !== "string")
+      continue;
+    try {
+      const parsed = JSON.parse(text);
+      if (typeof parsed === "object" && parsed !== null)
+        return parsed;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+var searchesPath = (cwd) => join3(dirname(process.env["ARP_SESSION_LOG"] ?? join3(cwd, ".arp", "session.jsonl")), "searches.jsonl");
+function recordSearch(call, cwd) {
+  if (call.session === null)
+    return;
+  const answer = answerOf(call.response);
+  if (answer === null || !Array.isArray(answer["skills"]))
+    return;
+  const domain = typeof answer["domain"] === "string" && DOMAIN.test(answer["domain"]) ? answer["domain"] : null;
+  const skills = answer["skills"].flatMap((row) => typeof row?.name === "string" && typeof row.source === "string" ? [{ name: row.name, source: row.source }] : []);
+  if (skills.length === 0)
+    return;
+  try {
+    const path = searchesPath(cwd);
+    mkdirSync2(dirname(path), { recursive: true });
+    appendFileSync(path, `${JSON.stringify({ session: call.session, domain, skills })}
+`);
+  } catch {}
+}
+function foundBySearch(cwd, session, skill) {
+  const path = searchesPath(cwd);
+  if (!existsSync(path))
+    return null;
+  const name = skill.split(":").pop() ?? skill;
+  let found = null;
+  for (const line of readFileSync2(path, "utf8").split(`
+`)) {
+    try {
+      const row = JSON.parse(line);
+      if (row.session !== session)
+        continue;
+      const hit = row.skills?.find((entry) => entry.name === name);
+      if (hit !== undefined)
+        found = { domain: typeof row.domain === "string" ? row.domain : null, source: hit.source };
+    } catch {
+      continue;
+    }
+  }
+  return found;
+}
 function skillsOfSession(log, session) {
   if (!existsSync(log))
     return [];
@@ -584,7 +640,15 @@ function recordSkillFailure(call, cwd) {
         continue;
       if (!askedBySkill(command, readFileSync2(join3(directory, "SKILL.md"), "utf8"), directory))
         continue;
-      appendFailure({ at: new Date().toISOString(), session: call.session, skill: skill.name, source: skill.source, reason });
+      const search = foundBySearch(cwd, call.session, skill.name);
+      appendFailure({
+        at: new Date().toISOString(),
+        session: call.session,
+        skill: skill.name,
+        source: skill.source ?? search?.source ?? null,
+        ...search?.domain != null ? { domain: search.domain } : {},
+        reason
+      });
       return;
     }
   } catch {}
@@ -686,6 +750,8 @@ if (call.tool === "Bash") {
   recordSkillFailure(call, cwd);
   process.exit(0);
 }
+if (call.tool.endsWith("__arp_pulse"))
+  recordSearch(call, cwd);
 var what = whatOf(call, cwd, () => fetchedRefs(cwd));
 if (what === null)
   process.exit(0);

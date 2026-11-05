@@ -5,15 +5,15 @@ import type {LocalFailure} from "./local-failures.js";
 /**
  * What may leave a machine from its local failure memory (`docs/tasks/70` item 2).
  *
- * **Off unless the person turned it on**, and only ever three fields: a public skill, `failed`, and a
- * closed reason. Never a session, a date or a path. `worked` is never here, because the hook cannot
+ * **Off unless the person turned it on**, and only ever a public skill, `failed`, a closed reason, and
+ * the domain of the search that found the skill when there was one. Never a session, a date or a path. `worked` is never here, because the hook cannot
  * tell it (ADR `0140`).
  *
  * **A skill with no known public source stays local.** A hook line usually has no source, and a skill
  * can be private: its name alone must not reach a public graph, and a name resolved by guessing
  * would write a line about somebody else's repository.
  */
-export type SharedLine = {toolUrl: string; outcome: "failed"; reason: UsageReason};
+export type SharedLine = {toolUrl: string; outcome: "failed"; domain?: string; reason: UsageReason};
 
 /** What is known about where an installed skill came from. */
 export type InstalledSkill = {skill: string; source: string};
@@ -67,9 +67,9 @@ export function installedFromReceipts(text: string | null): InstalledSkill[] {
     return found;
 }
 
-/** A key for one sentence: the same skill and reason is one line, however often it failed. */
+/** A key for one sentence: the same skill, domain and reason is one line, however often it failed. */
 export function sharedLineKey(line: SharedLine): string {
-    return `${line.toolUrl}\u0000${line.reason}`;
+    return `${line.toolUrl}\u0000${line.domain ?? ""}\u0000${line.reason}`;
 }
 
 export function decideShare(params: {
@@ -103,6 +103,7 @@ export function decideShare(params: {
         const line: SharedLine = {
             toolUrl: `https://github.com/${source}?skill=${encodeURIComponent(name)}`,
             outcome: "failed",
+            ...(failure.domain === undefined ? {} : {domain: failure.domain}),
             reason: failure.reason,
         };
         const key = sharedLineKey(line);
