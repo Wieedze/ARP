@@ -1,0 +1,176 @@
+{
+ "at": "2026-11-05T18:30:11.115Z",
+ "chosen": {
+  "task": "shock-analysis-supply",
+  "skills": [
+   {
+    "ref": "ethanfoell/skills@excel-finance-workbooks",
+    "commit": "7f3afa2e22010c0ec8fc5d899333e20ade881835",
+    "path": "skills/finance/excel-finance-workbooks/SKILL.md",
+    "folder": "skills/finance/excel-finance-workbooks"
+   },
+   {
+    "ref": "gaaiyun/excel-skill@excel-skill",
+    "commit": "f7e1e4b43c6e87822160113e0d53cb61676de80a",
+    "path": "SKILL.md",
+    "folder": "."
+   },
+   {
+    "ref": "haomingz/kimi-skills@xlsx",
+    "commit": "0ed44c8b4ae17e2967436e7fa82e77f5a97505f3",
+    "path": "skills/xlsx/SKILL.md",
+    "folder": "skills/xlsx"
+   },
+   {
+    "ref": "sandbaseai/sandbase-skills@excel-generator",
+    "commit": "cbab58188611e626ccaf54ac346b437d12ea4729",
+    "path": "marketing/excel-generator/SKILL.md",
+    "folder": "marketing/excel-generator"
+   },
+   {
+    "ref": "budyai/cashflow@finance-standards",
+    "commit": "d2e14f77912db3cc37d56e79104f2613285a9b74",
+    "path": ".claude/skills/finance-standards/SKILL.md",
+    "folder": ".claude/skills/finance-standards"
+   }
+  ]
+ },
+ "ranking": "1. **haomingz/kimi-skills@xlsx**: Strongest on formula deployment and mandatory recalculation, but it requires Python/openpyxl and ipython, which you are barred from. Needs a non-Python recalculation path.\n2. **ethanfoell/skills@excel-finance-workbooks**: Best fit for the workbook structure (named lookups, sanity checks, single sources of truth), but it doesn't cover Solver or HP filters. Needs those from you.\n3. **gaaiyun/excel-skill@excel-skill**: Useful formula reference (TREND, lookups), but built around openpyxl generation you can't use. Needs an Excel instance to calculate formulas.\n4. **sandbaseai/sandbase-skills@excel-generator**: Good verification checklist, but aimed at building new workbooks and optional paid SandBase data pulls. Needs you to preserve the existing template and avoid unneeded external calls.\n5. **budyai/cashflow@finance-standards**: Only covers variance-analysis and CFO-commentary conventions, which this potential-GDP model doesn't use. Nothing needed beyond ignoring it.\n\nNone of the five covers the Playwright scraping of the IMF WEO and ECB data, so that step will rely on your own tooling.",
+ "readerCostUsd": 0.00733055,
+ "tasks": [
+  {
+   "task": "shock-analysis-supply",
+   "read": 11,
+   "qualified": [
+    "ethanfoell/skills@excel-finance-workbooks",
+    "gaaiyun/excel-skill@excel-skill",
+    "haomingz/kimi-skills@xlsx",
+    "sandbaseai/sandbase-skills@excel-generator",
+    "budyai/cashflow@finance-standards"
+   ],
+   "seen": [
+    {
+     "ref": "ethanfoell/skills@excel-finance-workbooks",
+     "commit": "7f3afa2e22010c0ec8fc5d899333e20ade881835",
+     "path": "skills/finance/excel-finance-workbooks/SKILL.md",
+     "description": "Build, audit, maintain, and refactor Excel finance workbooks — budget vs. actuals, forecasts, reconciliations, and reporting models. Use when creating a new finance workbook, opening an existing one for the first time, reviewing whether its structure supports reliable ongoing use, refactoring fragile formulas or sheet dependencies, or maintaining a workbook across multiple AI sessions.",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "qualifies": true
+    },
+    {
+     "ref": "looskis/moolaski@moolaski-financial-analyst",
+     "commit": "9915aaea6833e3414b66ada91eb747c2f1caf336",
+     "path": "skills/moolaski-financial-analyst/SKILL.md",
+     "description": "A financial analyst that answers money questions with a working Excel model. It pins down the question, gathers the inputs, builds a live-formula workbook with a checks sheet, proves it ties, and leads with the answer and what would change it. Covers DCF, comps, LBOs, merger models, three-statement forecasts, operating budgets and budget-vs-actual, 13-week cash flows, capital budgeting, startup cap tables, project finance, real-estate acquisitions and development, rentals, flips, GP/LP waterfalls, scenarios and breakevens, and audits of models someone else built. Use when the user asks what a company, project or property is worth, whether a deal or investment works, whether the company will run out of cash, or for a \"DCF\", \"comps\", \"LBO\", \"merger model\", \"3-statement model\", \"budget\", \"variance\", \"13-week cash flow\", \"NPV\", \"cap table\", \"SAFE\", \"project finance\", \"DSCR\", \"pro forma\", \"rent roll\", \"cap rate\", \"waterfall\", \"IRR\", \"sensitivity\", \"what if\", or to \"review\" or \"fix\" a model.",
+     "answers": [
+      "no",
+      "yes"
+     ],
+     "qualifies": false
+    },
+    {
+     "ref": "anthropics/claude-plugins-community@tres-report-analyzer",
+     "commit": "06ec7b6a0a82bdc4bec44bd82d4368c42f20d7c1",
+     "path": "tres-finance-plugin/skills/tres-report-analyzer/SKILL.md",
+     "description": "Analyze any TRES Finance report XLSX and produce an automatic findings summary. Trigger this skill whenever a user uploads a .xlsx file that came from TRES Finance and asks to \"analyze\", \"summarize\", \"review\", \"check\", \"audit\", \"look at\", \"what does this show\", \"any issues\", \"anything interesting\", or \"walk me through\" the report. Also trigger when the user uploads an Excel file and mentions TRES, reconciliation, balances, transactions, cost basis, roll forward, or ERP sync. The skill identifies the report type from the file structure, runs targeted analysis based on report-specific logic, and produces a clear findings summary highlighting anomalies, key metrics, and action items.",
+     "answers": [
+      "no",
+      "no"
+     ],
+     "qualifies": false
+    },
+    {
+     "ref": "genspark-ai/genoffice@personal-finance",
+     "commit": "f8c17004fb730df11f0f743164ffd8b4281bb38c",
+     "path": "skills/recommended/personal-finance/SKILL.md",
+     "description": "Turn income, spending and goals into a monthly budget and savings plan with actionable adjustments, delivered as an Excel workbook",
+     "answers": [
+      "no",
+      "no"
+     ],
+     "qualifies": false
+    },
+    {
+     "ref": "gaaiyun/excel-skill@excel-skill",
+     "commit": "f7e1e4b43c6e87822160113e0d53cb61676de80a",
+     "path": "SKILL.md",
+     "description": "Generate Excel workbooks (.xlsx) with industry-specific templates for finance, FMCG, e-commerce, and internet/SaaS scenarios. Use this skill when the user wants to (1) create an Excel template with formulas, formatting, and charts; (2) build a dashboard or report; (3) analyze data with pivot tables or Power Query; (4) automate Excel generation in Python via openpyxl; (5) audit AI-generated openpyxl code for common pitfalls (formula-as-string, data_only flag misuse). Provides progressive-disclosure access to formulas, pivot tables, Power Query, charts, openpyxl, pandas-excel, and 4 industry template libraries. Chinese-friendly. Designed to make AI-generated Excel code paste-and-run.",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "qualifies": true
+    },
+    {
+     "ref": "haomingz/kimi-skills@xlsx",
+     "commit": "0ed44c8b4ae17e2967436e7fa82e77f5a97505f3",
+     "path": "skills/xlsx/SKILL.md",
+     "description": "Specialized utility for advanced manipulation, analysis, and creation of spreadsheet files, including (but not limited to) XLSX, XLSM, CSV formats. Core functionalities include formula deployment, complex formatting (including automatic currency formatting for financial tasks), data visualization, mandatory post-processing recalculation, and finance-focused Excel modeling workflows such as three-statement models, DCF valuation, and public comps analysis.",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "qualifies": true
+    },
+    {
+     "ref": "eaglef6432614/stock-master@stock-master",
+     "commit": "82c7599707f78c2634747e36294701926d0720ca",
+     "path": "SKILL.md",
+     "description": "综合性股票技术分析工具，小白友好。采用混合数据源（Yahoo Finance + Alpha Vantage MCP），提供交互式HTML可视化报告（Lightweight Charts K线图+技术叠加+Swing标注+趋势线+S/R色带）和通俗易懂的分析文字、买卖点建议、Excel持仓管理。支持港股本地计算、ATR动态止损、KDJ随机指标、MACD/RSI背离检测、OBV量能分析、斐波那契支撑阻力位、K线形态识别（锤子线/吞没/十字星）、趋势形态识别（双底/头肩/三角形）。支持TradingView跳转、飞书多维表格同步。当用户请求股票分析、技术指标、交易建议、持仓分析时激活。",
+     "answers": [
+      "no",
+      "no"
+     ],
+     "qualifies": false
+    },
+    {
+     "ref": "aojdevstudio/finance-guru@fin-guru-create-doc",
+     "commit": "a7ff9421e24e38fcb33d7b6ae51f6749081c5e61",
+     "path": ".claude/skills/fin-guru-create-doc/SKILL.md",
+     "description": "\"Write a Finance Guru document from a template in fin-guru/templates/, such as an analysis report, buy ticket, compliance memo, Excel model spec, presentation, or onboarding report. Use when finished analysis must become a dated file in analysis/ or tickets/. Not for the analysis itself (use fin-guru-quant-analysis or fin-guru-research) or a PDF ticker report (use finance-report).\"",
+     "answers": [
+      "no",
+      "no"
+     ],
+     "qualifies": false
+    },
+    {
+     "ref": "sandbaseai/sandbase-skills@excel-generator",
+     "commit": "cbab58188611e626ccaf54ac346b437d12ea4729",
+     "path": "marketing/excel-generator/SKILL.md",
+     "description": "\"Create, edit, analyze, and verify professional Excel workbooks for general business and operational use. Use when the deliverable is an .xlsx file; use a finance-specific modeling workflow for valuation or regulated financial models.\"",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "qualifies": true
+    },
+    {
+     "ref": "cklaozhao-boop/skills@excel-bookkeeper",
+     "commit": "8ab7282a18ee79ad8cee233565e6949768236a36",
+     "path": "skills/excel-bookkeeper/SKILL.md",
+     "description": "Use for personal or small-business bookkeeping in Excel workbooks. Triggers on requests to log income, expenses, or transfers, set up an Excel ledger, define a user's finance system, or turn natural-language transaction messages into structured records. Supports Chinese and English bookkeeping flows.",
+     "answers": [
+      "no",
+      "no"
+     ],
+     "qualifies": false
+    },
+    {
+     "ref": "budyai/cashflow@finance-standards",
+     "commit": "d2e14f77912db3cc37d56e79104f2613285a9b74",
+     "path": ".claude/skills/finance-standards/SKILL.md",
+     "description": "Apply when analyzing financial data, writing reports, or working with Excel files",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "qualifies": true
+    }
+   ]
+  }
+ ]
+}

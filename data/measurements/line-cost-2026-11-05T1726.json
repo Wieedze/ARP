@@ -1,0 +1,44 @@
+{
+ "at": "2026-11-05T17:26:01.947Z",
+ "chain": 13579,
+ "vaultFeesOverTenThousand": [
+  "100",
+  "100",
+  "100"
+ ],
+ "general": [
+  "0x4Ff2D2D253827897210bf1f29713f8389f55C68E",
+  "0x4Ff2D2D253827897210bf1f29713f8389f55C68E",
+  "10000",
+  "1445479635899882954996644783802455677789109005646",
+  "1000000000000000",
+  "1000000",
+  "1000",
+  "100000000000000000"
+ ],
+ "createFee": "1000000002000000",
+ "depositOneLevel": "1000000000000000",
+ "redeemBack": "980100000000000",
+ "roundTripLoss": "19900000000000",
+ "createFeeOverRoundTripLoss": 50.25125638190955,
+ "edges": 185,
+ "edgesWithAHolderOtherThanTheirWriter": 34,
+ "toolsWhoseWalletCountWouldHaveChanged": 9,
+ "largestChanges": [
+  {
+   "tool": "0xd006d48b6be455713a076af5fc34046233e51ce1f85a544b8eb9fe762b9ff975",
+   "walletsThatWroteAnEdge": 1,
+   "walletsWithAPositionToo": 16
+  },
+  {
+   "tool": "0x4c301beda47a7e16085bda1e86fb4e14bf5de40fa413cbdbc45d445d08ce519d",
+   "walletsThatWroteAnEdge": 1,
+   "walletsWithAPositionToo": 11
+  },
+  {
+   "tool": "0x6cf977f274782296374d17fefca32b45c42181eab2d1d513b161cf83eabb17b1",
+   "walletsThatWroteAnEdge": 2,
+   "walletsWithAPositionToo": 9
+  }
+ ]
+}

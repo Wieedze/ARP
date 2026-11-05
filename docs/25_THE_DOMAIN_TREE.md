@@ -273,9 +273,12 @@ Each carries a position, cost plus `minDeposit` (ADR `0053`), or the index does 
 
 - **Agents and people may propose.** An agent meets the missing category at the moment it needs
   one; a person rarely comes back to fill a gap.
-- **On testnet 13579 the sponsor writes it as the index's attestor** (`ARP_DOMAIN_ATTESTOR`), within
-  a daily limit, so the category appears in the index at once. A category written by anyone else
-  stays on the chain and out of the index.
+- **On testnet 13579 the sponsor writes it as one of the index's two attestors**
+  (`ARP_DOMAIN_ATTESTORS`, ADR `0124`), within a daily limit, so the category appears in the index at
+  once. A category written by anyone else stays on the chain and out of the index.
+- **So ARP's index is a curation, and it is called one.** Anyone can write to the graph. What ARP's
+  index shows is what ARP's two accounts hold a position on. A reader who wants another reading sets
+  `ARP_DOMAIN_ATTESTOR` to other accounts, which is §5: a tree is a reading of the graph.
 - **The user reviews after the fact, not before.** A weekly list of new categories and their
   reasons. One that duplicates another leaves the index when the attestor withdraws its position;
   it stays on the chain, because Intuition deletes nothing.

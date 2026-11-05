@@ -417,6 +417,7 @@ A skill listed through the sponsoring service reaches the chain but not `data/ca
 content server answers `unknown-atom` and a search says `file_not_read` until someone re-runs the
 measurements (ADR `0132`). Asked for implicitly by the usage demo, 2026-11-03; not built.
 
+<<<<<<< ours
 ## The delegation register, read side
 
 **Left 2026-11-03**, when task 37 closed at 37b and 37c (`docs/tasks/37`). Publishing works on
@@ -430,3 +431,44 @@ back yet:
 
 It depends on "Who pays on mainnet" above: if the operator funds the agent's wallet, nothing redeems
 a delegation and this read has no user.
+=======
+## A market on whether it worked
+
+**Asked 2026-11-05.** _« worked c'est pas mal car propose aussi de se positionner sur oppose et donc
+avoir un marché de worked ou pas et enfin une utilité pour les contre curve »_, then _« pour la
+question du marché on verra plus tard, honnêtement c'est pas le focus, même si on peut l'écrire dans
+futur »_ (spelling corrected).
+
+`uses` is a fact, so its opposing side has little to say. `worked` is a judgement, so it can be
+disputed. Neither `pulse-usage.ts` nor `pulse-score.ts` reads an opposing side today.
+
+**The shape proposed, not decided.** One line is a poor market: only the two parties know what
+happened, and a hire receipt holds hashes, so a third party has nothing to judge by. So two levels:
+
+| Level | Triple | What it is |
+| --- | --- | --- |
+| The testimony | `((hirer uses agent, in context of, domain), has outcome, worked)` | One attributed use, backed by its receipt |
+| The market | `(agent, works in, domain)` and its opposing side | A shared opinion, where the deposits gather |
+
+`works in` is an example and does not exist. The first row is form B (`docs/28`, ADR `0138`, the one
+on `feat/pulse`).
+
+ADR `0138` also says the amount deposited never reaches the score, so a market would sit beside the
+score, unless the user changes that.
+
+**What stands against it.** Nothing ever settles the market, and `docs/12` forbids ARP from measuring
+whether an agent was right, so a curve rewards being early and followed rather than being right. An
+active opposing side is not a given: 1 of 185 `uses` declarations on mainnet 1155 had one on
+2026-10-21. And it depends on the next entry.
+
+## Sybil on receipts and on the score
+
+**Asked 2026-11-05.** _« à faire une fois qu'on a réglé les autres choses »_. Deferred before that by
+ADR `0138`.
+
+A receipt that holds shows that two keys dealt with each other, not that they are two people. Task 65
+passed every check with one operator on both sides. The score counts distinct wallets
+(`pulse-score.ts`), so several wallets buy several votes.
+
+Ordered after the effect on the search and the depth of the tree are established.
+>>>>>>> theirs
