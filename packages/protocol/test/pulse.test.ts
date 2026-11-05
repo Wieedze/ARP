@@ -367,3 +367,25 @@ describe("spending GitHub's hourly limit", () => {
     });
 });
 
+
+describe("githubPulseSource, against a host that accepts and never answers", () => {
+    const silent = ((_url: unknown, init?: RequestInit) =>
+        new Promise((_, reject) => {
+            init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+        })) as typeof fetch; // only the two arguments used here
+
+    it("gives up on each kind of read at its limit", async () => {
+        const source = githubPulseSource({fetch: silent, timeoutMs: 20, token: "t"});
+        await expect(source.listing("a/b")).rejects.toBeDefined();
+        await expect(source.repository("a/b")).rejects.toBeDefined();
+        await expect(source.file("a/b", "SKILL.md")).rejects.toBeDefined();
+    });
+
+    it("stops every read when the caller's own signal fires", async () => {
+        const stop = new AbortController();
+        const source = githubPulseSource({fetch: silent, timeoutMs: 60_000, signal: stop.signal});
+        const reading = source.file("a/b", "SKILL.md");
+        stop.abort();
+        await expect(reading).rejects.toBeDefined();
+    });
+});

@@ -127,6 +127,7 @@ export type ListingCache = {
 /** Beyond this a repository is a collection, and reading each file's name costs too much per ask. */
 export const MAX_SKILL_FILES_READ = 200;
 const MAX_SCRIPTS_READ = 5;
+const GITHUB_READ_TIMEOUT_MS = 10_000;
 
 /**
  * Where the installer looks first, in its order (`skills` 1.7.6, `PRIORITY_PREFIXES`). It keeps the
@@ -462,11 +463,26 @@ type GitHubTree = {
  * repository's figures are left out with `withRepository: false`, lists come from `cache` when one is
  * given, and once GitHub says the limit is reached nothing more is asked of it.
  * `raw.githubusercontent.com` is not on that quota.
+ *
+ * Every request is bounded, its body included: a host that accepts and never answers otherwise holds a read
+ * for Node's own 300 s. `signal` stops them all, for a caller with a limit of its own.
  */
 export function githubPulseSource(
-    options: {fetch?: typeof fetch; token?: string; withRepository?: boolean; cache?: ListingCache} = {},
+    options: {
+        fetch?: typeof fetch;
+        token?: string;
+        withRepository?: boolean;
+        cache?: ListingCache;
+        timeoutMs?: number;
+        signal?: AbortSignal;
+    } = {},
 ): PulseSource {
     const get = options.fetch ?? fetch;
+    const timeoutMs = options.timeoutMs ?? GITHUB_READ_TIMEOUT_MS;
+    const bounded = (): AbortSignal => {
+        const limit = AbortSignal.timeout(timeoutMs);
+        return options.signal === undefined ? limit : AbortSignal.any([limit, options.signal]);
+    };
     const headers: Record<string, string> = {
         accept: "application/vnd.github+json",
         "user-agent": "arp-pulse",
@@ -493,7 +509,7 @@ export function githubPulseSource(
         if (cached !== null && cached !== undefined) return cached;
         if (quota.limited) return "rate_limited";
         quota.apiRequests += 1;
-        const response = await get(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, {headers});
+        const response = await get(`https://api.github.com/repos/${repo}/git/trees/HEAD?recursive=1`, {headers, signal: bounded()});
         if (noteLimit(response)) return "rate_limited";
         if (!response.ok) return "unreachable";
         const body = (await response.json()) as GitHubTree; // validated field by field below
@@ -519,7 +535,7 @@ export function githubPulseSource(
     const readRepository = async (repo: string): Promise<SkillRepository | null> => {
         if (options.withRepository === false || quota.limited) return null;
         quota.apiRequests += 1;
-        const response = await get(`https://api.github.com/repos/${repo}`, {headers});
+        const response = await get(`https://api.github.com/repos/${repo}`, {headers, signal: bounded()});
         noteLimit(response);
         if (!response.ok) return null;
         // validated field by field below
@@ -544,7 +560,7 @@ export function githubPulseSource(
         repository: (repo) => once(repositories, repo, readRepository),
         file: async (repo, path) => {
             const encoded = path.split("/").map(encodeURIComponent).join("/");
-            const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`);
+            const response = await get(`https://raw.githubusercontent.com/${repo}/HEAD/${encoded}`, {signal: bounded()});
             return response.ok ? response.text() : null;
         },
         quota: () => ({...quota}),
