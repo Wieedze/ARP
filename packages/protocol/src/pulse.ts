@@ -201,6 +201,23 @@ export function parseSkillsFind(output: string): SkillSearchResult[] {
     return results;
 }
 
+/**
+ * Merge several searches: a skill several of them rank high comes first (reciprocal rank fusion). The search
+ * takes words literally, and short phrases found far more than one sentence (`docs/tasks/64` §5).
+ */
+export function fuseSearches(lists: readonly (readonly SkillSearchResult[])[]): SkillSearchResult[] {
+    const scores = new Map<string, {row: SkillSearchResult; score: number}>();
+    for (const list of lists) {
+        list.forEach((row, rank) => {
+            const key = `${row.source}@${row.skill}`;
+            const entry = scores.get(key) ?? {row, score: 0};
+            entry.score += 1 / (60 + rank);
+            scores.set(key, entry);
+        });
+    }
+    return [...scores.values()].sort((a, b) => b.score - a.score).map((entry) => entry.row);
+}
+
 /** The frontmatter's `name`, unquoted. `null` when there is none, which an installer also skips. */
 export function frontmatterName(markdown: string): string | null {
     const lines = markdown.split("\n");

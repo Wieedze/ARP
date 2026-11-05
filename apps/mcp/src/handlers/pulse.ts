@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 
 import {
   findDeclaredTools,
+  fuseSearches,
   findToolAtoms,
   getPulseUsage,
   githubPulseSource,
@@ -35,6 +36,8 @@ import { type JsonRpcId, fail, text } from '../rpc.js';
 const run = promisify(execFile);
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 20;
+/** A ceiling on what one call asks of a service that is not ours. */
+const MAX_PHRASES = 4;
 
 /**
  * The version the comparison ran on. 1.7.4 returns at most 20 results where this returns up to 100, so
@@ -231,8 +234,13 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
 export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const query = args['query'];
   const given = args['search_output'];
-  if ((typeof query !== 'string' || query.trim() === '') && typeof given !== 'string') {
-    return fail(id, -32602, 'pass `query`, or `search_output` holding the text of `npx skills find`');
+  const phrasesRaw = args['queries'];
+  const phrases = Array.isArray(phrasesRaw)
+    ? phrasesRaw.filter((entry): entry is string => typeof entry === 'string' && entry.trim() !== '').slice(0, MAX_PHRASES)
+    : [];
+  if (typeof query === 'string' && query.trim() !== '' && phrases.length < MAX_PHRASES && !phrases.includes(query)) phrases.push(query);
+  if (phrases.length === 0 && typeof given !== 'string') {
+    return fail(id, -32602, 'pass `queries`, `query`, or `search_output` holding the text of `npx skills find`');
   }
   const limitRaw = args['limit'];
   const limit = typeof limitRaw === 'number' ? Math.min(Math.max(1, Math.floor(limitRaw)), MAX_LIMIT) : DEFAULT_LIMIT;
@@ -240,23 +248,24 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const askedDomain = typeof domainRaw === 'string' && domainRaw.trim() !== '' ? domainRaw.trim().toLowerCase() : null;
   const constraints = readConstraints(args['constraints']);
 
-  let output: string;
+  let lists: SkillSearchResult[][];
   if (typeof given === 'string') {
-    output = given;
+    lists = [parseSkillsFind(given)];
   } else {
-    const found = await search(String(query));
-    if ('error' in found) {
+    const found = await Promise.all(phrases.map(search));
+    const answered = found.flatMap((entry) => ('output' in entry ? [entry.output] : []));
+    if (answered.length === 0) {
+      const first = found[0];
       return text(id, {
         search: 'unavailable',
-        detail: found.error,
+        detail: first !== undefined && 'error' in first ? first.error : 'no search ran',
         next: 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`',
       });
     }
-    output = found.output;
+    lists = answered.map(parseSkillsFind);
   }
 
-  const searched: SkillSearchResult[] = parseSkillsFind(output);
-  if (searched.length === 0 && typeof query !== 'string') return text(id, { search: 'search_output', results: [] });
+  const searched: SkillSearchResult[] = fuseSearches(lists);
 
   // Everything about the public record degrades to "unknown", and the file facts still come: the first
   // comparison lost 4 of 9 runs to one failed read.
@@ -270,7 +279,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   try {
     if (scored) {
       const tree = await readDomainTree(domainWalk());
-      if (domain === null && typeof query === 'string') domain = inferDomain(query, tree.subtree(DOMAIN_ROOT));
+      if (domain === null && phrases.length > 0) domain = inferDomain(phrases.join(' '), tree.subtree(DOMAIN_ROOT));
       if (domain !== null) scope = new Set(tree.subtree(domain).concat(domain));
       const declared =
         scope === null
@@ -359,6 +368,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
 
   return text(id, {
     search: typeof given === 'string' ? 'search_output' : 'npx skills find',
+    ...(phrases.length > 1 ? { phrases } : {}),
     results_found: results.length,
     results_read: pulses.length,
     order: scored

@@ -139,7 +139,7 @@ export const TOOLS = [
     name: 'arp_pulse',
     description:
       'Before installing a skill: search with `npx skills find` and read what each result implies, from its own ' +
-      'files, with what agents wrote about it. Pass `query`, a few words for the need. In a host where ' +
+      'files, with what agents wrote about it. Pass `queries`, 3 short phrases worded differently. In a host where ' +
       '`npx` does not run, pass the command\'s text as `search_output`. Each result gives what its file ' +
       'mentions (key names, a login, paid words, hosts), the CLI it declares and commands it runs, its size and scripts, ' +
       'which other repositories hold the same content with their install figures, and `usage`: the ' +
@@ -150,7 +150,14 @@ export const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: 'A few words for the need: "video editing".' },
+        query: { type: 'string', description: 'A few words for the need: "video editing". Prefer `queries`.' },
+        queries: {
+          type: 'array',
+          items: { type: 'string' },
+          description:
+            'Up to 4 short phrases for the need, 2 to 4 words each, worded differently: "trim silence video", ' +
+            '"auto cut silence". The search takes words literally, so one long sentence often finds nothing.',
+        },
         search_output: {
           type: 'string',
           description: 'The text of `npx skills find <query>`, when this host cannot run it. Replaces `query`.',

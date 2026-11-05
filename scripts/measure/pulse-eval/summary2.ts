@@ -39,7 +39,7 @@ console.log(`runs ${rows.length}, $${rows.reduce((sum, row) => sum + row.costUsd
 const split = judged.filter((row) => new Set(row.verdicts.map((entry) => entry.verdict)).size > 1);
 console.log(`skills read ${judged.length}, readings that disagree ${split.length}`);
 for (const need of ["silences-fixed", "silences", "voiceover", "markdown"]) {
-    for (const arm of ["A", "B", "C", "D", "S", "F"]) {
+    for (const arm of ["A", "B", "C", "D", "S", "F", "M"]) {
         const cell = rows.filter((row) => row.need === need && row.arm === arm);
         if (cell.length === 0) continue;
         const choices = new Map<string, number>();

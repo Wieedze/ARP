@@ -548,6 +548,7 @@ export {
  */
 export {
     frontmatterName,
+    fuseSearches,
     githubPulseSource,
     groupByContent,
     MAX_SKILL_FILES_READ,

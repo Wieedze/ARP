@@ -2,6 +2,7 @@ import {describe, expect, it} from "vitest";
 
 import {
     frontmatterName,
+    fuseSearches,
     groupByContent,
     parseSkillsFind,
     readPulse,
@@ -84,6 +85,23 @@ describe("parseSkillsFind", () => {
 
     it("lists a repeated result once", () => {
         expect(parseSkillsFind("a/b@c 1 install\na/b@c 1 install\n")).toHaveLength(1);
+    });
+});
+
+describe("fuseSearches", () => {
+    const row = (skill: string) => result("a/b", skill);
+
+    it("puts first what several searches rank high, and keeps each skill once", () => {
+        const fused = fuseSearches([
+            [row("only-first"), row("both")],
+            [row("both"), row("only-second")],
+        ]);
+        expect(fused.map((entry) => entry.skill)).toEqual(["both", "only-first", "only-second"]);
+    });
+
+    it("gives one search its own order, and nothing for none", () => {
+        expect(fuseSearches([[row("x"), row("y")]]).map((entry) => entry.skill)).toEqual(["x", "y"]);
+        expect(fuseSearches([])).toEqual([]);
     });
 });
 

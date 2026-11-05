@@ -27,7 +27,7 @@ import {join, resolve} from "node:path";
 
 import {githubPulseSource, readPulse} from "../../packages/protocol/src/pulse.ts";
 
-type Arm = "A" | "B" | "C" | "D" | "S" | "F";
+type Arm = "A" | "B" | "C" | "D" | "S" | "F" | "M";
 type Need = {id: string; ask: string; domain: string; have: string[]; words?: string};
 
 const MACHINE = ["ffmpeg", "ffprobe", "python3", "node", "npx", "git"];
@@ -86,7 +86,9 @@ function prompt(need: Need, arm: Arm): string {
     const search =
         arm === "A"
             ? `Search with: npx skills find "${words}".`
-            : arm === "S" || arm === "F"
+            : arm === "M"
+              ? `Search with the arp_pulse tool: queries, 3 short phrases of 2 to 4 words worded differently, and the constraints this person gave.`
+              : arm === "S" || arm === "F"
               ? `Search with the arp_pulse tool: query "${words}", and the constraints this person gave.`
               : `Search with the arp_pulse tool: query "${words}", domain "${need.domain}", and the constraints this person gave.`;
     return [
