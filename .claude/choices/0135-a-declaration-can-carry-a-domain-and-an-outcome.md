@@ -51,6 +51,8 @@ plus the first-time atoms. `(edge, has outcome, worked)` and `(edge, has outcome
 stand, since an agent can use a tool twice; a reader sees both. A triple has one creator and later
 writers only deposit, so reading the creator misses a later backer.
 
+**A mainnet port is blocked until a writer's control of the agent is proven.**
+
 **Latent, none reached today (`intuition-integrator`, 2026-11-05; all `has outcome` triples on 13579
 were written by their edge's creator):**
 
@@ -60,6 +62,8 @@ were written by their edge's creator):**
   agent's owner closes it where a registry is readable.
 - **A sponsored edge's creator is the treasury** (31 of 184 `uses` edges on 13579), so an agent's own
   qualifier on it lands in `byOthers`.
+- **The reader filters outcomes to the two words and not domains**, so any wallet can put free text in
+  `by_domain` or `written_by_others`. An ordering only compares the domain asked about.
 - **A domain and an outcome are sibling triples**, so one edge with `audio`, `video` and `worked` counts
   as worked in both.
 - **Unlike a declaration's plan, this one reads no preview**, as `category.ts` does not. It relies on

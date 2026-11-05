@@ -86,6 +86,10 @@ describe("who stands behind a qualifier", () => {
         expect(usage?.byOthers).toEqual([]);
     });
 
+    it("asks only for positions that still hold shares, so a wallet that exited does not count", () => {
+        expect(PULSE_QUALIFIERS_QUERY).toContain('positions(where: {shares: {_gt: "0"}})');
+    });
+
     it("ignores an outcome outside the two words", async () => {
         const usage = (await read([use("0x1", "a")], [qualifier("0x1", OUTCOME, "best skill ever")])).get(TOOL);
         expect(usage?.byOutcome).toEqual({});
