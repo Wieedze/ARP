@@ -26,8 +26,8 @@ With `pulse-score-2`, one wallet saying `worked` took a skill in the middle of a
 
 **Negative:**
 - **The first real lines do not move it either.** On 13579 no skill has 3 wallets saying the same thing, so no real line moves any ranking today, and a skill the search placed low stays low: task 64's one separation came from a line reaching the agent through the order, and that path now needs 3 wallets.
-- **In simulation the threshold costs more than it saves**, in the worlds written so far (`docs/tasks/71` §2): 1.3 to 4.6 points without false wallets, and a gain in one cell of nine with false wallets. Invented worlds, exploratory.
-- **It protects the ranking, not the reading.** A line is still shown. `docs/tasks/71` §1 measures what that does.
+- **In simulation the threshold costs more than it saves**, in the worlds written so far (`docs/tasks/71` §3): 1.3 to 4.6 points without false wallets, and with false wallets a gain with an interval above zero in two cells of nine. Invented worlds, exploratory.
+- **It holds the score, not the reading.** A line is still shown. In `docs/tasks/71` §4 a favourite went from 8/15 to 1/15 after one false `failed` line was shown, with the search's order also shifting and a third arm at 5/15 with no line about it. So whether one false line still moves choices is open.
 - **Three wallets are cheap.** A line held on deposits costs about 50 times less than one written (ADR `0138`). This raises the price of a lie by a factor of 3. It does not stop a person with several wallets.
 
 ## References

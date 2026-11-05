@@ -37,6 +37,7 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
+import { lineSubjectCheck } from '../src/categories.ts';
 import { assertSponsorChain, KeyFileError, readKeyFile } from '../src/key-file.ts';
 import { SponsorLedger } from '../src/ledger.ts';
 import { intuitionJsonPinner } from '../src/pin.ts';
@@ -2241,5 +2242,42 @@ describe('POST /line', () => {
     const answer = await post(lineService(w), { request: await request({ domain: '', outcome: 'worked', reason: '' }) });
     expect(answer.status).toBe(200);
     expect(w.sent.filter((c) => c.kind === 'create-triple')).toHaveLength(2);
+  });
+});
+
+describe('lineSubjectCheck', () => {
+  const real = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = real;
+  });
+  const answering = (status: number, body: unknown) => {
+    globalThis.fetch = (async () => new Response(JSON.stringify(body), { status })) as unknown as typeof fetch; // the one call this reads
+    return lineSubjectCheck('http://index')(`0x${'77'.repeat(32)}`);
+  };
+  const thing = (url: unknown) => ({ data: { atom: { value: { thing: { url } } } } });
+
+  test('accepts a URL on GitHub', async () => {
+    expect(await answering(200, thing('https://github.com/a/b?skill=s'))).toBe('github');
+  });
+
+  test('refuses an agent, whose Thing has a URL on another host', async () => {
+    expect(await answering(200, thing('https://8004scan.io/agents/13579/2'))).toBe('other');
+  });
+
+  test('refuses a host that only looks like GitHub', async () => {
+    expect(await answering(200, thing('https://github.com.evil.example/a/b'))).toBe('other');
+  });
+
+  test('refuses a URL it cannot read', async () => {
+    expect(await answering(200, thing('not a url'))).toBe('other');
+  });
+
+  test('says unseen when the index has no document', async () => {
+    expect(await answering(200, { data: { atom: null } })).toBe('unseen');
+    expect(await answering(200, thing(null))).toBe('unseen');
+  });
+
+  test('throws on an index that does not answer, so the route says try again', async () => {
+    await expect(answering(429, {})).rejects.toThrow('the index answered 429');
   });
 });

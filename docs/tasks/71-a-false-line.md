@@ -33,6 +33,12 @@
 
 **How little this can show.** From 8/15, only 0/15 gives intervals that do not overlap (0-20% against 30-75%). So `F-failed` can catch only a line that all but removes the favourite. A smaller move reads as not established.
 
+**Corrected after the runs:** that sentence is wrong. 1/15 (1.19-29.82%) also clears 8/15 (30.12-75.19%), and it is the result §4 rests on. It stays as written before the runs.
+
+**How the off-choice was picked.** §1 says the first skill `S`'s answer lists that no run chose. With 5 orders that is ambiguous: in the first run it gives `makemyclip/editor`. The most listed such skill was taken, an interpretation made before the treatment arms ran.
+
+**What a stranger can check.** The freeze and the replaced rule reached git only in `ced1b29`, after every arm ran. The order rests on this session's log and the timestamps in the raw file: `d4ff324` holds §1 as first written, and the first treatment row is 18:44:47 UTC.
+
 ## 2. The cost of the threshold, written before it ran
 
 `bun run scripts/measure/signal-sim.ts --round 3`, invented worlds, no agent, no chain. `tool` against `tool` with the threshold, world by world, 300 worlds per cell, in `base`, `sparse`, and with 1, 2 and 20 false wallets on each of the 3 worst skills per domain, at 50, 200 and 1,000 agents.
@@ -51,7 +57,7 @@
 | 2 false wallets | -6.2 [-9.2, -3.2] | -2.3 [-4.3, -0.4] | -0.5 [-1.4, 0.5] |
 | 20 false wallets | -1.8 [-3.0, -0.6] | +1.1 [0.3, 1.9] | +1.6 [-0.3, 3.5] |
 
-**In these worlds the threshold costs more than it saves.** It gains where it was built to, one false wallet among few agents, and in one cell with 20. With 2 false wallets it loses most at 50 agents, which was not expected and is not explained: an honest line can complete a liars' count to 3. This does not reverse the user's choice, and a false line moving every choice is a harm this average does not weigh: agents in these worlds do not lose trust in the tool. The user should read this table.
+**In these worlds the threshold costs more than it saves.** It gains where it was built to, one false wallet among few agents, and in one cell with 20. With 2 false wallets it loses most at 50 agents, which was not expected and is not explained. One candidate, untested: an honest line can complete a liars' count to 3. This does not reverse the user's choice, and a false line moving every choice is a harm this average does not weigh: agents in these worlds do not lose trust in the tool. The user should read this table.
 
 ## 4. What §1 showed
 
@@ -63,13 +69,15 @@
 | `F-failed`, 1 false `failed` on `auto-editor` | 1/15 (1.2-29.8%) | 15 | 4/15 |
 | `F-worked`, 1 false `worked` on `monkeyboiii/video-master` | 0/15 (0-20.4%), against 0/15 in `S` | 9 | never |
 
-**The reading.** `F-failed` against `S`: the intervals do not overlap, by 0.3 of a point, and by the rule that counts as different. **So one false `failed` line, with no reason, was followed by agents leaving the favourite, even with the ranking held.** `kappaemme-git`'s skill went from 6 to 13.
+**The reading.** `F-failed` against `S`: the intervals do not overlap, by 0.3 of a point, and by the rule that counts as different. **So one false `failed` line, with no reason, was followed by agents leaving the favourite, with the score held.** The order the agent saw was not held, as below. `kappaemme-git`'s skill went from 6 to 13.
 
-**It cannot be called the reading alone**, by the rule of §1. The target was first in fewer runs of that arm, 4/15 against 9/15, and the score does not produce that, so it is the search answering differently. Going by position, exploratory: when the target was first, it was chosen 6 of 9 in `S`, 1 of 4 in `F-failed` and 3 of 5 in `F-worked`, and when fourth, 2 of 5, 0 of 10 and 1 of 6. That leans the same way, on very few runs.
+**It cannot be called the reading alone**, by the rule of §1. The target was first in fewer runs of that arm, 4/15 against 9/15, and the score does not produce that, so the agent's own words or the search answered differently, and the raw file holds no query to tell which. Going by position, exploratory: when `auto-editor` was first, it was chosen 6 of 9 in `S`, 1 of 4 in `F-failed` and 3 of 5 in `F-worked`, and when fourth, 2 of 5, 0 of 10 and 1 of 6. That leans the same way, on very few runs.
+
+**The other control.** `auto-editor` was chosen 5/15 (15.2-58.3%) in `F-worked`, an arm with no line about it. That interval overlaps `F-failed`'s 1/15, so against this baseline the same comparison is not established. An exact test, exploratory and not part of the rule, gives p = 0.014 for 8/15 against 1/15 and p = 0.17 for 5/15 against 1/15. The baseline moves a lot between arms at this n, and the separation of §1's rule rests on 0.3 of a point.
 
 `F-worked`: a false `worked` on a skill never chosen did not get it chosen, 0/15 on both sides, in 9 runs that saw it. Not established as no effect: it was listed in only 9, and one need cannot say.
 
 **Limits.** One need, one day, one skill, the same search. The line had no reason: a reason could read differently. Tool errors, 11, 10 and 5 per arm, were not inspected. No skill ran, so nothing says the choice got worse.
 
-**What it means for the choice of design 1.** The threshold holds the ranking, and in this run a single line still moved the choice through reading it. What the user asked to protect, that one false line does not move every choice, is therefore **not established by the threshold alone**: a line shown below the threshold may need to be shown differently, or not at all. That is the user's decision.
+**What it means for the choice of design 1.** The threshold holds the score. In this run a choice fell after a single line was shown, and this cannot say how much of that was the line. So **whether one false line still moves choices is open**: the threshold is not shown to be enough, and it is not shown to be insufficient either. A line shown below the threshold may need to be shown differently. That is the user's decision, and a larger run on this one question would settle more than this one did.
 

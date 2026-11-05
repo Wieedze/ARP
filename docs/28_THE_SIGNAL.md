@@ -89,7 +89,7 @@ flowchart TD
 | The reason | Not shown useful. A condition worth testing: where the good skills are the ones that need something, +0.6 to +2.7 points, found in an exploratory round |
 | The proof, at a weight of 2 | Alone, +4.5 against liars without receipts and -12.1 when they hold receipts. With the other details, -0.4 and -20. **So its weight is 1**, and no receipt is read today |
 
-False wallets cost a plain count about 12 points (77.8% to 65.7%). What `arp_pulse` computes today, domain and reason without proof, was not run against them.
+False wallets cost a plain count about 12 points (77.8% to 65.7%). This table predates the threshold. With it, in the same invented worlds, `arp_pulse`'s reading loses 1.3 to 4.6 points without false wallets, and gains with an interval above zero in two of nine cells with them (`docs/tasks/71` §3).
 
 ## Open
 

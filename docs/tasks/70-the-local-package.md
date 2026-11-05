@@ -93,11 +93,11 @@ The real search package was not run in this check, and no agent in a session has
 
 ## Item 1, what shows it
 
-From this repository's CLI, not yet from a plugin's own install, which is step 4 of the local walk. Local sponsor on port 3277 with a budget of 0.1 tTRUST and one line a day:
+From this repository's CLI, not from a plugin's own install, whose `marketplace add` and `install` remain in the local walk. Local sponsor on port 3277 with a budget of 0.1 tTRUST and one line a day:
 
     ARP_SPONSOR=http://127.0.0.1:3277 bun run apps/cli/src/cli.ts line --tool "https://github.com/Wieedze/ARP?skill=arp" --domain development --outcome failed --reason missing-file
 
-The first two tries were refused in clear words, `"software" is not a category under tool` and the same for `ai`, and spent nothing on a line. The third wrote a test line on 13579, about ARP's own skill, which did not really fail: T1 `0x2d2b8c4a…` to T4 `0x5867cd0e…`, 0.018 tTRUST in value for the run (0.006 of listing, 0.012 for the line) plus gas, with the local agent `0x56BC52…` holding a position on each level and the treasury as creator (`data/measurements/pulse-lines-*.json`). A second line was refused, `1 sponsored lines a day per agent, reached`. `getPulseUsage` reads one nested line, `development`, `failed`, `missing-file`, written by that agent and not by the treasury.
+The first two tries were refused in clear words, `"software" is not a category under tool` and the same for `ai`, and spent nothing on a line. The third wrote a test line on 13579, about ARP's own skill, which did not really fail: T1 `0x2d2b8c4a…` to T4 `0x5867cd0e…`, 0.018 tTRUST in value for the run (0.006 of listing, 0.012 for the line) plus gas, with the local agent `0x56BC52…` holding a position on each level and the treasury as creator (read from the index by `term_id`; `data/measurements/pulse-lines-*.json` holds what the reader returns). A second line was refused, `1 sponsored lines a day per agent, reached`. `getPulseUsage` reads one nested line, `development`, `failed`, `missing-file`, written by that agent and not by the treasury.
 
 **A trap:** the listing takes GitHub's own spelling, so `Wieedze/ARP` was listed as `intuition-box/ARP`, and a search under the old name does not reach the line. `writeLine` returns the URL it wrote under, as `toolUrl`.
 
