@@ -99,3 +99,13 @@ quality plus noise) and says nothing about real skills. Last 20% of agents, 400 
 In this model the score moves agents to a skill that works well more than to the true best, and it recovers from 50 false wallets at the cost of the
 agents who come first: 15% success among the last 10 of 50 agents, against 76% for the search. **Thompson sampling did worse than the score in every
 row but the first**, so the recommendation to add it to the sequential test is withdrawn. All of this depends on the assumptions.
+
+## 5. Discovery, written before it ran
+
+`scripts/measure/discovery-bench.ts`, raw output `data/measurements/discovery-bench-2026-11-05.json`. Twelve needs, each as a person would say it. Four
+strategies: `raw` searches the sentence; `terse` drops the small words; `expanded` fuses `terse` with three short phrases a model wrote; `reranked` orders `expanded`'s
+top 30 by how many of those words a skill's description holds. A blind judge rates each skill 0, 1 or 2 from its name and description, twice.
+
+**How it will be read, decided now.** Paired by need. A strategy counts as better than `raw` only if it is up on at least 10 of 12 needs (a sign test, about p < 0.04 two-sided);
+anything less is reported as not established. A rating says what a description claims, not that the skill works. The needs were written by the author of the
+strategies, and search results are one day's. Whether fusing searches costs too many calls is decided after, not by this.
