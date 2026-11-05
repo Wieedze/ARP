@@ -74,9 +74,12 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
       if (!(await reads.termExists(request.tool))) {
         return json({ error: 'the tool has no atom: list it first (POST /list-tool)', rule: 'tool' }, 422);
       }
-      // Only a tool: a line about an agent's atom would lift that agent in a list ordered on `worked`.
-      if (!(await categories.isTool(request.tool))) {
-        return json({ error: 'this term is not a listed tool, or the index has not seen it yet', rule: 'tool' }, 422);
+      const about = await lines.subject(request.tool);
+      if (about === 'other') {
+        return json({ error: 'a sponsored line is about a skill or repository on GitHub', rule: 'tool' }, 422);
+      }
+      if (about === 'unseen') {
+        return json({ error: 'the index has no document for this tool yet', rule: 'tool', retry: true }, 422);
       }
       usesId = await reads.tripleId(subject, options.usesPredicate, request.tool);
       edgeExists = await reads.termExists(usesId);

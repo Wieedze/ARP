@@ -359,7 +359,8 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
       const error = String(answer.body['error'] ?? '');
       const notIndexedYet =
         (answer.status === 403 && /no identity atom on the graph/.test(error)) ||
-        (answer.status === 422 && /the index has not seen it yet/.test(error));
+        (answer.status === 422 && answer.body['retry'] === true) ||
+        (answer.status === 503 && answer.body['retry'] === true);
       if (notIndexedYet && Date.now() < deadline) {
         await wait(5_000);
         continue;

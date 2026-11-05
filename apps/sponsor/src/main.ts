@@ -61,7 +61,7 @@ import deployments from '../../../data/deployments/13579.json';
 import { assertSponsorChain, readKeyFile } from './key-file.ts';
 import { nullOnRevert } from './routes/context.ts';
 import { SponsorLedger } from './ledger.ts';
-import { categoryLog, categoryTree, compoundsFrom, toolCheck } from './categories.ts';
+import { categoryLog, categoryTree, compoundsFrom, lineSubjectCheck, toolCheck } from './categories.ts';
 import { resolveOnGitHubCached } from './github.ts';
 import { repoSpellingsOnGraph } from './indexer.ts';
 import { intuitionJsonPinner, intuitionPinner } from './pin.ts';
@@ -346,7 +346,10 @@ const service = createSponsor({
   resolveTool: (url) => resolveOnGitHubCached(url),
   repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
   // ADR `0135`, `0144`: the predicate a line's domain is written with.
-  lines: { inContextOf: deployments.arp.endpointBinding.inContextOf as Hex },
+  lines: {
+    inContextOf: deployments.arp.endpointBinding.inContextOf as Hex,
+    subject: lineSubjectCheck(deployments.chain.graphqlUrl),
+  },
   categories: {
     ...CATEGORY_TREE,
     isTool: toolCheck(deployments.chain.graphqlUrl),

@@ -192,7 +192,7 @@ export type SponsorOptions = {
     log(entry: CategoryLogEntry): void;
   } | null;
   /** What `POST /line` needs (ADR `0144`), with `categories` for the domain. Absent, it answers 503. */
-  lines?: { inContextOf: Hex } | null;
+  lines?: { inContextOf: Hex; subject(atomId: Hex): Promise<'github' | 'other' | 'unseen'> } | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
   /** Where a failed request's detail goes, redacted. `console.error` by default. */

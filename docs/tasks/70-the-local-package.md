@@ -149,3 +149,4 @@ Then, reading each output:
 
 It writes that this skill failed for want of a program, which is true of a machine without `web2md`, permanently on testnet 13579. A second run of `arp share send` must say `sent 0`.
 
+**Note on item 4's evidence:** `wallets_worked 2, wallets_failed 1` predates `payers` reaching the agent path (`d590849`). It should now read 1 and 0 on that agent, and was not re-run.

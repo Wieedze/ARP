@@ -88,6 +88,18 @@ describe("writeLine", () => {
         await expect(writeLine(config, agent, INPUT)).resolves.toMatchObject({termId: ATOM});
     });
 
+    it("waits while the index has no document for the tool, or cannot be read", async () => {
+        const first = setup((_body, calls) => (calls === 1 ? {status: 422, body: {error: "no document yet", retry: true}} : ok));
+        await expect(writeLine(first.config, first.agent, INPUT)).resolves.toMatchObject({termId: ATOM});
+        const second = setup((_body, calls) => (calls === 1 ? {status: 503, body: {error: "the chain could not be read", retry: true}} : ok));
+        await expect(writeLine(second.config, second.agent, INPUT)).resolves.toMatchObject({termId: ATOM});
+    });
+
+    it("does not wait on a refusal that will not change", async () => {
+        const {config, agent} = setup(() => ({status: 422, body: {error: "a sponsored line is about a skill or repository on GitHub", rule: "tool"}}));
+        await expect(writeLine(config, agent, INPUT)).rejects.toThrow("about a skill or repository on GitHub");
+    });
+
     it("says what the sponsor refused", async () => {
         const {config, agent} = setup(() => ({status: 429, body: {error: "5 sponsored lines a day per agent, reached"}}));
         await expect(writeLine(config, agent, INPUT)).rejects.toThrow("the sponsor refused the line (429): 5 sponsored lines a day per agent, reached");

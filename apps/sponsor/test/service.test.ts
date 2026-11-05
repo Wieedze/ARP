@@ -2051,7 +2051,7 @@ describe('POST /line', () => {
   const lineService = (w: World, over: Partial<Parameters<typeof createSponsor>[0]> = {}) =>
     sponsor(w, {
       wallet: chainLike(w),
-      lines: { inContextOf: IN_CONTEXT },
+      lines: { inContextOf: IN_CONTEXT, subject: async () => 'github' },
       categories: {
         isCategory: async (label) => label === 'video',
         isKnown: async () => true,
@@ -2190,24 +2190,19 @@ describe('POST /line', () => {
     expect(w.sent).toHaveLength(0);
   });
 
-  test('refuses a term that is not a tool, such as an agent', async () => {
+  test('refuses a term that is not on GitHub, such as an agent', async () => {
     const w = seeded();
-    const answer = await call(
-      lineService(w, {
-        categories: {
-          isCategory: async () => true,
-          isKnown: async () => true,
-          isTool: async () => false,
-          invalidate: () => undefined,
-          compounds: new Map(),
-          attestors: [],
-          log: () => undefined,
-        },
-      }),
-      '/line',
-      { request: await request() },
-    );
+    const service = lineService(w, { lines: { inContextOf: IN_CONTEXT, subject: async () => 'other' } });
+    expect((await call(service, '/line', { request: await request() })).status).toBe(422);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('tells the client to try again when the index has no document yet', async () => {
+    const w = seeded();
+    const service = lineService(w, { lines: { inContextOf: IN_CONTEXT, subject: async () => 'unseen' } });
+    const answer = await call(service, '/line', { request: await request() });
     expect(answer.status).toBe(422);
+    expect(answer.body.retry).toBe(true);
     expect(w.sent).toHaveLength(0);
   });
 

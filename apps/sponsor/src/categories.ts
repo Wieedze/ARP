@@ -51,6 +51,35 @@ export function categoryTree(graphqlUrl: string) {
   };
 }
 
+/**
+ * What `POST /line` may be about (ADR `0144`): an atom whose `url` is on GitHub. `unseen` is an atom the index
+ * has no document for, yet or for good. Any other URL is refused, because every agent's Thing has one too, and a
+ * line about an agent would lift it in a list ordered on `worked`. A tool that is only an endpoint is refused with it.
+ */
+export function lineSubjectCheck(graphqlUrl: string): (atomId: string) => Promise<'github' | 'other' | 'unseen'> {
+  return async (atomId) => {
+    const response = await fetch(graphqlUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        query:
+          'query LineSubject($id: String!) { atom(term_id: $id) { value { thing { url } } } }',
+        variables: { id: atomId },
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) throw new Error(`the index answered ${response.status}`);
+    const body = (await response.json()) as { data?: { atom?: { value?: { thing?: { url?: string } | null } | null } | null } }; // read by shape
+    const url = body.data?.atom?.value?.thing?.url;
+    if (typeof url !== 'string') return 'unseen';
+    try {
+      return new URL(url).hostname === 'github.com' ? 'github' : 'other';
+    } catch {
+      return 'other';
+    }
+  };
+}
+
 /** Whether an atom is a skill or tool: a Thing whose `url` is a tool URL, per the indexer. */
 export function toolCheck(graphqlUrl: string): (atomId: string) => Promise<boolean> {
   return async (atomId) => {
