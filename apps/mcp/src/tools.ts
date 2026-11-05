@@ -591,7 +591,7 @@ export const DESKTOP_TOOLS = [
     name: 'arp_declare_used',
     description:
       'After a skill from `arp_get_skill` actually helped with the task, record publicly that you ' +
-      'used it, so others can see which skills get used. ARP pays for it and supports the record in ' +
+      'used it, so others can see what was declared about it. ARP pays for it and supports the record in ' +
       'your name; nothing is asked of the person. Only for a skill you used, never for one you only ' +
       'read. The first time takes about a minute.',
     inputSchema: {

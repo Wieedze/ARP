@@ -11,18 +11,20 @@
 
    **No daily rate is quoted here, and that is deliberate.** Two observations the same day: the id rose from 309,925 on 2026-10-20 to 444,562 on 2026-10-21, and 72 ids were consumed in the two minutes between two probes. Those imply rates 2.6× apart — ~135,000 a day against ~52,000 — so a two-minute sample cannot settle it and neither can two daily snapshots. An earlier version of this line said "~44,000 a day" as though it were a measurement. Re-run the script; do not quote a rate.
 
-2. An agent is **composed of modules**. A module is a tool or a methodology registered in `ModuleRegistry`: a domain plus a schema. Anyone can register one.
+2. An agent is **composed of modules**. A module is a tool or a methodology, listed as an atom on Intuition. Anyone can list one. (`ModuleRegistry` was deleted, ADR `0055`.)
 3. The agent runs. It **deposits TRUST on the modules it actually used** — not the ones it claims to use. When it brings a proof that the use happened, ARP's sponsoring service pays the deposit and the position is still the agent's (`receiver`). Without a proof it can deposit its own TRUST, and ARP indexes that as _declared_, never _proven_ (ADR `0094`).
 4. That deposit is the signal. **Amended 2026-11-05 by the user (ADR `0138`): in the score its size is not read. What it buys is the right to write a line.** Measured the same day, and not part of that amendment: a line held on deposits alone costs far less than one written (`scripts/measure/line-cost.ts`, 13579). It produces reputation at two levels at once:
    - **tool reputation** — how many distinct agents put money on this module
    - **agent reputation** — what this agent is composed of, and how much it has committed to that composition
-5. The agent operates under a **signed delegation whose caveats are the guard rail**. `DomainScopeEnforcer` bounds where it can stake; `TrustStakeCapEnforcer` bounds how much. Out-of-scope attempts revert before any state change.
+5. The agent operates under a **signed delegation whose caveats are the guard rail**. `DomainScopeEnforcer` bounds where it can stake; `TrustStakeCapEnforcer` bounds how much. Out-of-scope attempts revert before any state change. **The user set delegations aside on 2026-11-03**, so nothing built now relies on this point.
 6. **ARP is a directory and a verifier.** It hands out an agent's endpoint, which the operator's node registers through a signed handshake, and it checks proofs. The call itself goes from agent to agent: ARP never relays a request and never sees a prompt (ADR `0094`).
 
 That is the whole protocol. Nothing above requires ground truth, an oracle, a resolver, or visibility
 into anyone's execution.
 
 ## Why the signal is not free
+
+**Amended 2026-11-05 (ADRs `0138`, `0142`):** the fee buys the right to write a line. It does not make the line true, and the amount is not read in the score, so this section no longer says what gives a line its value.
 
 Every other reputation layer in this market takes free input: feedback, ratings, votes. ARP's input is a deposit of real TRUST on a tool the agent used, made under a cap its operator signed.
 

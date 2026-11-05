@@ -274,9 +274,9 @@ describe("Landing", () => {
         await waitFor(() => expect(cost).toHaveBeenCalled());
 
         // Each word is an inline-block, which drops a space at the end of its own box. The space
-        // has to sit between the boxes, or the headline reads "Thereputation pulsefor".
+        // has to sit between the boxes, or the headline reads "Checkbefore youragent".
         const words = container.querySelector("h1 [aria-hidden='true']");
-        expect(words?.textContent).toBe("The reputation pulse for autonomous agents and tools.");
+        expect(words?.textContent).toBe("Check before your agent installs or pays.");
         for (const word of words?.querySelectorAll(".arp-word") ?? []) {
             expect(word.textContent).not.toMatch(/\s/);
         }
@@ -291,7 +291,7 @@ describe("Landing", () => {
         // the animated words are `aria-hidden`.
         const heading = container.querySelector("h1");
         expect(heading?.querySelector(".sr-only")?.textContent).toBe(
-            "The reputation pulse for autonomous agents and tools.",
+            "Check before your agent installs or pays.",
         );
         expect(heading?.querySelector("[aria-hidden='true']")).not.toBeNull();
     });

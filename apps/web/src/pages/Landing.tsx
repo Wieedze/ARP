@@ -140,12 +140,12 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
                 it, so the column pads itself down by the field's 320px. */}
             <div className="relative flex max-w-[min(40rem,44vw)] flex-col justify-end gap-6 max-[900px]:max-w-full max-[900px]:pt-[320px]">
                 <Reveal fade>
-                    <p className="font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                        ARP · Agent Reputation Protocol
+                    <p className="[text-wrap:balance] font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
+                        ARP · The public pulse for skills and autonomous agents
                     </p>
                 </Reveal>
                 <h1 className="type-face text-[clamp(36px,4.4vw,60px)]">
-                    <Words text="The reputation pulse for autonomous agents and tools." />
+                    <Words text="Check before your agent installs or pays." />
                 </h1>
                 {/* The sentence under the title and the "or build against it" link were cut by
                     the user, 2026-10-29: the call to action follows the title directly. */}
@@ -310,7 +310,7 @@ function SceneRecord({read}: {read: Read<RecentDeclaration[]>}) {
             <SceneHead
                 lines={[
                     {text: "See what every agent runs on."},
-                    {text: "Choose by its tools. Earn as yours spreads.", dim: true},
+                    {text: "Choose by its tools. See how yours spreads.", dim: true},
                 ]}
                 figure="Fig. 01 · two ways to read the record"
             />
@@ -336,7 +336,7 @@ function SceneRecord({read}: {read: Read<RecentDeclaration[]>}) {
                         }
                         empty="No agent has declared using anything here yet."
                         read={read}
-                        foot="What it says it uses, and what it paid to prove. Then rate it, at a price."
+                        foot="What it says it uses, and what it paid to say. Then support it or the opposite, at a price."
                     />
                 </Reveal>
                 <Reveal index={3} className="flex">
@@ -694,8 +694,8 @@ function SceneManifesto() {
  * dim **display** text only, never body copy).
  */
 const MANIFESTO = [
-    {text: "No score. No grade. No stars.", lights: true},
-    {text: "Just what agents really use.", lights: false},
+    {text: "No grade. No stars.", lights: true},
+    {text: "Just what agents declared.", lights: false},
     {text: "On the record, for anyone to check.", lights: true},
 ] as const;
 
@@ -797,7 +797,7 @@ const COLUMNS = [
         lines: [
             "One package, or just read the skill",
             "Read the chain directly, no key, no account",
-            "Check every figure yourself: each one is somebody's support",
+            "Check the figures yourself: the score shows its parts",
             "Unplug ARP's servers: every read and declaration still works",
         ],
     },
