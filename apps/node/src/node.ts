@@ -57,7 +57,9 @@ import {
   echo,
   type NodeLimits,
   PaymentLedger,
+  readOffer,
   type TaskHandler,
+  type TaskOffer,
 } from './task.ts';
 import { chooseTunnel, clientAddress, startTunnel } from './tunnel.ts';
 
@@ -138,13 +140,18 @@ const identity = identityFromEnv();
 
 const handlerPath = process.env.ARP_NODE_HANDLER;
 let handle: TaskHandler = echo;
+let offer: TaskOffer | null = null;
 if (handlerPath !== undefined) {
-  const module = (await import(handlerPath)) as { handle?: TaskHandler };
+  const module = (await import(handlerPath)) as { handle?: TaskHandler; offer?: unknown };
   if (typeof module.handle !== 'function') {
     console.error(`${handlerPath} does not export a \`handle\` function`);
     process.exit(1);
   }
   handle = module.handle;
+  offer = readOffer(module.offer);
+  if (module.offer !== undefined && offer === null) {
+    console.error(`${handlerPath} exports an \`offer\` that is not three short strings, so none is served`);
+  }
 }
 
 const publicClient = createPublicClient({ transport: http(rpcUrl) });
@@ -157,7 +164,7 @@ const node = createNode({
   identity,
   minBudget: MIN_BUDGET,
   handle,
-  handlerPath: handlerPath ?? null,
+  offer,
   ledger: new PaymentLedger(LEDGER),
   limits: LIMITS,
 });

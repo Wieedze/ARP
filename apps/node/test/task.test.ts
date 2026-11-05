@@ -14,7 +14,7 @@ import {
   type SignedHireReceipt,
 } from '@arp-protocol/core';
 
-import { createNode, echo, type NodeLimits, PaymentLedger, type TaskHandler } from '../src/task.ts';
+import { createNode, echo, type NodeLimits, PaymentLedger, readOffer, type TaskHandler, type TaskOffer } from '../src/task.ts';
 
 const agent = privateKeyToAccount(generatePrivateKey());
 const requester: Address = '0x00000000000000000000000000000000000000aa';
@@ -56,6 +56,7 @@ function node(
   txs: Record<Hex, Tx>,
   options: {
     handle?: TaskHandler;
+    offer?: TaskOffer;
     ledger?: PaymentLedger;
     limits?: Partial<NodeLimits>;
     now?: () => number;
@@ -71,7 +72,7 @@ function node(
     limits: options.limits,
     now: options.now,
     handle: options.handle ?? echo,
-    handlerPath: null,
+    offer: options.offer ?? null,
     ledger: options.ledger ?? new PaymentLedger(join(dir, 'ledger.jsonl')),
   });
 }
@@ -236,7 +237,6 @@ describe('what an unpaid stranger can make it do', () => {
       identity: null,
       minBudget: MIN,
       handle: echo,
-      handlerPath: null,
       ledger: new PaymentLedger(null),
     });
     expect((await n.fetch(task({ ...hire, paymentTxHash: '0x1234' }))).status).toBe(400);
@@ -294,6 +294,21 @@ describe('what an unpaid stranger can make it do', () => {
 });
 
 describe('the other routes', () => {
+  test('GET / says what the operator sells and does not publish where the handler lives', async () => {
+    const offer = { description: 'counts words', input: '{"text": "..."}', output: '{"words": 1}' };
+    const body = (await (
+      await node({}, { offer }).fetch(new Request('http://node/'))
+    ).json()) as Record<string, unknown>;
+    expect(body['offer']).toEqual(offer);
+    expect(body).not.toHaveProperty('handler');
+  });
+
+  test('an offer that is not three short strings is not served', () => {
+    expect(readOffer({ description: 'a', input: 'b' })).toBeNull();
+    expect(readOffer({ description: 'a', input: 'b', output: 'x'.repeat(501) })).toBeNull();
+    expect(readOffer({ description: 'a', input: 'b', output: 'c' })).toEqual({ description: 'a', input: 'b', output: 'c' });
+  });
+
   test('healthz names the agent', async () => {
     const body = (await (await node({}).fetch(new Request('http://node/healthz'))).json()) as {
       agent: string;

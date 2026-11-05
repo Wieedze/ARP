@@ -29,6 +29,25 @@ export type TaskContext = {
 };
 export type TaskHandler = (payload: unknown, context: TaskContext) => Promise<unknown>;
 
+/**
+ * What this node sells, in the operator's words, so a caller can decide before paying (ADR `0139`).
+ * It is the operator's claim. Nothing checks that the handler does it, except whoever pays and looks.
+ */
+export type TaskOffer = { description: string; input: string; output: string };
+
+const MAX_OFFER_FIELD = 500;
+
+/** An offer a handler module exports, or `null` when it is absent or not three short strings. */
+export function readOffer(value: unknown): TaskOffer | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const { description, input, output } = value as Record<string, unknown>; // each field is checked next
+  const fields = [description, input, output];
+  if (!fields.every((field) => typeof field === 'string' && field.length > 0 && field.length <= MAX_OFFER_FIELD)) {
+    return null;
+  }
+  return { description, input, output } as TaskOffer; // checked just above
+}
+
 export const echo: TaskHandler = async (payload, context) => ({
   echoed: payload,
   note:
@@ -128,7 +147,8 @@ export type NodeOptions = {
   identity: AgentIdentity | null;
   minBudget: bigint;
   handle: TaskHandler;
-  handlerPath: string | null;
+  /** Served at `GET /`. The handler's path is not: it names a directory on the operator's machine. */
+  offer?: TaskOffer | null;
   ledger: PaymentLedger;
   limits?: Partial<NodeLimits>;
   /** Milliseconds. Injected so a test can move the rate-limit window. */
@@ -169,7 +189,7 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
 export function createNode(options: NodeOptions): {
   fetch(request: Request, client?: string): Promise<Response>;
 } {
-  const { account, publicClient, chainId, identity, minBudget, handle, handlerPath, ledger } =
+  const { account, publicClient, chainId, identity, minBudget, handle, offer = null, ledger } =
     options;
   const limits: NodeLimits = { ...DEFAULT_LIMITS, ...options.limits };
   const now = options.now ?? Date.now;
@@ -262,7 +282,7 @@ export function createNode(options: NodeOptions): {
           agent: account.address,
           endpoints: [{ path: '/task', method: 'POST', description: 'hire this agent' }],
           minBudgetWei: minBudget.toString(),
-          handler: handlerPath,
+          offer,
         });
       }
 
