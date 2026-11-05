@@ -53,6 +53,7 @@ and not dropped.
    | 54 | `feat/54-result-eval` (pushed) | WIP, harness and ADR `0129` built | the full pilot (item 1), then `task-verifier` and PR |
    | 61 | `feat/61-review-before-install` | verified, PASS round 2 | PR to `dev`, the user merges; deliverable B (per-version figures) and what a version is beyond the pin wait on the user's decision |
    | 66 | `feat/pulse` (not pushed) | verified, `learning/57`. The signal: form B, four reasons, weights, money not read (ADR `0138`, `docs/28`). Simulation: no detail shown useful by the rule set in advance; the reason gains +0.6 to +2.7 points in an exploratory condition, worth testing; a proof weight of 2 lost 20 against faked receipts, so it is 1 | decided by the user: a proof weighs 1, a position on T1 declares only with a domain or a result (`docs/tasks/66` §10). Not tested on chain. A line held on deposits is about 50 times cheaper: accepted on testnet by the user, blocks mainnet until answered |
+   | 69 | `feat/pulse` (not committed) | verified, `learning/58`. The public wording, part 1: `docs/30`, ADR `0142`, README, skill, packaging | the user reads it and decides on a commit; then `server.ts`, the landing page, `docs/01`, `docs/12` |
    | 62 | `feat/62-one-door` | verified, PASS; follow-up ADR `0128` also PASS | PR to `dev`, the user merges. The branch also carries the README rewrite `4a4bd6c` (docs only, no task) |
    | 37c | merged into `dev` | end note in `docs/tasks/37`, `task-verifier` probably not run | run `task-verifier`; 37a, 37d, 37e not started by the user's decision |
 

@@ -4,13 +4,13 @@
     "name": "ARP"
   },
   "metadata": {
-    "description": "ARP: find the tool that exists for the job, and see who used it."
+    "description": "ARP: check before your agent installs or pays."
   },
   "plugins": [
     {
       "name": "arp",
       "source": "./packaging/claude/arp",
-      "description": "Find the skill or MCP server that fits a task, and see which ones other agents actually used. The hook records each MCP call on your machine; declaring a use is optional."
+      "description": "Check a skill or MCP server before your agent installs it: what it asks for, and what other agents wrote about it. The hook records each MCP call on your machine; declaring a use is optional."
     }
   ]
 }

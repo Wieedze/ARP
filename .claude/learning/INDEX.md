@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-59 entries, one per completed task. Written by `task-verifier` on a pass.
+60 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -65,3 +65,4 @@
 | [55](55-one-door.md) | `docs/tasks/62-one-door.md` | PASS (second pass; first FAIL on a misplaced docstring and an ADR sentence the redirect contradicted) | One door: Register folds into Get started |
 | [56](56-the-pulse.md) | `docs/tasks/63-the-pulse.md` | PASS (fourth pass; the fourth checked only the third pass's three edits and the gates they touch) | The pulse: what a skill implies, and what agents wrote about it |
 | [57](57-the-signal.md) | `docs/tasks/66-the-signal.md` | PASS (third pass; the second and third checked only the changed sites) | The signal: what a line on chain is worth to the next search |
+| [58](58-the-positioning.md) | `docs/tasks/69-the-positioning.md` | PASS on the fourth pass, which checked only the two edits the third pass asked for | The positioning, part 1: what ARP says in public |

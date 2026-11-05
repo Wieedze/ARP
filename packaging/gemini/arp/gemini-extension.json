@@ -1,7 +1,7 @@
 {
   "name": "arp",
   "version": "0.0.1",
-  "description": "Find the skill or MCP server that fits a task, and see which ones other agents actually used. Declaring a use is optional.",
+  "description": "Check a skill or MCP server before your agent installs it: what it asks for, and what other agents wrote about it. Declaring a use is optional.",
   "mcpServers": {
     "arp": {
       "command": "npx",
