@@ -1,0 +1,170 @@
+{
+ "cost": 0.21622829999999998,
+ "judged": [
+  {
+   "need": "silences",
+   "source": "kappaemme-git/codex-video-short-maker-skill",
+   "skill": "video-short-maker",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "make_short.py uses ffmpeg silencedetect to cut silent passages and concatenate the non-silent segments with only ffmpeg/ffprobe (no account, payment, or API key), and --output sets output.mp4, though the default 45s target duration would need to be raised to avoid truncating the result."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill's base workflow uses only ffmpeg silencedetect and concat to cut silence and export MP4 with --output, needing no account, payment, or API key, though its default 45s target duration and hard-coded macOS paths may need adjusting (e.g., a larger --duration) to keep all non-silent content."
+    }
+   ]
+  },
+  {
+   "need": "silences",
+   "source": "agenticluke/claude-skill-video-editing-plus",
+   "skill": "video-editing",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill covers silence detection with ffmpeg silencedetect and accurate cuts/concatenation with ffmpeg, which is enough to remove silent passages from clip.mp4 into output.mp4 using only the installed tools."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill covers silence detection with ffmpeg silencedetect and accurate cutting/concatenation with ffmpeg, which together with the available ffmpeg and python3 are enough to remove silent passages from clip.mp4 into output.mp4 without accounts, payment, or API keys."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "agents365-ai/video-podcast-maker",
+   "skill": "video-podcast-maker",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill's default TTS backend is free, keyless edge-tts (installable package), and its pipeline of script, TTS, Remotion and ffmpeg produces an narrated MP4, though it is heavy (large npm install, Studio confirmation stop) for a plain script.txt-to-output.mp4 job."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill's default TTS backend is edge-tts (free, no key or account), and with free npm/pip installs of Remotion and edge-tts plus the existing ffmpeg it can turn a script into a narrated output.mp4, though the full pipeline is heavy (4K, research, Studio review stops) and Azure keys are only needed for the optional backend."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "boraoztunc/skills",
+   "skill": "hyperframes-media",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The `tts` command generates a narration WAV from script.txt locally with Kokoro (free packages and model download, no account or API key), and the machine's ffmpeg can then mux it with a simple background into output.mp4."
+    },
+    {
+     "verdict": "unsure",
+     "why": "The skill's TTS (local Kokoro, no API key, free pip install) can make the voice-over from script.txt, but it never explains how to combine audio into an output.mp4 video (no visuals or ffmpeg steps; it relies on a separate 'hyperframes' skill and renderer), so whether it covers the full job is not settled."
+    }
+   ]
+  },
+  {
+   "need": "markdown",
+   "source": "codealive-ai/ai-driven-development",
+   "skill": "fetch-url-as-markdown",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill fetches each URL locally with free trafilatura (installable via pip, no account or key) and outputs clean Markdown to stdout, which can be saved per page; the Exa fallback is optional and only needed for JS-heavy pages."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill fetches each URL locally with free pip-installable trafilatura and outputs clean Markdown to stdout (one invocation per page, redirectable to separate files), needing no account, payment, or API key; the Exa fallback is optional and only for JS-heavy pages."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "openclaw/openclaw",
+   "skill": "sherpa-onnx-tts",
+   "verdicts": [
+    {
+     "verdict": "unsure",
+     "why": "The skill covers free offline TTS to a WAV file (and ffmpeg can mux that into an mp4), but it references a {baseDir}/bin/sherpa-onnx-tts wrapper while shipping 0 scripts, so the wrapper may not exist, and it says nothing about building the video."
+    },
+    {
+     "verdict": "unsure",
+     "why": "The skill covers free offline TTS to a WAV file (and ffmpeg could mux it with a generated video), but it never explains how to build the video from script.txt, and it references a {baseDir}/bin/sherpa-onnx-tts wrapper even though the skill ships no scripts, so it is unclear the wrapper exists."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "aminmzadev/keyless-agent-skills",
+   "skill": "ffmpeg-pipeline",
+   "verdicts": [
+    {
+     "verdict": "unsure",
+     "why": "The skill can assemble and mux video, but the voice-over from script.txt depends on a sibling `anon-audio` skill (and `anon-image` for visuals) that isn't among its shipped files, so nothing here shows whether narration works without an account, payment or key."
+    },
+    {
+     "verdict": "unsure",
+     "why": "The skill only muxes narration and stills, and it hands text-to-speech and image generation to sibling skills (anon-audio, anon-image) that aren't among the shipped files, so I can't tell from what's shown whether a free, keyless voice-over is possible."
+    }
+   ]
+  },
+  {
+   "need": "markdown",
+   "source": "freestylefly/canghe-skills",
+   "skill": "canghe-url-to-markdown",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill fetches a URL via Chrome CDP and saves clean Markdown with front matter to one file per page, needing only a free package run through npx bun and a local Chrome, with no account, payment or API key."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill fetches a URL via Chrome CDP and writes clean Markdown with metadata to one file per page, run via npx bun (free package, no account, payment or API key), so looping over the URL list covers the job, assuming Chrome is installed or URL_CHROME_PATH is set."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "aaryan-kapoor/video-production-skill",
+   "skill": "video-production",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill covers script-to-narrated-MP4 with segments, local TTS (Kokoro, a free pip-installable package, or other platform-native TTS), ffmpeg loudnorm and mux, and needs no account, payment, or API key."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill covers script-to-narrated-video end to end (segments, TTS voiceover, ffmpeg mux to MP4) and offers Kokoro (free, pip-installable) or platform-native TTS, so no account, payment, or API key is required."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "limin112/min-skill",
+   "skill": "explain-video",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill covers script-to-narrated-video end to end, and on Linux with free installs (edge-tts needs no account or key, plus playwright and pillow) it can produce output.mp4, though it expects a deck/narration structure and its macOS 'say' fallback is unavailable."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill's pipeline (narration.txt → TTS via free edge-tts → SRT → Playwright recording → ffmpeg mux) can produce a narrated output.mp4 on Linux using only free installable packages (edge-tts, playwright, pillow) with no account, payment, or API key, though it needs adapting from the slide-deck authoring flow and the macOS-only `say` fallback is unavailable."
+    }
+   ]
+  },
+  {
+   "need": "markdown",
+   "source": "agentbay-ai/agentbay-skills",
+   "skill": "web-scraper",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill scrapes URLs to Markdown files using only free pip packages (requests, beautifulsoup4) with no account, payment or API key, and a list of pages can be handled by running the single-page command once per URL."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill scrapes URLs into Markdown files using only free pip packages (requests, beautifulsoup4) with no account, payment or API key, and running it once per URL gives one file per page."
+    }
+   ]
+  }
+ ]
+}

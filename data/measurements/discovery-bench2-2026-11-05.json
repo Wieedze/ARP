@@ -1,0 +1,1819 @@
+{
+ "cost": 0.11504619999999999,
+ "githubCalls": 36,
+ "githubRefused": 0,
+ "needs": [
+  {
+   "need": "I need to remove the silent parts from a video I recorded",
+   "found": {
+    "skills": 28,
+    "github": 80,
+    "both": 106
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "wyattblue/auto-editor@auto-editor",
+      "read": true,
+      "contentId": "65502c6c70492e354905fb1706434c306eab647d",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "monkeyboiii/video-master@auto-editor",
+      "read": true,
+      "contentId": "780bfa771ce49cbc8b269533427b131a42e65262",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "notivn/aiev@auto-cut",
+      "read": true,
+      "contentId": "736bd60dc6a6328319976dd8485932437515889a",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "expocut/codex-plugin@expocut-social-speed-edit",
+      "read": true,
+      "contentId": "852752adafcf49719d76b9090d206044d3782703",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "htekdev/vidpipe-copilot-plugin@video-edit",
+      "read": true,
+      "contentId": "473c2f3f284f0e116d0424335ef56388b9675149",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "ChatCut-Inc/agent-plugin@video-gen",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "eachlabs/skills@video-trimming",
+      "read": true,
+      "contentId": "427f324e6dd392865aa17d96a27851ae431e08ab",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "Kappaemme-git/codex-video-short-maker-skill@video-short-maker",
+      "read": true,
+      "contentId": "a2a9c5354584e48d8f9042f35ea9992fbb58e0ff",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "xGameBuilder/City-of-Voltures-AAA-Game-Title-@video-trimming",
+      "read": true,
+      "contentId": "427f324e6dd392865aa17d96a27851ae431e08ab",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "timscheuerai/content-vault@launch-video",
+      "read": true,
+      "contentId": "4e946a2921892741d27d509ada7b8db91e5f221a",
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "ChatCut-Inc/agent-plugin@video-gen",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "wyattblue/auto-editor@auto-editor",
+      "read": true,
+      "contentId": "65502c6c70492e354905fb1706434c306eab647d",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "htekdev/vidpipe-copilot-plugin@video-edit",
+      "read": true,
+      "contentId": "473c2f3f284f0e116d0424335ef56388b9675149",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "louisedesadeleer/cut-video@cut-video",
+      "read": true,
+      "contentId": "a5a87a64f381c62b8972a92132fb48015b0e50ff",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "eachlabs/skills@video-trimming",
+      "read": true,
+      "contentId": "427f324e6dd392865aa17d96a27851ae431e08ab",
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "turn my written script into a narrated video with a voice-over",
+   "found": {
+    "skills": 116,
+    "github": 86,
+    "both": 196
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "read": true,
+      "contentId": "b594aa032a93840914317878be5a022da2a60802",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-avatar-video",
+      "read": true,
+      "contentId": "ee6d471916d3674e415e3a04c194996128363e77",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "hyperfx-ai/marketing-skills@video-generation",
+      "read": true,
+      "contentId": "713f4b3d36e20d354fe4ed2b01c06f9907dab5e4",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "video-db/skills@videodb",
+      "read": true,
+      "contentId": "2af818d81680f48241d010f3ea9495d86cfea798",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "jwynia/agent-skills@document-to-narration",
+      "read": true,
+      "contentId": "a6ececbfb8fced75516fc767240b7b9c236ceb56",
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "feimacode/open-design-agent-kit@video-shortform",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "affaan-m/ECC@fal-ai-media",
+      "read": true,
+      "contentId": "65009a4cc1c8573ab3b74a941666bcc59f99d6a6",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "indranilbanerjee/digital-marketing-pro@video-script",
+      "read": true,
+      "contentId": "3c8683e31b3ca196aae2bebdba2c8c085f510bad",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "simonmesmith/agent-skills@video-overview-generator",
+      "read": true,
+      "contentId": "422a6699c19d98e916891304cf30b59ea1709ae7",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "dramaclaw/dramaclaw@workflows",
+      "read": true,
+      "contentId": "a1b06a4e214c486fc1bc1af6191cb7c8b977b57a",
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "read": true,
+      "contentId": "b594aa032a93840914317878be5a022da2a60802",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "feimacode/open-design-agent-kit@video-shortform",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-avatar-video",
+      "read": true,
+      "contentId": "ee6d471916d3674e415e3a04c194996128363e77",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "simonmesmith/agent-skills@video-overview-generator",
+      "read": true,
+      "contentId": "422a6699c19d98e916891304cf30b59ea1709ae7",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "omer-metin/skills-for-antigravity@voiceover",
+      "read": true,
+      "contentId": "f4a9e989344a3b3c5a32e01d000d9b33d2ffa186",
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "convert a list of web pages into clean markdown files",
+   "found": {
+    "skills": 169,
+    "github": 86,
+    "both": 253
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "open.feishu.cn@lark-markdown",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "skills.volces.com@html-to-markdown",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "smithery.ai@web-to-markdown",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "curiousdima/claude-web-to-markdown-skill@web-to-markdown",
+      "read": true,
+      "contentId": "2e97a45801ae6214729722ae33a52a23284fe10f",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "ash-ishh/skills@url-to-markdown",
+      "read": true,
+      "contentId": "94b3f95e3096cdac3e3536e81281b858f96da159",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "saga/agent-skills@web-to-markdown",
+      "read": true,
+      "contentId": "5e4de8c0eac9e7f4894536e53f49b2b991601d65",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "CuriousDima/claude-web-to-markdown-skill@web-to-markdown",
+      "read": true,
+      "contentId": "2e97a45801ae6214729722ae33a52a23284fe10f",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "claude-office-skills/skills@pdf-converter",
+      "read": true,
+      "contentId": "8335900f08c45da78dabe641e10eff4cf2b088a2",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "smerchek/claude-epub-skill@markdown-to-epub",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "therealXiaomanChu/ex-skill@ex-skill",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "open.feishu.cn@lark-markdown",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "saga/agent-skills@web-to-markdown",
+      "read": true,
+      "contentId": "5e4de8c0eac9e7f4894536e53f49b2b991601d65",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "CuriousDima/claude-web-to-markdown-skill@web-to-markdown",
+      "read": true,
+      "contentId": "2e97a45801ae6214729722ae33a52a23284fe10f",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@html-to-markdown",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "smithery.ai@web-to-markdown",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "fill in a PDF form automatically from my data",
+   "found": {
+    "skills": 29,
+    "github": 83,
+    "both": 110
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "apsteinberg/skills@pdf-form-filler",
+      "read": true,
+      "contentId": "1a44b30c3f8cb6760e49610060b37cc65800aa82",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "askyourpdf/ai-pdf-filler@ai-pdf-filler-cli",
+      "read": true,
+      "contentId": "90a972c7f40f1e71c86ac30ce2ee6b63183345d0",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "inbharatai/claude-skills@form-filler",
+      "read": true,
+      "contentId": "9c9a0ad0545e0936114b22ddb19df1a5ee31ff5a",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "claude-office-skills/skills@PDF Form Filler",
+      "read": true,
+      "contentId": "fcc6aa9d8a1b1d196e1e11800d97ae38bc71f438",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "canner/wrenai@wren-enrich-context",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "claude-office-skills/skills@pdf-form-filler",
+      "read": true,
+      "contentId": "fcc6aa9d8a1b1d196e1e11800d97ae38bc71f438",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "glebis/claude-skills@sorted",
+      "read": true,
+      "contentId": "7d0b37a1bbecf9fe43d5dbe4dfbde073a4c1a9c5",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "leilei926524-tech/anti-distill@anti-distill",
+      "read": true,
+      "contentId": "21e6aa9c72a03a5456eeb4cd63234a2fa2935387",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "ndpvt-web/latex-document-skill@latex-document-skill",
+      "read": true,
+      "contentId": "6d4b0f41c0a81a0efa24135195957d9c9b12d687",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "BaiShuanghao/my_arXiv_daily@my_arXiv_daily",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "inbharatai/claude-skills@form-filler",
+      "read": true,
+      "contentId": "9c9a0ad0545e0936114b22ddb19df1a5ee31ff5a",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "claude-office-skills/skills@pdf-form-filler",
+      "read": true,
+      "contentId": "fcc6aa9d8a1b1d196e1e11800d97ae38bc71f438",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "apsteinberg/skills@pdf-form-filler",
+      "read": true,
+      "contentId": "1a44b30c3f8cb6760e49610060b37cc65800aa82",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "askyourpdf/ai-pdf-filler@ai-pdf-filler-cli",
+      "read": true,
+      "contentId": "90a972c7f40f1e71c86ac30ce2ee6b63183345d0",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "glebis/claude-skills@sorted",
+      "read": true,
+      "contentId": "7d0b37a1bbecf9fe43d5dbe4dfbde073a4c1a9c5",
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "transcribe an audio interview into text with timestamps",
+   "found": {
+    "skills": 236,
+    "github": 81,
+    "both": 308
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "noizai/skills@speech-to-text",
+      "read": true,
+      "contentId": "2a20a2c991cefdb09f281b245f7e2f5ac014b512",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "101-skills/superpowers@speech-to-text",
+      "read": true,
+      "contentId": "5fa05cd896de37be3b78b5d826ea00563ab8aee8",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "togethercomputer/skills@together-audio",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "bmad-labs/skills@ai-multimodal",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "calesthio/generative-media-skills@assemblyai-transcription",
+      "read": true,
+      "contentId": "92bbedb617ca544720eec9ab1eb327d2dbb3930c",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "awesome-genmedia/skills@speech-to-text",
+      "read": true,
+      "contentId": "bf6c06d4ea590c67445de3518021db190fdb402c",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "az9713/elevenlabs-skills@speech-to-text",
+      "read": true,
+      "contentId": "78b6455e3f3c2a79b6e63d8350a0ff45b125b00d",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "kevin-kuantso/Dev-Agent-Skills@audio-to-text",
+      "read": true,
+      "contentId": "fa3b5f54b2f8dfdb6e244e817edd0f3a0b6d2c8a",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "smallest-inc/skills@speech-to-text",
+      "read": true,
+      "contentId": "fcb801bcce0a8d5408a54c7ccc6804c4a8e054e2",
+      "ratings": [
+       1,
+       2
+      ]
+     },
+     {
+      "skill": "almazom/agents_slash_skills@speech-to-text",
+      "read": true,
+      "contentId": "996a31b58dd4af244f4099bfdf2cc05a419a1598",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "awesome-genmedia/skills@speech-to-text",
+      "read": true,
+      "contentId": "bf6c06d4ea590c67445de3518021db190fdb402c",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "az9713/elevenlabs-skills@speech-to-text",
+      "read": true,
+      "contentId": "78b6455e3f3c2a79b6e63d8350a0ff45b125b00d",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "noizai/skills@speech-to-text",
+      "read": true,
+      "contentId": "2a20a2c991cefdb09f281b245f7e2f5ac014b512",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "kevin-kuantso/Dev-Agent-Skills@audio-to-text",
+      "read": true,
+      "contentId": "fa3b5f54b2f8dfdb6e244e817edd0f3a0b6d2c8a",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "101-skills/superpowers@speech-to-text",
+      "read": true,
+      "contentId": "5fa05cd896de37be3b78b5d826ea00563ab8aee8",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "make a slide deck from my notes",
+   "found": {
+    "skills": 228,
+    "github": 72,
+    "both": 294
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "arifszn/slide-wright@slide-wright",
+      "read": true,
+      "contentId": "843c84dea82899b0f11630b0ed965101fdc5afff",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "varnan-tech/opendirectory@graphic-slide-deck",
+      "read": true,
+      "contentId": "c27debeb64c8b6ccc9de62614ceb40409e69ec8c",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@presentation-generator",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "edwinhu/workflows@workshop",
+      "read": true,
+      "contentId": "6faf9c23bc414737d1da80e269f5bfb4dffdd8f3",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "anthropics/skills@pptx",
+      "read": true,
+      "contentId": "64529c8b3f35fe632b7256bd2f6d46e4b40160ce",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "LearnPrompt/humanize-ppt@humanize-ppt",
+      "read": true,
+      "contentId": "2c36a8e30606bab7ea9c637614b569d87b34f23b",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "glebis/claude-skills@present",
+      "read": true,
+      "contentId": "bc785de9955b8d6acede7e9b2113980b847246f5",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "Gabberflast/academic-pptx-skill@academic-pptx-skill",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "claude-office-skills/skills@html-to-ppt",
+      "read": true,
+      "contentId": "9ccaba0209aa3cf6f44ff8c0243b7931419eefbc",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "claude-office-skills/skills@md-slides",
+      "read": true,
+      "contentId": "98bbdcfbb70ace7dd088def7760cf4fa99db3011",
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "arifszn/slide-wright@slide-wright",
+      "read": true,
+      "contentId": "843c84dea82899b0f11630b0ed965101fdc5afff",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "glebis/claude-skills@present",
+      "read": true,
+      "contentId": "bc785de9955b8d6acede7e9b2113980b847246f5",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "LearnPrompt/humanize-ppt@humanize-ppt",
+      "read": true,
+      "contentId": "2c36a8e30606bab7ea9c637614b569d87b34f23b",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "varnan-tech/opendirectory@graphic-slide-deck",
+      "read": true,
+      "contentId": "c27debeb64c8b6ccc9de62614ceb40409e69ec8c",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "Gabberflast/academic-pptx-skill@academic-pptx-skill",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "remove the background from a batch of product photos",
+   "found": {
+    "skills": 49,
+    "github": 77,
+    "both": 122
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "bria-ai/bria-skill@bria-ai",
+      "read": true,
+      "contentId": "0e1d62e32bdc621131e9d2a68f6f18bae6918b1d",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-image-generation",
+      "read": true,
+      "contentId": "a1e677ad7fe32eff16d4dd6e5ccc53ec1189c4e2",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "samehdoush/bg-remover-skill@bg-remover",
+      "read": true,
+      "contentId": "163d091e8ad20aed7ca458e0c309e86103f52f10",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "jablonkai/skills@pixelmator-pro",
+      "read": true,
+      "contentId": "e6645134dccad54f7886c41123ff1a7716b07e63",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@bria-ai",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "Bria-AI/bria-skill@remove-background",
+      "read": true,
+      "contentId": "e93772a13978895c748f673f4feb18f3a96bd516",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "awesome-genmedia/skills@background-removal",
+      "read": true,
+      "contentId": "ce65cffc5b8ac869329ac28fa669d27b060da6d8",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "michaelboeding/skills@background-remove",
+      "read": true,
+      "contentId": "1d02aa9c02395ecae8c91ca71080513c97e99eaf",
+      "ratings": [
+       2,
+       1
+      ]
+     },
+     {
+      "skill": "gabrielmoreira/agent-skills-mirror@remove-background",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "eachlabs/skills@background-removal",
+      "read": true,
+      "contentId": "990f04c9a245126087cbafd274bc75ed981c5981",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "Bria-AI/bria-skill@remove-background",
+      "read": true,
+      "contentId": "e93772a13978895c748f673f4feb18f3a96bd516",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "awesome-genmedia/skills@background-removal",
+      "read": true,
+      "contentId": "ce65cffc5b8ac869329ac28fa669d27b060da6d8",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "nvdigitalsolutions/mcp-ai-wpoos@design-image-optimization",
+      "read": true,
+      "contentId": "23d254120a33b2f6a20e417dd16c6be3f4f5081c",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "michaelboeding/skills@background-remove",
+      "read": true,
+      "contentId": "1d02aa9c02395ecae8c91ca71080513c97e99eaf",
+      "ratings": [
+       2,
+       1
+      ]
+     },
+     {
+      "skill": "bria-ai/bria-skill@bria-ai",
+      "read": true,
+      "contentId": "0e1d62e32bdc621131e9d2a68f6f18bae6918b1d",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "write unit tests for an existing Python module",
+   "found": {
+    "skills": 66,
+    "github": 83,
+    "both": 149
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "neko1313/graphlens@python-test-generator",
+      "read": true,
+      "contentId": "292f3406e04d2d03ef3c75b4105366e64cfb214e",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "cognitivemesh/pyarnes@python-test",
+      "read": true,
+      "contentId": "174327c0a17d582bf31c944e7ee0d3e79a2f59be",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "ameen-alam/ai-400-class@pytest-builder",
+      "read": true,
+      "contentId": "9f9af1d6fe17f06417e9dc5f84ff3f705bb3ea9b",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@tdd",
+      "read": true,
+      "contentId": "667dbdd00c09d0e2189e082986e6a4d61a67c2a6",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "yonatangross/orchestkit@testing-unit",
+      "read": true,
+      "contentId": "19e47ee8a5b4e36d57979c1f3b308b036cf69422",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "fr33d3m0n/threat-modeling@threat-modeling",
+      "read": true,
+      "contentId": "a0962b739591b41e7b86168c899ee9feda3c316c",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "OneWave-AI/claude-skills@scout",
+      "read": true,
+      "contentId": "5a15cff64fba0bd134dcb39f5f1fbadfb807abfd",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "glebis/claude-skills@tdd",
+      "read": true,
+      "contentId": "e3e891bd3b115badbbf3d753b34f703c7987bd9e",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "7onez/cti-expert@cti-expert",
+      "read": true,
+      "contentId": "309fba9661c55fb84b30c9533aa1e6aa4927a389",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "yoligehude14753/ecom-agent@ecom-agent",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "fr33d3m0n/threat-modeling@threat-modeling",
+      "read": true,
+      "contentId": "a0962b739591b41e7b86168c899ee9feda3c316c",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "neko1313/graphlens@python-test-generator",
+      "read": true,
+      "contentId": "292f3406e04d2d03ef3c75b4105366e64cfb214e",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "OneWave-AI/claude-skills@scout",
+      "read": true,
+      "contentId": "5a15cff64fba0bd134dcb39f5f1fbadfb807abfd",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "cognitivemesh/pyarnes@python-test",
+      "read": true,
+      "contentId": "174327c0a17d582bf31c944e7ee0d3e79a2f59be",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "ameen-alam/ai-400-class@pytest-builder",
+      "read": true,
+      "contentId": "9f9af1d6fe17f06417e9dc5f84ff3f705bb3ea9b",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "check my website for accessibility problems",
+   "found": {
+    "skills": 204,
+    "github": 84,
+    "both": 285
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "rampstackco/claude-skills@accessibility-audit",
+      "read": true,
+      "contentId": "d9ecd05561f92c85662049f500034590e1dbd4f6",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "patricio0312rev/skills@accessibility-auditor",
+      "read": true,
+      "contentId": "cf14de5bbf5c42a9c45b1bb60e083e83e0d7b796",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "ibelick/ui-skills@fixing-accessibility",
+      "read": true,
+      "contentId": "e825388bce62e4456ed3b2b899c9bc58f5873c5b",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "forcedotcom/sf-skills@design-systems-slds-validate",
+      "read": true,
+      "contentId": "9f6c78cea3bb5f2cb69b45600294d8c045a47e23",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "mohitagw15856/pm-claude-skills@accessibility-audit",
+      "read": true,
+      "contentId": "5fd9bdad1bb2665e6b59d9821b20371d499af1f1",
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "sickn33/agentic-awesome-skills@design-theme-guide",
+      "read": true,
+      "contentId": "cf92f45992bda02e1ac375a5343fcf48a30bdd3b",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "matteocervelli/llms@website-health",
+      "read": true,
+      "contentId": "831f910c9e274c1c445d97119d102b162fc678bc",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "OneWave-AI/claude-skills@scout",
+      "read": true,
+      "contentId": "5a15cff64fba0bd134dcb39f5f1fbadfb807abfd",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "gabrielmoreira/agent-skills-mirror@website-health",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "ChiChou/grapefruit@mastg",
+      "read": true,
+      "contentId": "e7bbe373ece6d55d97ec1c84c2674768619719dc",
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "sickn33/agentic-awesome-skills@design-theme-guide",
+      "read": true,
+      "contentId": "cf92f45992bda02e1ac375a5343fcf48a30bdd3b",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "warpdotdev/oz-skills@web-accessibility-audit",
+      "read": true,
+      "contentId": "02c6a20f314a43c455dec0bea29e9ffb61845112",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "rampstackco/claude-skills@accessibility-audit",
+      "read": true,
+      "contentId": "d9ecd05561f92c85662049f500034590e1dbd4f6",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "patricio0312rev/skills@accessibility-auditor",
+      "read": true,
+      "contentId": "cf14de5bbf5c42a9c45b1bb60e083e83e0d7b796",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "matteocervelli/llms@website-health",
+      "read": true,
+      "contentId": "831f910c9e274c1c445d97119d102b162fc678bc",
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "translate the subtitles of a video into Spanish",
+   "found": {
+    "skills": 42,
+    "github": 63,
+    "both": 102
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "read": true,
+      "contentId": "b594aa032a93840914317878be5a022da2a60802",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "clawhub.ai@translate",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "scenario-labs/skills@scenario-caption-studio",
+      "read": true,
+      "contentId": "5a34c0d24d982e21e14686e01e457db279f8ceba",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "jianshuo/claude-skills@wjs-translating-subtitles",
+      "read": true,
+      "contentId": "d9b93a768ee9895cd461d25e050e136498d58006",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "nicepkg/ai-workflow@srt-translator",
+      "read": true,
+      "contentId": "3fc8437e6f6e6ba98f7c702f06bede215e4c0983",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "ChatCut-Inc/agent-plugin@video-translation",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "sickn33/agentic-awesome-skills@apify-youtube-transcript-scraper",
+      "read": true,
+      "contentId": "687ba95f3d745acf75aa2b435d172f1d78d8167e",
+      "ratings": [
+       1,
+       0
+      ]
+     },
+     {
+      "skill": "sickn33/agentic-awesome-skills@app-store-optimization",
+      "read": true,
+      "contentId": "01b51c515ed0420568e0c749a004c1f59c20932b",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "davila7/claude-code-templates@multimodal-whisper",
+      "read": true,
+      "contentId": "248c27c58b44a6087dd1bedcda60f888e99b64bd",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "S3YED/appie-kit@srt-subtitles",
+      "read": true,
+      "contentId": "ef2d715a6bf749d26ec7303cd5ba280c60057151",
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "ChatCut-Inc/agent-plugin@video-translation",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "sickn33/agentic-awesome-skills@apify-youtube-transcript-scraper",
+      "read": true,
+      "contentId": "687ba95f3d745acf75aa2b435d172f1d78d8167e",
+      "ratings": [
+       1,
+       0
+      ]
+     },
+     {
+      "skill": "sickn33/agentic-awesome-skills@app-store-optimization",
+      "read": true,
+      "contentId": "01b51c515ed0420568e0c749a004c1f59c20932b",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "davila7/claude-code-templates@multimodal-whisper",
+      "read": true,
+      "contentId": "248c27c58b44a6087dd1bedcda60f888e99b64bd",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "S3YED/appie-kit@srt-subtitles",
+      "read": true,
+      "contentId": "ef2d715a6bf749d26ec7303cd5ba280c60057151",
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "turn a CSV of sales into charts for a report",
+   "found": {
+    "skills": 135,
+    "github": 83,
+    "both": 217
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "skyworkai/skywork-skills@Skywork Excel",
+      "read": true,
+      "contentId": "321ce6d19cf936e117d720dc2815f640edcda280",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "anygenio/anygen-skills@anygen-data-analysis",
+      "read": true,
+      "contentId": "4dd60c9194cd96852622c9a9600880a64d585ca5",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@anygen-data-analysis",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@report-generator",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "iart-ai/data-animation-skills@animated-infographic",
+      "read": true,
+      "contentId": "24ad5b77ab8fd9c8c0723d739ff78287974f33ba",
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "claude-office-skills/skills@report-generator",
+      "read": true,
+      "contentId": "6a555269da7ad338fd558f5017f1232b07b93a29",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "claude-office-skills/skills@data-analysis",
+      "read": true,
+      "contentId": "92c68c1621fd29332f4c42f18e106dd2bafc1ce1",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "diegosouzapw/awesome-omni-skills@calc",
+      "read": true,
+      "contentId": "b3450f2171bf46e06c69b231ad0feb43ad62598b",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "diegosouzapw/awesome-omni-skills@calc-v2",
+      "read": true,
+      "contentId": "5022d4e5ef4cd1628b68a8dce81bb0873aa6faba",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "onvoyage-ai/gtm-engineer-skills@create-geo-charts",
+      "read": true,
+      "contentId": "e58138f98fbf54857dd94a3e3a5a5c33888a6862",
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "claude-office-skills/skills@report-generator",
+      "read": true,
+      "contentId": "6a555269da7ad338fd558f5017f1232b07b93a29",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "claude-office-skills/skills@data-analysis",
+      "read": true,
+      "contentId": "92c68c1621fd29332f4c42f18e106dd2bafc1ce1",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skyworkai/skywork-skills@Skywork Excel",
+      "read": true,
+      "contentId": "321ce6d19cf936e117d720dc2815f640edcda280",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "anygenio/anygen-skills@anygen-data-analysis",
+      "read": true,
+      "contentId": "4dd60c9194cd96852622c9a9600880a64d585ca5",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "hherosoul/dsh-smart-charts@smart-charts",
+      "read": true,
+      "contentId": "de7b0d9c12934fccaed0a8bc7ec23850bcc0ad1b",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "review a pull request for security problems",
+   "found": {
+    "skills": 266,
+    "github": 77,
+    "both": 343
+   },
+   "strategies": {
+    "skills": [
+     {
+      "skill": "jeffallan/claude-skills@code-reviewer",
+      "read": true,
+      "contentId": "9409fe55525cb86d371e29f58b46f68f79bc2484",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "onewave-ai/claude-skills@code-review-pro",
+      "read": true,
+      "contentId": "6cd753cb52ee4c016756cb93b7296876afddf4af",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "microsoft/azure-skills@azure-compliance",
+      "read": true,
+      "contentId": "83ec452ff0bb131e41363be040ad22251d7bcb5a",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@code-review",
+      "read": true,
+      "contentId": "a8ef561571acbb611de8ff19ba6da75b197c63a8",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "securityskills/skills@secure-code-review",
+      "read": true,
+      "contentId": "3eef76df63570a2f9ddf0c746da3754c3c56b5a7",
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "github": [
+     {
+      "skill": "awesome-skills/code-review-skill@code-review-skill",
+      "read": true,
+      "contentId": "4850184dfd7765ea7b3c5c4e9b6cf8e0815ee7cb",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "butterbase-ai/butterbase@butterbase",
+      "read": true,
+      "contentId": "df9c098a4ddbb96cc810d2e5d7a6861cdd682b74",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "xwtro0tk1t-cloud/harness@harness",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "ParzivalHack/PySpector@PySpector",
+      "read": false,
+      "contentId": null,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "truongduy2611/app-store-preflight-skills@app-store-preflight-skills",
+      "read": true,
+      "contentId": "cfd9c73577300f9310ca892fefd38fbe1abd73cb",
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "both": [
+     {
+      "skill": "jeffallan/claude-skills@code-reviewer",
+      "read": true,
+      "contentId": "9409fe55525cb86d371e29f58b46f68f79bc2484",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "onewave-ai/claude-skills@code-review-pro",
+      "read": true,
+      "contentId": "6cd753cb52ee4c016756cb93b7296876afddf4af",
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "microsoft/azure-skills@azure-compliance",
+      "read": true,
+      "contentId": "83ec452ff0bb131e41363be040ad22251d7bcb5a",
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "awesome-skills/code-review-skill@code-review-skill",
+      "read": true,
+      "contentId": "4850184dfd7765ea7b3c5c4e9b6cf8e0815ee7cb",
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "butterbase-ai/butterbase@butterbase",
+      "read": true,
+      "contentId": "df9c098a4ddbb96cc810d2e5d7a6861cdd682b74",
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}
