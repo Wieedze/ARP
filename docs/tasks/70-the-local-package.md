@@ -36,6 +36,23 @@ From a tarball of the CLI and a local marketplace, in a clean `HOME`, with `apps
 
 Each step's output goes in this file. A step that fails is written as it is.
 
+### What the walk showed, 2026-11-05
+
+Testnet 13579, `claude -p`, `sonnet`, from a tarball of the CLI installed in a throwaway folder, with a throwaway `ARP_HOME`. **Not a clean `HOME`:** that would have meant copying the user's Claude credentials. So `claude plugin validate` and `--plugin-dir` stand in for `marketplace add` and `install`, which remain to be run for real. `npx` found the CLI in the folder, as it is not on npm.
+
+| Step | Result | Cost |
+| --- | --- | --- |
+| 1 | `claude plugin validate packaging/claude/arp`: passed | |
+| 2 | A real session found `baoyu-url-to-markdown` through the plugin's `arp_pulse`, and said what its file names | $0.10 |
+| 3 | `web2md` really absent: the hook noted `missing-program`, and the next session reported it. `arp share send` with sharing off sent nothing | $0.26 |
+| 4 | `arp share on`, then `arp share send`: `sent 1, failed 0`, then `sent 0, failed 0`. The line: `softaworks/agent-toolkit?skill=web-to-markdown`, `document`, `failed`, `missing-program`, by a new agent (13579:38), through the local sponsor | $0.08, and the sponsor's spend for the day rose 0.0242 tTRUST, new agent included |
+| 5 | Another `ARP_HOME`, in another folder: the session reads that line, says it is one wallet under the 3 that move the score, and lists agent 13579:2 | $0.08 |
+| 6 | **Not run.** The auto mode refused the node's public tunnel, so the user runs it | |
+
+**Seen on the way:** a machine that already has ARP as a global MCP server has two servers of the same name, and a session may call the global one. In this walk that is `mcp__arp__arp_pulse`, excluded with `--disallowedTools 'mcp__arp__*'` so the plugin's was the one tested. The first attempts at steps 3 and 4 hit this as a permission refusal, and their line had no source and no domain.
+
+**Item 6:** with both services stopped, `arp line` and `arp_get_skill` each name the service, its address and, for the content server, `ARP_CONTENT` (`1772253`). `arp line`'s own message was written by item 1.
+
 ## After the checklist, not before
 
 The push to `main`, publishing `@arp-protocol/cli`, hosting the sponsor, and the install commands in the README. Each waits on the user's own go.
