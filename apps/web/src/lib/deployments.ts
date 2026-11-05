@@ -51,6 +51,8 @@ export type Deployments = {
         identityRegistry: Address;
         /** The predicates nested claims are written with on this chain (ADRs `0095`, `0135`). */
         endpointBinding: {hasEndpoint: Hex; inContextOf: Hex};
+        /** ARP's sponsoring service's sending address on this chain (task 58). */
+        sponsor: Address;
         deployedTxs: {
             moduleRegistry: Hex;
             domainScopeEnforcer: Hex;

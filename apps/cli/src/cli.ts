@@ -56,7 +56,8 @@ usage
     --project            the project's files instead of your user ones
     --print              (init) print the MCP entry for any other client, write nothing
     --sponsored          (init) testnet tools that sign nothing for the user: ARP's sponsor
-                         pays, and a fetched skill is installed into .claude/skills
+                         pays, and a fetched skill is installed into .claude/skills once you
+                         accept the question it shows
     --capture            (init) hook every runtime and keep each payload, redacted, in
                          ~/.arp/captures/ — to teach the hook a new runtime
   arp --version

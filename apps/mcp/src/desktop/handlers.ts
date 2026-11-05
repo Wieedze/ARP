@@ -4,21 +4,54 @@
  * The key is created the first time one of them is called, not when the server starts, so a user
  * who only searches never gets one.
  */
+import { skillRefFromUrl } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
 import { getAddress, type Hex } from 'viem';
 
+import skillFacts from '../../../../data/catalogue/skill-facts.json';
+import { askPerson } from '../client-session.js';
+import { SKILL_PINS } from '../data.js';
+import { keyOf } from '../tool-search.js';
+import type { ReviewContext } from './skill-gate.js';
+
 import { CONTENT_URL, MULTI_VAULT, RECEIPTS_LOG, RPC, SKILLS_DIR, SPONSOR_URL, record } from '../config.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
-import { agentKeyPath, agentSender, loadOrCreateAgentKey, type AgentSender } from './agent-key.js';
+import { agentKeyPath, agentSender, DESKTOP_CHAIN_ID, loadOrCreateAgentKey, type AgentSender } from './agent-key.js';
 import { declareUsed, getSkill, type LoopConfig } from './loop.js';
 
 let agent: AgentSender | undefined;
+
+// The shape of a committed file `scripts/build/build-skill-facts.ts` generates.
+const INSTALLS = new Map(
+  Object.entries(skillFacts.facts as Record<string, { installs: number | null }>).map(([label, fact]) => [keyOf(label), fact.installs]),
+);
+
+/** The commit's date from the pin record, and skills.sh's install count with its date. */
+function reviewContext(url: string): ReviewContext {
+  const ref = skillRefFromUrl(url);
+  const pinned = ref === null ? undefined : SKILL_PINS[DESKTOP_CHAIN_ID]?.repos[ref.repo];
+  const installs = INSTALLS.get(keyOf(url));
+  return {
+    committedAt: pinned?.committedAt ?? null,
+    thirdParty:
+      installs === undefined || installs === null
+        ? []
+        : [{ label: 'installs', value: installs.toLocaleString('en-US'), source: 'skills.sh', readOn: skillFacts._measuredOn }],
+  };
+}
 
 export function loopConfig(): LoopConfig {
   const registry = record.arp?.identityRegistry;
   if (typeof registry !== 'string') throw new Error('this chain has no ARP identity registry');
   return { contentUrl: CONTENT_URL, sponsorUrl: SPONSOR_URL, registry: getAddress(registry), multiVault: getAddress(MULTI_VAULT), stateDir: arpHome(),
-    ...(SKILLS_DIR === undefined ? {} : { skillsDir: SKILLS_DIR, projectReceipts: RECEIPTS_LOG }),
+    ...(SKILLS_DIR === undefined
+      ? {}
+      : {
+          skillsDir: SKILLS_DIR,
+          projectReceipts: RECEIPTS_LOG,
+          ask: askPerson,
+          reviewContext,
+        }),
   };
 }
 
@@ -40,13 +73,24 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
         name: skill.name,
         source: skill.url,
         skill_md: skill.text,
-        ...(skill.installedAt === undefined
-          ? {}
-          : {
+        ...(skill.installedAt !== undefined
+          ? {
               installed_at: skill.installedAt,
               files: skill.files,
-              note: 'Installed for this project, with its scripts: invoke it with the Skill tool from the next session.',
-            }),
+              note: 'The person accepted it. Installed for this project, with its scripts: invoke it with the Skill tool from the next session.',
+            }
+          : skill.notInstalled !== undefined
+            ? {
+                installed: false,
+                note:
+                  'Nothing was installed and nothing was kept. ' +
+                  (skill.notInstalled === 'unavailable'
+                    ? 'This client cannot show the person the install question. '
+                    : 'The client answered without an accept. ') +
+                  'Tell the person: if they saw no question, their editor cannot show it (Claude Code in VS Code answers no without showing it, anthropics/claude-code#98256); ' +
+                  'they can open Claude Code in a terminal in this project and ask again, and the question will show there. If they did say no, do not retry.',
+              }
+            : {}),
       });
     }
     const done = await declareUsed(loop, agentFor(), atom as Hex); // checked to be 32 bytes of hex above

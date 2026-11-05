@@ -43,11 +43,13 @@ const LISTINGS: Record<string, RepositoryFile[]> = {
 
 const CONTENT = stringToBytes("# Product photography\n\nPut the bottle on the left.\n");
 const NONCE = keccak256(stringToBytes("caller-nonce"));
+const PIN = "0123456789abcdef0123456789abcdef01234567";
 
 function config(over: Partial<ContentServeConfig> = {}): ContentServeConfig {
     return {
         chainId: TESTNET,
         index: INDEX,
+        pin: () => PIN,
         listing: async (repo) => LISTINGS[repo] ?? [],
         raw: async () => ({code: 200, bytes: CONTENT}),
         signer: {address: NODE.address, signTypedData: (data) => NODE.signTypedData(data)},
@@ -187,8 +189,51 @@ describe("serveContent", () => {
             }),
         );
         expect(seen).toEqual([
-            "https://raw.githubusercontent.com/magentosh/superpowers/HEAD/guides/photo/product-photography/SKILL.md",
+            `https://raw.githubusercontent.com/magentosh/superpowers/${PIN}/guides/photo/product-photography/SKILL.md`,
         ]);
+    });
+
+    it("reads the listing and the bytes at the pinned commit, never at HEAD", async () => {
+        // Task 61, deliverable A: the bytes installed are the bytes that were listed.
+        const listed: string[] = [];
+        const answer = await serveContent(
+            SKILL_ATOM,
+            config({
+                listing: async (repo, commit) => {
+                    listed.push(`${repo}@${commit}`);
+                    return LISTINGS[repo] ?? [];
+                },
+            }),
+        );
+        expect(listed).toEqual([`magentosh/superpowers@${PIN}`]);
+        if (answer.status !== "served") throw new Error(answer.status);
+        expect(answer.commit).toBe(PIN);
+    });
+
+    it("names the commit in the receipt, and the receipt still verifies", async () => {
+        const answer = await serveContent(SKILL_ATOM, config());
+        if (answer.status !== "served" || answer.receipt === null) throw new Error("no receipt");
+        expect(answer.receipt.receipt.commit).toBe(PIN);
+        expect((await verifyContentReceipt(answer.receipt)).status).toBe("valid");
+    });
+
+    it("refuses a repository with no pinned commit rather than reading HEAD", async () => {
+        const fetched: string[] = [];
+        const answer = await serveContent(
+            SKILL_ATOM,
+            config({
+                pin: () => null,
+                raw: async (url) => {
+                    fetched.push(url);
+                    return {code: 200, bytes: CONTENT};
+                },
+            }),
+        );
+        expect(answer).toEqual({
+            status: "unpinned",
+            ref: {repo: "magentosh/superpowers", skill: "product-photography"},
+        });
+        expect(fetched).toEqual([]);
     });
 
     it("refuses a listing path that escapes the repository", async () => {

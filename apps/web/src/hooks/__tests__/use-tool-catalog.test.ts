@@ -16,6 +16,7 @@ function tool(atomId: string, overrides: Partial<ToolListing> = {}): ToolListing
         hostedAt: null,
         type: "Thing",
         edgeCount: 1,
+        declarers: [],
         pricedEdges: 1,
         provenDeposits: 0,
         declaredDeposits: 1,

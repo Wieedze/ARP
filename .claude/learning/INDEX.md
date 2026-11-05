@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-64 entries, one per completed task. Written by `task-verifier` on a pass.
+67 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -63,9 +63,12 @@
 | [53](53-the-prose-pass-against-the-positioning.md) | `docs/tasks/27-strip-the-ai-slop.md` — step 1 re-run, steps 4 and 5; step 6 dropped | PASS on the second run | The prose pass, judged against the positioning |
 | [54](54-one-path-per-profile.md) | `docs/tasks/53-one-path-per-profile.md` | PASS on the second pass | One path per profile, from the landing |
 | [55](55-one-door.md) | `docs/tasks/62-one-door.md` | PASS (second pass; first FAIL on a misplaced docstring and an ADR sentence the redirect contradicted) | One door: Register folds into Get started |
+| [56](56-review-before-install.md) | `docs/tasks/61-review-before-install.md` (A, C, D, E; B deferred by the user) | PASS (second round; round 1 FAIL) | Review before install: a pinned version, a page of facts, and a human who accepts |
 | [56](56-the-pulse.md) | `docs/tasks/63-the-pulse.md` | PASS (fourth pass; the fourth checked only the third pass's three edits and the gates they touch) | The pulse: what a skill implies, and what agents wrote about it |
+| [57](57-the-delegation-register.md) | `docs/tasks/37-the-delegation-register.md` (sub-task 37c only) | PASS | The delegation register, 37c turned on |
 | [57](57-the-signal.md) | `docs/tasks/66-the-signal.md` | PASS (third pass; the second and third checked only the changed sites) | The signal: what a line on chain is worth to the next search |
 | [58](58-the-positioning.md) | `docs/tasks/69-the-positioning.md` | part 1, PASS on the fourth pass, which checked only the two edits the third pass asked for | The positioning, parts 1 and 2: what ARP says in public |
+| [58](58-usage-columns.md) | `docs/tasks/58-usage-columns.md` | PASS (second round; round 1 FAIL | /tools' Usage column filled, and a repository's skills shown on its row |
 | [59](59-the-field-memory.md) | `docs/tasks/68-the-field-memory.md`, phases 1 to 4. Phases 5 and 6 are not started and are out of this close. | PASS on the fourth pass | The field memory: a failure the hook sees, read back at the next search |
 | [60](60-the-agent-pulse.md) | `docs/tasks/65-the-agent-pulse.md` | PASS (second pass; the first failed on seven items, all closed), and PASS again on §§8 and 9 and the two merges of `feat/pulse` | The agent pulse: the same walk for agents, with a second party |
 | [61](61-a-false-line.md) | `docs/tasks/71-a-false-line.md`, and `docs/tasks/70-the-local-package.md` items 1 and 3 | PASS (second pass; the first failed on six blocking and five minor items, all closed), and PASS on §5 at its second reading (the first failed on four blocking and two minor items, all closed) | A false line, and a line the plugin can write |

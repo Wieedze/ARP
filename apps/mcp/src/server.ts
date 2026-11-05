@@ -38,6 +38,7 @@ import { linesOf, loopbackHosts, redactUrls, refuseForeignRequest, serveFetch } 
 import { DESKTOP_TOOL_NAMES, DESKTOP_TOOLS, PLUGIN_TOOL_NAMES, READ_TOOL_NAMES, TOOLS } from './tools.js';
 import { desktopTool } from './desktop/handlers.js';
 import { serveContentRequest } from './content.js';
+import { recordClientCapabilities, stdioRouter } from './client-session.js';
 import {
   PORT,
   RECEIPT_SIGNER,
@@ -286,6 +287,7 @@ export const handler = {
 
     switch (body.method) {
       case 'initialize':
+        recordClientCapabilities(body.params);
         return result(id, {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: {} },
@@ -354,7 +356,10 @@ async function serveStdio(input: AsyncIterable<unknown>): Promise<void> {
       else process.stdout.once('drain', () => resolve());
     });
 
-  for await (const line of linesOf(input)) {
+  // Requests are still handled one at a time, in order, as before. What changed with task 61 is
+  // that the reading goes on while one is open: a tool call that asks the person (elicitation)
+  // waits for the client's answer, and that answer arrives on this same input.
+  const handle = async (line: string): Promise<void> => {
     let response: Response;
     try {
       response = await handler.fetch(
@@ -369,9 +374,13 @@ async function serveStdio(input: AsyncIterable<unknown>): Promise<void> {
       process.stderr.write(`request failed: ${error instanceof Error ? error.name : 'error'}\n`);
       response = fail(null, -32603, 'internal error');
     }
-    if (response.status === 202) continue;
+    if (response.status === 202) return;
     await send(await response.text());
-  }
+  };
+
+  const router = stdioRouter(handle, send);
+  for await (const line of linesOf(input)) router.receive(line);
+  await router.close();
 }
 
 /**

@@ -44,7 +44,8 @@
  * bad-atom-id      not 0x + 64 hex. Nothing was looked up
  * unknown-atom     not in the catalogue. We have nothing to say about it
  * not-a-file       a catalogued tool with no file — every MCP server is this
- * absent           the repository has no such skill at HEAD. 139 of 662 are here
+ * unpinned         the repository has no pinned commit, so there is no version to serve (task 61)
+ * absent           the repository has no such skill at its pinned commit
  * ambiguous        several paths, contents differ. 2 of 662
  * unsafe-path      a listing path that escapes the repository. Defence in depth
  * upstream         the origin answered something other than 200
@@ -75,6 +76,8 @@ export type ContentAnswer =
           status: "served";
           ref: SkillRef;
           path: string;
+          /** The pinned commit the bytes were read at. */
+          commit: string;
           /** Other paths in the same repository carrying the same bytes. */
           alsoAt: readonly string[];
           bytes: Uint8Array;
@@ -85,6 +88,7 @@ export type ContentAnswer =
     | {status: "bad-atom-id"}
     | {status: "unknown-atom"}
     | {status: "not-a-file"; url: string}
+    | {status: "unpinned"; ref: SkillRef}
     | {status: "absent"; ref: SkillRef}
     | {status: "ambiguous"; ref: SkillRef; paths: readonly string[]}
     | {status: "unsafe-path"; ref: SkillRef; path: string}
@@ -96,8 +100,14 @@ export type ContentServeConfig = {
     chainId: number;
     /** Atom id to URL. Built once by the caller; this never mutates it. */
     index: ReadonlyMap<string, string>;
-    /** A repository's file listing. The caller caches; this calls it once per request. */
-    listing(repo: string): Promise<readonly RepositoryFile[]>;
+    /**
+     * The commit a repository is served at, or null when it has none (task 61, deliverable A). The
+     * bytes come from that commit and nothing else, and the receipt names it: a newer upstream
+     * commit is a new version that has to be listed again, never a silent substitution.
+     */
+    pin(repo: string): string | null;
+    /** A repository's file listing at a commit. The caller caches; this calls it once per request. */
+    listing(repo: string, commit: string): Promise<readonly RepositoryFile[]>;
     /** Fetch a raw URL. Returns the status and the bytes, and never throws for a 404. */
     raw(url: string): Promise<{code: number; bytes: Uint8Array}>;
     /** Null means serve the bytes and sign nothing. */
@@ -142,7 +152,9 @@ export async function serveContent(
     // catalogue is this, and it is an answer rather than a failure.
     if (ref === null) return {status: "not-a-file", url};
 
-    const resolved = resolveContentPath(ref, await config.listing(ref.repo));
+    const commit = config.pin(ref.repo);
+    if (commit === null) return {status: "unpinned", ref};
+    const resolved = resolveContentPath(ref, await config.listing(ref.repo, commit));
     if (resolved.status === "absent") return {status: "absent", ref};
     if (resolved.status === "ambiguous") {
         return {status: "ambiguous", ref, paths: resolved.paths};
@@ -151,7 +163,7 @@ export async function serveContent(
         return {status: "unsafe-path", ref, path: resolved.path};
     }
 
-    const fetched = await config.raw(rawContentUrl(ref, resolved.path));
+    const fetched = await config.raw(rawContentUrl(ref, resolved.path, commit));
     if (fetched.code !== 200) {
         return {status: "upstream", ref, path: resolved.path, code: fetched.code};
     }
@@ -179,6 +191,7 @@ export async function serveContent(
                       to: config.to,
                       servedAt: config.now(),
                       nonce: config.nonce,
+                      commit,
                   },
                   config.chainId,
                   config.signer,
@@ -187,6 +200,7 @@ export async function serveContent(
     return {
         status: "served",
         ref,
+        commit,
         path: resolved.path,
         alsoAt: resolved.alsoAt,
         bytes: fetched.bytes,

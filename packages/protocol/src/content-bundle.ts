@@ -31,6 +31,8 @@ export type BundleAnswer =
           ref: SkillRef;
           /** The skill's directory in the repository, without a trailing slash. */
           path: string;
+          /** The pinned commit every file was read at. */
+          commit: string;
           files: readonly BundleFile[];
           manifest: string;
           digest: Hex;
@@ -90,7 +92,9 @@ export async function serveSkillBundle(atomId: string, config: BundleServeConfig
     const ref = skillRefFromUrl(url);
     if (ref === null) return {status: "not-a-file", url};
 
-    const listing = await config.listing(ref.repo);
+    const commit = config.pin(ref.repo);
+    if (commit === null) return {status: "unpinned", ref};
+    const listing = await config.listing(ref.repo, commit);
     const resolved = resolveContentPath(ref, listing);
     if (resolved.status === "absent") return {status: "absent", ref};
     if (resolved.status === "ambiguous") return {status: "ambiguous", ref, paths: resolved.paths};
@@ -114,7 +118,7 @@ export async function serveSkillBundle(atomId: string, config: BundleServeConfig
     const maxTotal = config.maxTotal ?? DEFAULT_MAX_TOTAL;
     for (const member of members) {
         if (!isSafeRelativePath(member.path)) return {status: "unsafe-path", ref, path: member.repoPath};
-        const fetched = await config.raw(rawContentUrl(ref, member.repoPath));
+        const fetched = await config.raw(rawContentUrl(ref, member.repoPath, commit));
         if (fetched.code !== 200) return {status: "upstream", ref, path: member.repoPath, code: fetched.code};
         total += fetched.bytes.byteLength;
         if (fetched.bytes.byteLength > cap || total > maxTotal) {
@@ -143,9 +147,10 @@ export async function serveSkillBundle(atomId: string, config: BundleServeConfig
                       to: config.to,
                       servedAt: config.now(),
                       nonce: config.nonce,
+                      commit,
                   },
                   config.chainId,
                   config.signer,
               );
-    return {status: "served", ref, path: dir, files, manifest, digest, receipt};
+    return {status: "served", ref, path: dir, commit, files, manifest, digest, receipt};
 }

@@ -33,6 +33,7 @@ query ToolListing(${variables}) {
     limit: $limit
   ) {
     term_id
+    subject_id
     object {
       term_id
       label

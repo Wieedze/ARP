@@ -14,7 +14,9 @@
  * `receipts.jsonl` (one line per skill served).
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
+
+import { installFiles, installPrompt, recordInstall, SAFE_SKILL_NAME, type GateAnswer, type ReviewContext } from './skill-gate.js';
 
 import {
   decodeEventLog,
@@ -42,6 +44,7 @@ import {
   verifyContentReceipt,
   type BundleFile,
   type SignedContentReceipt,
+  type SkillPrompt,
   type UsageOutcome,
   type UsageReason,
 } from '@arp-protocol/core';
@@ -80,6 +83,13 @@ export type LoopConfig = {
    * (`apps/hook/src/hook.ts`, `fetchedRefs`). Written with `skillsDir`, never without.
    */
   projectReceipts?: string;
+  /**
+   * Shows the install question to the person and returns their answer. Absent, it is the same as a
+   * client that cannot ask: nothing is installed (task 61, deliverable D).
+   */
+  ask?: (prompt: SkillPrompt) => Promise<GateAnswer>;
+  /** The commit's date and third-party figures for the question, by skill URL. */
+  reviewContext?: (url: string) => ReviewContext;
   /** How long to wait for the indexer to see a new identity, in ms. */
   indexerWaitMs?: number;
   sleep?: (ms: number) => Promise<void>;
@@ -88,7 +98,17 @@ export type LoopConfig = {
 
 type AgentState = { agentId: string; identityAtom?: Hex };
 
-export type ServedSkill = { atom: Hex; url: string; name: string; text: string; installedAt?: string; files?: number };
+export type ServedSkill = {
+  atom: Hex;
+  url: string;
+  name: string;
+  text: string;
+  files?: number;
+  /** Where the person accepted it into. */
+  installedAt?: string;
+  /** Not installed: what the client answered instead of an accept. */
+  notInstalled?: Exclude<GateAnswer, 'accepted'>;
+};
 
 type ReceiptLine = { atom: Hex; url: string; skill: string | null; receipt: SignedContentReceipt };
 
@@ -204,32 +224,21 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
   const line: ReceiptLine = { atom: signed.receipt.atom, url: signed.receipt.url, skill: ref?.skill ?? null, receipt: signed };
   appendFileSync(join(config.stateDir, 'receipts.jsonl'), `${JSON.stringify(line)}\n`);
   const served = { atom: signed.receipt.atom, url: signed.receipt.url, name: ref?.skill ?? signed.receipt.url, text: new TextDecoder().decode(skillMd.bytes) };
-  // Installed under its own name only when that name is a plain directory name: it comes from a URL.
-  if (config.skillsDir === undefined || ref === null || !/^[a-z0-9][a-z0-9._-]*$/i.test(ref.skill)) return served;
-  const dir = join(config.skillsDir, ref.skill);
-  // A different file already at one of these paths is somebody's: another skill of the same name, or
-  // one edited by hand. Refused before anything is written, never overwritten (ADR `0116`).
-  const clash = files.find((file) => {
-    const path = join(dir, file.path);
-    return existsSync(path) && !Buffer.from(readFileSync(path)).equals(Buffer.from(file.bytes));
-  });
-  if (clash !== undefined) {
-    throw new Error(
-      `${join(dir, clash.path)} already exists with different contents; nothing was installed. ` +
-        `Remove ${dir} to install this skill there.`,
-    );
-  }
-  // Every path was checked to stay inside the directory by `bundleMatchesReceipt`.
-  for (const file of files) {
-    mkdirSync(dirname(join(dir, file.path)), { recursive: true });
-    writeFileSync(join(dir, file.path), file.bytes);
-  }
-  if (config.projectReceipts !== undefined) {
-    mkdirSync(join(config.projectReceipts, '..'), { recursive: true });
-    const at = new Date(signed.receipt.servedAt * 1000).toISOString();
-    appendFileSync(config.projectReceipts, `${JSON.stringify({ skill: ref.skill, atom: signed.receipt.atom, url: signed.receipt.url, at, receipt: signed })}\n`);
-  }
-  return { ...served, installedAt: join(dir, 'SKILL.md'), files: files.length };
+  if (config.skillsDir === undefined || ref === null || !SAFE_SKILL_NAME.test(ref.skill)) return served;
+
+  // The question is always asked (task 61): an absent `ask` is the same as nobody to ask.
+  const prompt = installPrompt(
+    signed,
+    files,
+    join(config.skillsDir, ref.skill),
+    config.reviewContext?.(signed.receipt.url) ?? { committedAt: null, thirdParty: [] },
+  );
+  const answer = config.ask === undefined ? 'unavailable' : await config.ask(prompt);
+  // Nothing written, nothing kept: a refusal is not parked for later (user decision 2026-11-03).
+  if (answer !== 'accepted') return { ...served, notInstalled: answer, files: files.length };
+  const installedAt = installFiles(config.skillsDir, ref.skill, files);
+  if (config.projectReceipts !== undefined) recordInstall(config.projectReceipts, ref.skill, signed);
+  return { ...served, installedAt, files: files.length };
 }
 
 /** This key's agent id: read from `~/.arp`, or minted with gas the sponsor sends once. */

@@ -1,7 +1,8 @@
 # Task 37 — The delegation register: published on Intuition, found by the agent, sponsored on testnet
 
-**Status:** **PARTLY BUILT**, 2026-10-30: 37b and 37c are built, with task 40, in `apps/sponsor`;
-37a, 37d and 37e are not started. Completion note at the end.
+**Status:** **CLOSED** 2026-11-03 at 37b and 37c (`task-verifier` PASS on 37c,
+`.claude/learning/57-the-delegation-register.md`). 37a, 37d, 37e and the rest of §3's walk were not
+started, by the user's decision, and moved to `FUTURE.md`. Completion note at the end.
 **ADR:** `0092` (sponsoring on testnet; amends `0045` and `security.md`).
 **Required skills:** `mms-smart-accounts-kit` (`references/delegations.md`), `intuition`.
 **Rules:** `code.md`, `security.md`, `metamask-delegation.md`, `portability.md`, `claims.md`,
@@ -182,3 +183,9 @@ On `feat/40-sponsoring-service`, with task 40. ADR `0096`, post-mortem
   second browser and from `arp`, revoke it, see it disabled). The user chose to stop after this
   publication.
 
+**2026-11-03, closed.** `task-verifier` PASS on 37c as turned on that day, post-mortem
+`.claude/learning/57-the-delegation-register.md`. The task closes at 37b and 37c. 37a (find a
+delegation by its agent), 37d (the account page reads it), 37e (the agent finds its own) and the
+rest of §3's walk (find from a second browser and from `arp`, revoke, see it disabled) are in
+`FUTURE.md`. The global-budget 429 is tested on `checkPublishLimits` in `packages/protocol`, not
+through the route.

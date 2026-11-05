@@ -3,7 +3,7 @@ import {screen} from "@testing-library/react";
 
 import {renderWithProviders} from "../../test/render";
 import type {ToolRow} from "../../services/tool-catalog";
-import {rankTools} from "../../services/tool-catalog";
+import {rankTools, skillUsageByRepo} from "../../services/tool-catalog";
 import {ToolCatalogList} from "./ToolCatalogList";
 
 /**
@@ -25,6 +25,7 @@ const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     label: null,
     href: "/atom/0xaa",
     declarations: 4,
+    declarers: [],
     provenDeposits: 3,
     declaredDeposits: 7,
     supportTrust: "1.0000",
@@ -112,5 +113,96 @@ describe("ToolCatalogList", () => {
         renderWithProviders(<ToolCatalogList rows={[row()]} curveId={1} />);
         expect(screen.getByText(/named by agents/i)).toBeTruthy();
         expect(screen.queryByText(/declared by agents/i)).toBeNull();
+    });
+
+    it("shows on a repository row how many agents use its skills, each once (task 58)", () => {
+        const repo = row({
+            key: "0xrr",
+            name: "anthropics/skills",
+            label: "github.com/anthropics/skills",
+            declarations: 0,
+            provenDeposits: 0,
+            declaredDeposits: 0,
+        });
+        const skills = [
+            row({
+                key: "0x1",
+                name: "pptx",
+                source: "anthropics/skills",
+                declarations: 2,
+                declarers: ["0xa", "0xb"],
+            }),
+            row({
+                key: "0x2",
+                name: "pdf",
+                source: "anthropics/skills",
+                declarations: 1,
+                declarers: ["0xa"],
+            }),
+            row({
+                key: "0x3",
+                name: "docx",
+                source: "anthropics/skills",
+                declarations: 0,
+                declarers: [],
+            }),
+        ];
+        renderWithProviders(
+            <ToolCatalogList
+                rows={[repo]}
+                curveId={1}
+                showStars
+                repoUsage={skillUsageByRepo([repo, ...skills])}
+            />,
+        );
+        expect(screen.getByRole("img", {name: "2 agents use its skills"})).toBeTruthy();
+        expect(screen.getByRole("link").textContent).not.toMatch(/skills? declared|usage\b/i);
+    });
+
+    it("says nothing about a repository none of whose skills was declared", () => {
+        const repo = row({
+            key: "0xrr",
+            name: "acme/skills",
+            label: "github.com/acme/skills",
+            declarations: 0,
+            provenDeposits: 0,
+            declaredDeposits: 0,
+        });
+        renderWithProviders(
+            <ToolCatalogList
+                rows={[repo]}
+                curveId={1}
+                showStars
+                repoUsage={skillUsageByRepo([repo])}
+            />,
+        );
+        expect(screen.queryByRole("img", {name: /use its skills/})).toBeNull();
+    });
+
+    it("names one agent in the singular", () => {
+        const repo = row({
+            key: "0xrr",
+            name: "acme/skills",
+            label: "github.com/acme/skills",
+            declarations: 0,
+            provenDeposits: 0,
+            declaredDeposits: 0,
+        });
+        const skill = row({
+            key: "0x1",
+            name: "one",
+            source: "acme/skills",
+            declarations: 1,
+            declarers: ["0xa"],
+        });
+        renderWithProviders(
+            <ToolCatalogList
+                rows={[repo]}
+                curveId={1}
+                showStars
+                repoUsage={skillUsageByRepo([repo, skill])}
+            />,
+        );
+        expect(screen.getByRole("img", {name: "1 agent uses its skills"}).textContent).toBe("1");
     });
 });
