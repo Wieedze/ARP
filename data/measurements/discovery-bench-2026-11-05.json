@@ -1,0 +1,1879 @@
+{
+ "cost": 0.11444271000000002,
+ "needs": [
+  {
+   "need": "I need to remove the silent parts from a video I recorded",
+   "variants": [
+    "remove silent parts video",
+    "trim silence video",
+    "auto cut silence"
+   ],
+   "found": {
+    "raw": 0,
+    "terse": 0,
+    "expanded": 28
+   },
+   "strategies": {
+    "raw": [],
+    "terse": [],
+    "expanded": [
+     {
+      "skill": "wyattblue/auto-editor@auto-editor",
+      "installs": "1K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "monkeyboiii/video-master@auto-editor",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "notivn/aiev@auto-cut",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "expocut/codex-plugin@expocut-social-speed-edit",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "htekdev/vidpipe-copilot-plugin@video-edit",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "wyattblue/auto-editor@auto-editor",
+      "installs": "1K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "monkeyboiii/video-master@auto-editor",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "danielrosehill/claude-video-editor-plugin@auto-cut-silences",
+      "installs": "9",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "htekdev/vidpipe-copilot-plugin@video-edit",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "louisedesadeleer/cut-video@cut-video",
+      "installs": "109",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "turn my written script into a narrated video with a voice-over",
+   "variants": [
+    "text-to-video narration skill",
+    "script to video voiceover",
+    "narrated video generator"
+   ],
+   "found": {
+    "raw": 2,
+    "terse": 3,
+    "expanded": 116
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-avatar-video",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-avatar-video",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "ferrants/skill-tts@tts",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-avatar-video",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "ferrants/skill-tts@tts",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "hyperfx-ai/marketing-skills@video-generation",
+      "installs": "217",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "video-db/skills@videodb",
+      "installs": "1.6K",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "beatra-ai/beatra-skills@ai-video-image-music-studio",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "ferrants/skill-tts@tts",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "jwynia/agent-skills@document-to-narration",
+      "installs": "987",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "adriendidoudid/eleven-sk@elevenlabs",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "hyperfx-ai/marketing-skills@video-generation",
+      "installs": "217",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "convert a list of web pages into clean markdown files",
+   "variants": [
+    "convert web pages to markdown",
+    "html to markdown files",
+    "web page markdown converter"
+   ],
+   "found": {
+    "raw": 1,
+    "terse": 3,
+    "expanded": 169
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "mattpocock/skills@improve-codebase-architecture",
+      "installs": "1.2M",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "skills.volces.com@html-extract",
+      "installs": "3",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "skills.volces.com@html-markdown",
+      "installs": "2",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "skills.volces.com@html-to-markdown",
+      "installs": "1",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "skills.volces.com@html-to-markdown",
+      "installs": "1",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "open.feishu.cn@lark-markdown",
+      "installs": "822K",
+      "read": false,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "smithery.ai@web-to-markdown",
+      "installs": "16",
+      "read": false,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "curiousdima/claude-web-to-markdown-skill@web-to-markdown",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@html-extract",
+      "installs": "3",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "vinihdsouza/skill_java_v2@html-to-md",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "frontboat/markdown-dot-new@markdown-dot-new",
+      "installs": "8",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "ash-ishh/skills@url-to-markdown",
+      "installs": "5",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "ichuan/skills@web-search-fetch",
+      "installs": "4",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "blessonism/search-skills@mineru-extract",
+      "installs": "182",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "fill in a PDF form automatically from my data",
+   "variants": [
+    "fill pdf form automatically",
+    "auto fill pdf",
+    "pdf form filler"
+   ],
+   "found": {
+    "raw": 1,
+    "terse": 2,
+    "expanded": 30
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "open.feishu.cn@lark-sheets",
+      "installs": "856.9K",
+      "read": false,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "mattpocock/skills@domain-modeling",
+      "installs": "938K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "inbharatai/claude-skills@form-filler",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "inbharatai/claude-skills@form-filler",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "apsteinberg/skills@pdf-form-filler",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "askyourpdf/ai-pdf-filler@ai-pdf-filler-cli",
+      "installs": "341",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@domain-modeling",
+      "installs": "938K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "claude-office-skills/skills@PDF Form Filler",
+      "installs": "4.8K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "inbharatai/claude-skills@form-filler",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "syncfusion/pure-react-ui-components-skills@syncfusion-pure-react-grid",
+      "installs": "8",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "docaohieu2808/pdfx@pdfx",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "ontos-ai/snapfill-openclaw-plugin@snapfill",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "aicodedecode/awesome-muse-skills@form-filler",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "transcribe an audio interview into text with timestamps",
+   "variants": [
+    "transcribe audio interview",
+    "audio to text timestamps",
+    "speech to text transcription"
+   ],
+   "found": {
+    "raw": 2,
+    "terse": 2,
+    "expanded": 236
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "marcelocajueiro/transcribe@transcribe",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "marcelocajueiro/transcribe@transcribe",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "opentranscription/skills@transcribing-audio",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "marcelocajueiro/transcribe@transcribe",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "opentranscription/skills@transcribing-audio",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "noizai/skills@speech-to-text",
+      "installs": "193",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "101-skills/superpowers@speech-to-text",
+      "installs": "189",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "togethercomputer/skills@together-audio",
+      "installs": "89",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "marcelocajueiro/transcribe@transcribe",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "opentranscription/skills@transcribing-audio",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "noizai/skills@speech-to-text",
+      "installs": "193",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "101-skills/superpowers@speech-to-text",
+      "installs": "189",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "calesthio/generative-media-skills@assemblyai-transcription",
+      "installs": "109",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "make a slide deck from my notes",
+   "variants": [
+    "make slides from notes",
+    "notes to slide deck",
+    "create presentation from notes"
+   ],
+   "found": {
+    "raw": 11,
+    "terse": 81,
+    "expanded": 251
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "open.feishu.cn@lark-slides",
+      "installs": "855.8K",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "varnan-tech/opendirectory@graphic-slide-deck",
+      "installs": "50",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "edwinhu/workflows@workshop",
+      "installs": "8",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "mohitagw15856/pm-claude-skills@deck-from-doc",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "pangenomeai/academic-skills-food-nutrition@agri-ppt",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "arifszn/slide-wright@slide-wright",
+      "installs": "122",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "open-slide/open-slide@create-slide",
+      "installs": "181",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "glebis/claude-skills@present",
+      "installs": "116",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "thecraighewitt/skills@slide-deck",
+      "installs": "40",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "varnan-tech/opendirectory@graphic-slide-deck",
+      "installs": "50",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "arifszn/slide-wright@slide-wright",
+      "installs": "122",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "varnan-tech/opendirectory@graphic-slide-deck",
+      "installs": "50",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@presentation-generator",
+      "installs": "17",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "edwinhu/workflows@workshop",
+      "installs": "8",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "thecraighewitt/skills@slide-deck",
+      "installs": "40",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "arifszn/slide-wright@slide-wright",
+      "installs": "122",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "varnan-tech/opendirectory@graphic-slide-deck",
+      "installs": "50",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "edwinhu/workflows@workshop",
+      "installs": "8",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "thecraighewitt/skills@slide-deck",
+      "installs": "40",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "yuanyuanma03/academic-research-skills@nature-paper2ppt",
+      "installs": "25",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "remove the background from a batch of product photos",
+   "variants": [
+    "remove background product photos",
+    "bulk image background removal",
+    "batch remove photo background"
+   ],
+   "found": {
+    "raw": 3,
+    "terse": 7,
+    "expanded": 49
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "bria-ai/bria-skill@remove-background",
+      "installs": "204",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-image-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "skills.volces.com@image-remove-background",
+      "installs": "3",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "bria-ai/bria-skill@bria-ai",
+      "installs": "345",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-image-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "samehdoush/bg-remover-skill@bg-remover",
+      "installs": "12",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "jablonkai/skills@pixelmator-pro",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "skills.volces.com@bria-ai",
+      "installs": "2",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "bria-ai/bria-skill@bria-ai",
+      "installs": "345",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "inference-sh/skills@ai-image-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "samehdoush/bg-remover-skill@bg-remover",
+      "installs": "12",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "jablonkai/skills@pixelmator-pro",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "skills.volces.com@bria-ai",
+      "installs": "2",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "bria-ai/bria-skill@bria-ai",
+      "installs": "345",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "nvdigitalsolutions/mcp-ai-wpoos@design-image-optimization",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "samehdoush/bg-remover-skill@bg-remover",
+      "installs": "12",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "jablonkai/skills@pixelmator-pro",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "bria-ai/bria-skill@remove-background",
+      "installs": "204",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "write unit tests for an existing Python module",
+   "variants": [
+    "unit test generator python",
+    "pytest module tests",
+    "write python unit tests"
+   ],
+   "found": {
+    "raw": 0,
+    "terse": 1,
+    "expanded": 66
+   },
+   "strategies": {
+    "raw": [],
+    "terse": [
+     {
+      "skill": "jaredlander/freshbooks-speed@unit-testing",
+      "installs": "9",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "jaredlander/freshbooks-speed@unit-testing",
+      "installs": "9",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "neko1313/graphlens@python-test-generator",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "cognitivemesh/pyarnes@python-test",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "ameen-alam/ai-400-class@pytest-builder",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@tdd",
+      "installs": "1.2M",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "jaredlander/freshbooks-speed@unit-testing",
+      "installs": "9",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "ameen-alam/ai-400-class@pytest-builder",
+      "installs": "2",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "arabelatso/skills-4-se@unit-test-generator",
+      "installs": "3",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "testland/qa@pytest-asyncio-patterns",
+      "installs": "4",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "alamops/skills@write-tests",
+      "installs": "6",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "check my website for accessibility problems",
+   "variants": [
+    "accessibility audit skill",
+    "website accessibility checker",
+    "WCAG compliance review"
+   ],
+   "found": {
+    "raw": 4,
+    "terse": 30,
+    "expanded": 232
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "mistyhx/frontend-design-audit@frontend-design-audit",
+      "installs": "134",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "jalaalrd/full-stack-audit@full-stack-audit",
+      "installs": "22",
+      "read": true,
+      "ratings": [
+       2,
+       1
+      ]
+     },
+     {
+      "skill": "misardev/misar-ai-plugins@auditor",
+      "installs": "1",
+      "read": false,
+      "ratings": [
+       1,
+       0
+      ]
+     },
+     {
+      "skill": "ukohaemmanuel/full-stack-audit@full-stack-audit",
+      "installs": "1",
+      "read": true,
+      "ratings": [
+       2,
+       1
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "github/awesome-copilot@web-design-reviewer",
+      "installs": "14.2K",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "squirrelscan/skills@squirrelscan",
+      "installs": "3.1K",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "smithery.ai@web-design-reviewer",
+      "installs": "677",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "mistyhx/frontend-design-audit@frontend-design-audit",
+      "installs": "134",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "microsoft/githubcopilot_customized@web-design-reviewer",
+      "installs": "9",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "rampstackco/claude-skills@accessibility-audit",
+      "installs": "326",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "patricio0312rev/skills@accessibility-auditor",
+      "installs": "359",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "ibelick/ui-skills@fixing-accessibility",
+      "installs": "23.1K",
+      "read": true,
+      "ratings": [
+       1,
+       2
+      ]
+     },
+     {
+      "skill": "squirrelscan/skills@squirrelscan",
+      "installs": "3.1K",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "forcedotcom/sf-skills@design-systems-slds-validate",
+      "installs": "6K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "jalaalrd/full-stack-audit@full-stack-audit",
+      "installs": "22",
+      "read": true,
+      "ratings": [
+       2,
+       1
+      ]
+     },
+     {
+      "skill": "forcedotcom/sf-skills@experience-lwc-security-validate",
+      "installs": "2.4K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "richhemsley3/claude-design-skills@accessibility-auditor",
+      "installs": "45",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "mistyhx/frontend-design-audit@frontend-design-audit",
+      "installs": "134",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skeletont638-code/a11y-sentinel@accessibility-audit",
+      "installs": "4",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "translate the subtitles of a video into Spanish",
+   "variants": [
+    "translate video subtitles to Spanish",
+    "Spanish subtitle translation",
+    "translate subtitles srt"
+   ],
+   "found": {
+    "raw": 1,
+    "terse": 2,
+    "expanded": 42
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "clawhub.ai@translate",
+      "installs": "5",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "inference-sh/skills@ai-video-generation",
+      "installs": "14",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "clawhub.ai@translate",
+      "installs": "5",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "scenario-labs/skills@scenario-caption-studio",
+      "installs": "599",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "jianshuo/claude-skills@wjs-translating-subtitles",
+      "installs": "220",
+      "read": true,
+      "ratings": [
+       2,
+       1
+      ]
+     },
+     {
+      "skill": "nicepkg/ai-workflow@srt-translator",
+      "installs": "64",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "nicepkg/ai-workflow@srt-translator",
+      "installs": "64",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "voxflowstudio/skills@transcribe",
+      "installs": "17",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "sonilo-ai/skills@proofread",
+      "installs": "11",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "unliftedq/skills@subtitle-translator",
+      "installs": "7",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "alwaysmavs/agent-skills@video-subtitle-translator",
+      "installs": "5",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "turn a CSV of sales into charts for a report",
+   "variants": [
+    "csv to charts skill",
+    "sales data visualization",
+    "report chart generator"
+   ],
+   "found": {
+    "raw": 0,
+    "terse": 1,
+    "expanded": 135
+   },
+   "strategies": {
+    "raw": [],
+    "terse": [
+     {
+      "skill": "gzsteven666/data-analyze@data-analyze-refined",
+      "installs": "10",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "skyworkai/skywork-skills@Skywork Excel",
+      "installs": "365",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "anygenio/anygen-skills@anygen-data-analysis",
+      "installs": "73",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "gzsteven666/data-analyze@data-analyze-refined",
+      "installs": "10",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@anygen-data-analysis",
+      "installs": "19",
+      "read": false,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skills.volces.com@report-generator",
+      "installs": "5",
+      "read": false,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "anygenio/anygen-skills@anygen-data-analysis",
+      "installs": "73",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "gzsteven666/data-analyze@data-analyze-refined",
+      "installs": "10",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "skyworkai/skywork-skills@Skywork Excel",
+      "installs": "365",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "hherosoul/dsh-smart-charts@smart-charts",
+      "installs": "207",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "iofficeai/officecli@officecli-data-dashboard",
+      "installs": "110",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "need": "review a pull request for security problems",
+   "variants": [
+    "security review pull request",
+    "code security review",
+    "PR security audit"
+   ],
+   "found": {
+    "raw": 14,
+    "terse": 14,
+    "expanded": 276
+   },
+   "strategies": {
+    "raw": [
+     {
+      "skill": "microsoft/azure-skills@azure-compliance",
+      "installs": "623.3K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@code-review",
+      "installs": "853.4K",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@research",
+      "installs": "767.2K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "onewave-ai/claude-skills@code-review-pro",
+      "installs": "2.6K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "lee-to/ai-factory@aif-review",
+      "installs": "103",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "terse": [
+     {
+      "skill": "microsoft/azure-skills@azure-compliance",
+      "installs": "623.3K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@code-review",
+      "installs": "853.4K",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@git-guardrails-claude-code",
+      "installs": "535.9K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "onewave-ai/claude-skills@code-review-pro",
+      "installs": "2.6K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "lee-to/ai-factory@aif-review",
+      "installs": "103",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "expanded": [
+     {
+      "skill": "onewave-ai/claude-skills@code-review-pro",
+      "installs": "2.6K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "microsoft/azure-skills@azure-compliance",
+      "installs": "623.3K",
+      "read": true,
+      "ratings": [
+       0,
+       0
+      ]
+     },
+     {
+      "skill": "mattpocock/skills@code-review",
+      "installs": "853.4K",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     },
+     {
+      "skill": "jeffallan/claude-skills@code-reviewer",
+      "installs": "6.8K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "securityskills/skills@secure-code-review",
+      "installs": "1.7K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     }
+    ],
+    "reranked": [
+     {
+      "skill": "onewave-ai/claude-skills@code-review-pro",
+      "installs": "2.6K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "jeffallan/claude-skills@code-reviewer",
+      "installs": "6.8K",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "farmage/opencode-skills@code-reviewer",
+      "installs": "381",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "owasp/secure-agent-playbook@code-review-security",
+      "installs": "453",
+      "read": true,
+      "ratings": [
+       2,
+       2
+      ]
+     },
+     {
+      "skill": "usestrix/strix@find-security-vulnerabilities-in-code",
+      "installs": "15.2K",
+      "read": true,
+      "ratings": [
+       1,
+       1
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -109,3 +109,16 @@ top 30 by how many of those words a skill's description holds. A blind judge rat
 **How it will be read, decided now.** Paired by need. A strategy counts as better than `raw` only if it is up on at least 10 of 12 needs (a sign test, about p < 0.04 two-sided);
 anything less is reported as not established. A rating says what a description claims, not that the skill works. The needs were written by the author of the
 strategies, and search results are one day's. Whether fusing searches costs too many calls is decided after, not by this.
+
+**What it showed.** `data/measurements/discovery-bench-2026-11-05.json`, $0.11. 178 ratings compared, 6 disagree; 20 of 178 listed skills could not be read and count as described by nothing.
+
+| Strategy | Mean DCG@5 | Needs with a skill rated as doing the job | Such skills per top 5 | Against `raw` |
+| --- | --- | --- | --- | --- |
+| `raw`, the sentence | 1.18 | 5/12 | 0.7 | |
+| `terse` | 2.30 | 8/12 | 1.1 | 9 up, 1 down: not established by the rule |
+| `expanded` | 4.14 | 12/12 | 2.6 | 12 up, 0 down: better by the rule |
+| `reranked` | 4.88 | 12/12 | 3.5 | 12 up, 0 down: better by the rule |
+
+**How far that goes.** `raw` is a low bar: the search matches words literally, a sentence often returns 0 to 3 results, and agents in the comparisons already wrote short words. Against `terse`, closer to what an agent does, `expanded` is up on 10, down on 1, level on 1, which meets the same threshold but was not the comparison set in advance. `reranked` against `expanded` is 9 up and 3 down, below it, and it is circular: it orders by words in the description and the judge reads that description. A rating is what a description claims, and no skill ran. One day, twelve needs, written by the author of the strategies.
+
+**Variants of the simulation** (`--variants`): the weight of the prior changes almost nothing, 10% exploration and picking among the top 3 lower success, and an agent assumed to notice 7 in 10 failing skills by reading keeps success steady and resists false lines at the start. That detection rate is an assumption and not a measurement.

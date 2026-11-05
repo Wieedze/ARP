@@ -9,7 +9,7 @@
  *  quality plus noise. Each agent takes the first result and it works with the skill's true rate. A share of agents declare,
  *  each from its own wallet, and always truthfully except where a scenario says otherwise.
  */
-type Policy = "search" | "score" | "thompson";
+type Policy = "search" | "score" | "thompson" | "score-weak-prior" | "score-strong-prior" | "explore-10" | "top-3" | "reads-files";
 
 function rng(seed: number) {
     let state = seed >>> 0;
@@ -65,17 +65,30 @@ function run(policy: Policy, scenario: Scenario, agents: number, seed: number) {
         if (policy !== "search") {
             let top = -1;
             for (let skill = 0; skill < count; skill += 1) {
-                const a = (prior[skill] ?? 0) + (worked[skill] ?? 0);
-                const b = 1 - (prior[skill] ?? 0) + (failed[skill] ?? 0);
+                const strength = policy === "score-strong-prior" ? 5 : policy === "score-weak-prior" ? 0.3 : 1;
+                const a = strength * (prior[skill] ?? 0) + (worked[skill] ?? 0);
+                const b = strength * (1 - (prior[skill] ?? 0)) + (failed[skill] ?? 0);
+                // `reads-files`: reading a skill's file lets an agent notice 7 in 10 of those that would fail.
+                if (policy === "reads-files" && (quality[skill] ?? 0) < 0.4 && random() < 0.7) continue;
                 const value =
-                    policy === "score"
-                        ? a / (a + b)
-                        : ((sample) => sample / (sample + gamma(b, random)))(gamma(a, random));
+                    policy === "thompson"
+                        ? ((sample) => sample / (sample + gamma(b, random)))(gamma(a, random))
+                        : a / (a + b);
                 if (value > top) {
                     top = value;
                     pick = skill;
                 }
             }
+        }
+        if (policy === "explore-10" && random() < 0.1) pick = Math.floor(random() * count);
+        if (policy === "top-3") {
+            const ranked = quality
+                .map((_value, skill) => skill)
+                .sort((x, y) => {
+                    const score = (skill: number) => ((prior[skill] ?? 0) + (worked[skill] ?? 0)) / (1 + (worked[skill] ?? 0) + (failed[skill] ?? 0));
+                    return score(y) - score(x);
+                });
+            pick = ranked[Math.floor(random() * 3)] ?? pick;
         }
         const success = random() < (quality[pick] ?? 0);
         if (agent >= tailFrom) {
@@ -100,12 +113,15 @@ const SCENARIOS: Scenario[] = [
     {name: "50 false wallets on the worst", declareShare: 0.2, noise: 0.3, fakeOnWorst: 50},
 ];
 
+const POLICIES: Policy[] = process.argv.includes("--variants")
+    ? ["score", "score-weak-prior", "score-strong-prior", "explore-10", "top-3", "reads-files"]
+    : ["search", "score", "thompson"];
 const RUNS = 400;
 console.log(`${RUNS} worlds per cell. Last 20% of agents: success rate, then share who took the true best skill.`);
 for (const agents of [50, 200, 1000]) {
     console.log(`\n${agents} agents`);
     for (const scenario of SCENARIOS) {
-        const cells = (["search", "score", "thompson"] as Policy[]).map((policy) => {
+        const cells = POLICIES.map((policy) => {
             let success = 0;
             let best = 0;
             let ceiling = 0;
