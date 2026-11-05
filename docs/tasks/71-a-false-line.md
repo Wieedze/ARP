@@ -1,6 +1,6 @@
 # Task 71 — A false line: the ranking moves from three wallets
 
-**Status:** verified 2026-11-05 on `feat/agent-pulse`, not pushed. `task-verifier` PASS on the second pass, post-mortem `.claude/learning/61-a-false-line.md`. Item 3 of `docs/tasks/70`, which its test closes for the score and not for the choice: §4 leaves that open. Three questions wait on the user: whether adding a skill to the candidates needs the threshold, the treasury's cost of a line, and how a line below the threshold is shown.
+**Status:** verified 2026-11-05 on `feat/agent-pulse`, not pushed. `task-verifier` PASS on the second pass, post-mortem `.claude/learning/61-a-false-line.md`. Item 3 of `docs/tasks/70`, which its test closes for the score and not for the choice: §4 leaves that open. The user's three answers are in §5.
 **ADR:** `0143`.
 **Decision:** the user chose design 1, relayed by `arp-f3`: the ranking moves only from 3 different wallets that say the same thing. Below that, a line is only shown. The threshold is one constant. The user also asked to measure, at low cost, whether an agent that reads "1 agent says it failed" changes its choice anyway: the threshold protects the ranking, not the reading.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
@@ -80,4 +80,18 @@
 **Limits.** One need, one day, one skill, the same search. The line had no reason: a reason could read differently. Tool errors, 11, 10 and 5 per arm, were not inspected. No skill ran, so nothing says the choice got worse.
 
 **What it means for the choice of design 1.** The threshold holds the score. In this run a choice fell after a single line was shown, and this cannot say how much of that was the line. So **whether one false line still moves choices is open**: the threshold is not shown to be enough, and it is not shown to be insufficient either. A line shown below the threshold may need to be shown differently. That is the user's decision, and a larger run on this one question would settle more than this one did.
+
+## 5. The user's answers, relayed by `arp-f3`
+
+| Question | Answer | Where |
+| --- | --- | --- |
+| How a line below the threshold is shown | Qualified, with no further measurement | `unconfirmed` in `arp_pulse`, `unconfirmedNote` |
+| Whether a skill the search did not return needs the threshold to enter the list | Yes | `entersList` |
+| A line's cost to the treasury, 0.012 tTRUST | Accepted on testnet, blocking for mainnet | ADR `0144`, `docs/27` §2 |
+
+**What the second costs.** No skill has 3 wallets on 13579, so no declared skill reaches an agent whose search did not return it. Task 64's one separation came from that path.
+
+**What the first does not show.** Nothing measured that the wording changes a choice: §4 is open, and at 15 runs a repeat would not settle it.
+
+**Seen live**, `arp_pulse` on 13579, read-only, query "cut silences", domain `video`: `nateherkai/herk-edit-kit` `cut-silences` stays first at 0.8, with `unconfirmed`: "1 wallet said failed: not confirmed, below 3 wallets. Check it in the skill's file."
 

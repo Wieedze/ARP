@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {inferDomain, lineWeight, priorFromRank, scoreSkill, signalOf, WALLETS_TO_MOVE, type SignalContext} from "../src/pulse-score.js";
+import {inferDomain, lineWeight, priorFromRank, scoreSkill, signalOf, unconfirmedNote, entersList, WALLETS_TO_MOVE, type SignalContext} from "../src/pulse-score.js";
 import type {UsageReason} from "../src/declare/usage-context.js";
 import type {PulseUsage} from "../src/pulse-usage.js";
 
@@ -210,6 +210,40 @@ describe("signalOf", () => {
             const read = usage(excused("0xA"), excused("0xB"), excused("0xC"));
             expect(signalOf(read, video({canProvide: new Set(["key"])}))).toMatchObject({failed: 0, failuresThatDoNotApply: 3});
         });
+    });
+});
+
+describe("entersList", () => {
+    const worked = (...wallets: string[]) => wallets.map((wallet) => line(wallet, ["video"], ["worked"]));
+
+    it("keeps out a skill with one or two wallets", () => {
+        expect(entersList(usage(...worked("0xA")), video())).toBe(false);
+        expect(entersList(usage(...worked("0xA", "0xB")), video())).toBe(false);
+        expect(entersList(undefined, video())).toBe(false);
+    });
+
+    it("lets in a skill from three wallets saying the same thing", () => {
+        expect(entersList(usage(...worked("0xA", "0xB", "0xC")), video())).toBe(true);
+    });
+
+    it("does not add a worked and a failed to reach it", () => {
+        expect(entersList(usage(...worked("0xA", "0xB"), line("0xC", ["video"], ["failed"])), video())).toBe(false);
+    });
+
+    it("counts only lines that concern this search", () => {
+        const audio = (wallet: string) => line(wallet, ["audio"], ["worked"]);
+        expect(entersList(usage(audio("0xA"), audio("0xB"), audio("0xC")), video())).toBe(false);
+    });
+});
+
+describe("unconfirmedNote", () => {
+    it("says who said what, that it is not confirmed, and where to check", () => {
+        expect(unconfirmedNote({worked: 0, failed: 1})).toBe("1 wallet said failed: not confirmed, below 3 wallets. Check it in the skill's file.");
+        expect(unconfirmedNote({worked: 2, failed: 1})).toContain("1 wallet said failed and 2 wallets said worked");
+    });
+
+    it("says nothing with nothing below the threshold", () => {
+        expect(unconfirmedNote({worked: 0, failed: 0})).toBeNull();
     });
 });
 

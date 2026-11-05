@@ -582,6 +582,7 @@ export {
 
 /** The score of a skill in a context: public, recomputable, never on chain (ADR `0137`). */
 export {
+    entersList,
     inferDomain,
     lineWeight,
     priorFromRank,
@@ -590,6 +591,7 @@ export {
     SCORE_VERSION,
     SIGNAL_WEIGHTS,
     signalOf,
+    unconfirmedNote,
     WALLETS_TO_MOVE,
     type Capability,
     type PulseScore,

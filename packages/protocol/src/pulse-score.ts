@@ -119,6 +119,23 @@ export function signalOf(
     };
 }
 
+/** Whether a skill the search did not return may enter its list: {@link WALLETS_TO_MOVE} wallets said the same thing (ADR `0143`). */
+export function entersList(usage: PulseUsage | undefined, context: SignalContext): boolean {
+    const {worked, failed} = signalOf(usage, context);
+    return worked > 0 || failed > 0;
+}
+
+/**
+ * What a reader is told about lines below the threshold, or `null` when there are none. Said beside the line
+ * because a line that moves no score can still move a choice (`docs/tasks/71` §4). The user's wording.
+ */
+export function unconfirmedNote(heard: {worked: number; failed: number}): string | null {
+    const said = (count: number, word: string) => (count === 0 ? null : `${count} wallet${count === 1 ? "" : "s"} said ${word}`);
+    const parts = [said(heard.failed, "failed"), said(heard.worked, "worked")].filter((part) => part !== null);
+    if (parts.length === 0) return null;
+    return `${parts.join(" and ")}: not confirmed, below ${WALLETS_TO_MOVE} wallets. Check it in the skill's file.`;
+}
+
 /** The formula alone, so a caller that already holds the weights runs the same one. */
 export function scoreFrom(prior: number, worked: number, failed: number): number {
     return (prior + worked) / (1 + worked + failed);

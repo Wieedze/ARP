@@ -12,6 +12,8 @@ import {
   githubPulseSource,
   groupByContent,
   BECAUSE_LABEL,
+  entersList,
+  unconfirmedNote,
   type Capability,
   HAS_OUTCOME_LABEL,
   inferDomain,
@@ -402,8 +404,15 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       ...(heard.worked === 0 && heard.failed === 0 ? {} : { too_few_wallets_to_move_the_order: heard }),
     };
   };
+  // A skill the search did not return enters only from the threshold, so one line cannot add one (ADR `0143`).
+  results = results.filter((result) => rankOf.has(`${result.source}@${result.skill}`) || entersList(usageOf(result), signal));
   const workedHere = (result: SkillSearchResult) =>
     domain === null ? 0 : workedInDomain(usageOf(result), domain);
+
+  const unconfirmedOf = (read: PulseUsage | undefined) => {
+    const note = unconfirmedNote(signalOf(read, signal).heard);
+    return note === null ? {} : { unconfirmed: note };
+  };
 
   const ordered = results
     .map((result, order) => ({ result, order }))
@@ -464,6 +473,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       ...factsOf(entry.row, copies),
       ...yourFailuresLine(mine, entry.row.skill, entry.row.source),
       ...(scored ? { score: Number(scoreOf(entry.row).score.toFixed(3)), score_parts: scoreOf(entry.row) } : {}),
+      ...unconfirmedOf(entry.usage),
       ...(toCheck(entry.row, constraints).length === 0 ? {} : { check_against_constraints: toCheck(entry.row, constraints) }),
       ...(entry.atom === null ? {} : { atom_id: entry.atom }),
       usage: usageRead ? usageLine(entry.usage, domain) : { unknown: 'the public record did not answer' },

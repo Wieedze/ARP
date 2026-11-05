@@ -67,7 +67,7 @@ flowchart TD
 
 `prior` comes from the rank in the search, from 0.8 to 0.2. `worked` and `failed` are sums of weights. `not-the-right-tool` counts only in the domain it names, not above or below it.
 
-**Below 3 different wallets saying the same thing, a line is only shown** (ADR `0143`, the user's choice). So one false line no longer moves the ranking, and neither does one true line. It protects the ranking and not the reading: an agent still reads the line (`docs/tasks/71`).
+**Below 3 different wallets saying the same thing, a line is only shown** (ADR `0143`, the user's choice). So one false line no longer moves the ranking, and neither does one true line, and a skill the search did not return enters the list only from 3 wallets too. An agent still reads a line below the threshold, with `unconfirmed` beside it: how many wallets said what, not confirmed, to check in the skill's file. Whether a line shown moves a choice is open (`docs/tasks/71` §4).
 
 **Example.** A skill with a prior of 0.5, `failed` in `video` because of `missing-key`:
 
