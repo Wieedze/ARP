@@ -1,8 +1,8 @@
 # ADR index
 
-**Generated** 2026-11-04 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
+**Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-129 decisions. Newest last. `choices/README.md` says when to write one.
+130 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -161,3 +161,4 @@ Read these before relying on them.
 | [0131](0131-search-ranks-by-words-and-usage.md) | 2026-11-03 | Accepted | A search ranks by the words it matched and by how many agents used each tool |
 | [0132](0132-a-search-says-what-a-skill-needs-from-its-file.md) | 2026-11-04 | Accepted | A search says what a skill needs from its own file, including a skill listed yesterday |
 | [0133](0133-a-search-ranks-a-refused-skill-last-and-says-so.md) | 2026-11-04 | Accepted | A search says when a skill cannot be fetched, and ranks it last |
+| [0134](0134-a-skills-pulse-is-read-on-demand.md) | 2026-11-05 | Accepted | A skill's pulse is read on demand, and its content id is git's tree id |

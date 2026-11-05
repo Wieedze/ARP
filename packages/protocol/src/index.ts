@@ -543,6 +543,30 @@ export {
 } from "./content-path.js";
 
 /**
+ * What a skill's own files show, read when somebody asks (task 63, ADR `0134`): what it mentions
+ * needing, which results of a search are the same content, and every way the read can fail.
+ */
+export {
+    frontmatterName,
+    githubPulseSource,
+    groupByContent,
+    MAX_SKILL_FILES_READ,
+    parseSkillsFind,
+    readPulse,
+    readSkillFacts,
+    type ListedFile,
+    type PulseFailure,
+    type PulseGroup,
+    type PulseSource,
+    type RepositoryListing,
+    type SkillFacts,
+    type SkillPulse,
+    type SkillRepository,
+    type SkillSearchResult,
+} from "./pulse.js";
+export {readRequires, type SkillRequires} from "./skill-requires.js";
+
+/**
  * Serving a tool's content and signing for having served it. Every piece of IO is injected, so this
  * holds no key and touches no network; `apps/mcp/src/content.ts` is the transport.
  */
