@@ -613,6 +613,8 @@ export {
 export {
     atomIsCanonicalFor,
     findAgentsInDomains,
+    findAgentsWithEndpoints,
+    wordsMatchingOffer,
     readLineReceipts,
     receiptHolds,
     resolveAgentAtom,

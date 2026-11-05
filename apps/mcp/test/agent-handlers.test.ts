@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const OWN = '0xC165A2AD2E540A4069E02834009161E2b4490d5A';
 const ELSEWHERE = '0x00000000000000000000000000000000000000f1';
@@ -9,15 +9,16 @@ const mocks = vi.hoisted(() => ({
   getPulseUsage: vi.fn(),
   findAgentsInDomains: vi.fn(),
   walletControlsSubject: vi.fn(),
+  getAgentEndpoints: vi.fn(),
+  findAgentsWithEndpoints: vi.fn(),
 }));
 
 vi.mock('@arp-protocol/core', async (original) => ({
   ...(await original<typeof import('@arp-protocol/core')>()),
   resolveAgent: async () => null,
   resolveAgentAtom: async () => ({ status: 'found', atom: `0x${'aa'.repeat(32)}` }),
-  getAgentEndpoints: async () => [
-    { endpoint: 'https://node.example', tripleId: '0x1', createdAt: null, status: 'unproven', proofs: [] },
-  ],
+  getAgentEndpoints: mocks.getAgentEndpoints,
+  findAgentsWithEndpoints: mocks.findAgentsWithEndpoints,
   getPulseUsage: mocks.getPulseUsage,
   readLineReceipts: async () => ({ receipts: [], unreadable: [], othersNotRead: 0 }),
   findAgentsInDomains: mocks.findAgentsInDomains,
@@ -26,6 +27,8 @@ vi.mock('@arp-protocol/core', async (original) => ({
   walletControlsSubject: mocks.walletControlsSubject,
 }));
 
+vi.mock('../src/host-guard.js', () => ({ hostGuard: () => ({ allowPrivate: true }) }));
+
 vi.mock('../src/config.js', async (original) => ({
   ...(await original<typeof import('../src/config.js')>()),
   chainId: 13579,
@@ -33,6 +36,10 @@ vi.mock('../src/config.js', async (original) => ({
   IN_CONTEXT_OF: `0x${'c1'.repeat(32)}`,
   reads: { atomId: mocks.atomId },
 }));
+
+const UNPROVEN = [{ endpoint: 'https://node.example', tripleId: '0x1', createdAt: null, status: 'unproven', proofs: [] }];
+mocks.getAgentEndpoints.mockResolvedValue(UNPROVEN);
+mocks.findAgentsWithEndpoints.mockResolvedValue({ agents: [], truncated: false });
 
 const { agentEndpoints, findAgents } = await import('../src/handlers/agents.js');
 const { pulse } = await import('../src/handlers/pulse.js');
@@ -122,10 +129,64 @@ describe('arp_find_agents with a domain', () => {
     expect((out['agents'] as { used_here: unknown[] }).used_here).toHaveLength(1);
   });
 
-  it('says plainly when arp_pulse has no domain to look for agents in', async () => {
+  it('says plainly when arp_pulse has neither words nor a domain to look for agents with', async () => {
     const out = await pulse(1, { search_output: '' }).then(answer);
     expect(out['agents']).toBeNull();
     expect(String(out['agents_note'])).toContain('domain');
+  });
+
+  describe('a need in its own words, from the run that found nobody (docs/tasks/70, step 6)', () => {
+    // The offer `scripts/demo/agent-call-handler.ts` serves, copied because apps import no script.
+    const offer = {
+      description: 'Answers from a private collection of internal project notes that are published nowhere else.',
+      input: '{"note": "<the note id>"}',
+      output: '{"note": "<id>", "text": "<the note>"}',
+    };
+    beforeEach(() => {
+      mocks.getPulseUsage.mockReset().mockResolvedValue(new Map());
+      mocks.findAgentsInDomains.mockReset().mockResolvedValue({ agents: [], truncated: false });
+      mocks.findAgentsWithEndpoints.mockReset().mockResolvedValue({
+        agents: [{ atomId: ATOM, label: 'Agent 13579:2', caip19: `eip155:13579/erc721:${OWN}/2`, ambiguous: false }],
+        truncated: false,
+      });
+      mocks.getAgentEndpoints.mockReset().mockResolvedValue([
+        { endpoint: 'https://node.example', tripleId: '0x1', createdAt: null, status: 'bound', proofs: [] },
+      ]);
+      vi.stubGlobal('fetch', async () => Response.json({ minBudgetWei: '1000', offer }));
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      mocks.getAgentEndpoints.mockReset().mockResolvedValue(UNPROVEN);
+    });
+
+    it('finds the agent whose offer answers, though the domain tried is not its own', async () => {
+      const out = await pulse(1, {
+        search_output: '',
+        queries: ['internal project note', 'orchard-17 review budget', 'company project notes'],
+        domain: 'business',
+      }).then(answer);
+      const agents = out['agents'] as { used_here: unknown[]; offers_matching_need: Record<string, unknown>[] };
+      expect(agents.used_here).toEqual([]);
+      expect(agents.offers_matching_need).toHaveLength(1);
+      expect(agents.offers_matching_need[0]).toMatchObject({
+        agent_token_id: '2',
+        registry: OWN,
+        address: 'https://node.example',
+        answers_now: true,
+      });
+      expect(agents.offers_matching_need[0]?.['words_matched']).toEqual(['internal', 'project', 'note']);
+    });
+
+    it('does not offer an agent for a need its offer says nothing about', async () => {
+      const out = await pulse(1, { search_output: '', queries: ['video editing silence'] }).then(answer);
+      expect((out['agents'] as { offers_matching_need: unknown[] }).offers_matching_need).toEqual([]);
+    });
+
+    it('does not offer an agent whose node does not answer', async () => {
+      vi.stubGlobal('fetch', async () => new Response('', { status: 530 }));
+      const out = await pulse(1, { search_output: '', queries: ['internal project note'] }).then(answer);
+      expect((out['agents'] as { offers_matching_need: unknown[] }).offers_matching_need).toEqual([]);
+    });
   });
 
   it('says lines are not read on a chain whose record has no predicate for them', async () => {

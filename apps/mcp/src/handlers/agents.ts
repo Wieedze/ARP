@@ -4,6 +4,8 @@ import {
   atomIsCanonicalFor,
   findAgents as findAgentsByCapability,
   findAgentsInDomains,
+  findAgentsWithEndpoints,
+  wordsMatchingOffer,
   getAgentEndpoints,
   getPulseUsage,
   type FetchLike,
@@ -223,6 +225,75 @@ export async function readNode(
   };
 }
 
+const MAX_OFFERS_READ = 10;
+
+function signedEndpoints(hasEndpoint: string, agentRegistry: string, agentId: string, agentAtom: string) {
+  const client = chainClient();
+  return getAgentEndpoints(
+    { agentRegistry, agentId, agentAtom },
+    {
+      graphqlUrl: GRAPHQL,
+      predicates: { hasEndpoint, inContextOf: IN_CONTEXT_OF },
+      chain: {
+        ownerOf: ({ registry: at, agentId: token }) =>
+          client.readContract({ address: at, abi: REGISTRY_ABI, functionName: 'ownerOf', args: [token] }),
+        verifyMessage: ({ address, message, signature }) =>
+          client.verifyMessage({ address, message, signature }),
+      },
+    },
+  );
+}
+
+/**
+ * Agents whose own offer answers the need's words, whatever domain those words led to. The first version of the
+ * one search looked only in the inferred domain, and an agent with a node that held the note found nobody
+ * (`docs/tasks/70`, step 6). It asks at most this many agents' newest signed addresses, somebody else's servers,
+ * on every search.
+ */
+export async function offersForNeed(phrases: readonly string[]): Promise<Record<string, unknown>> {
+  const hasEndpoint = (record as { arp?: { endpointBinding?: { hasEndpoint?: string } } }).arp
+    ?.endpointBinding?.hasEndpoint; // a JSON record, read optionally
+  if (hasEndpoint === undefined) return { offers_matching_need: null };
+  const found = await findAgentsWithEndpoints({
+    graphqlUrl: GRAPHQL,
+    hasEndpoint,
+    chainId,
+    knownRegistries: knownRegistries(),
+    resolveStrict: (ref) => resolveAgentAtom(ref, { graphqlUrl: GRAPHQL, controllersOf }),
+  });
+  const candidates = found.agents.filter((agent) => agent.caip19 !== null).slice(0, MAX_OFFERS_READ);
+  let notCheckable = 0;
+  const rows = await Promise.all(
+    candidates.map(async (agent) => {
+      const ref = parseCaip19(agent.caip19 ?? '');
+      if (ref === null) return null;
+      const endpoints = await signedEndpoints(hasEndpoint, `eip155:${ref.chainId}:${ref.registry}`, ref.tokenId, agent.atomId);
+      const newest = endpoints.find((entry) => entry.status === 'bound');
+      if (newest === undefined) return null;
+      const node = await readNode(newest.endpoint, newest.createdAt);
+      if (node.answers === null) notCheckable += 1;
+      const matched = node.offer === null ? null : wordsMatchingOffer(phrases, node.offer.description);
+      if (matched === null || node.offer === null) return null;
+      return {
+        caip19: agent.caip19,
+        agent_chain_id: ref.chainId,
+        agent_token_id: ref.tokenId,
+        registry: ref.registry,
+        label: agent.label,
+        address: newest.endpoint,
+        answers_now: node.answers,
+        words_matched: matched,
+        offer: node.offer,
+      };
+    }),
+  );
+  return {
+    offers_matching_need: rows.filter((row) => row !== null),
+    ...(notCheckable === 0 ? {} : { offers_not_checkable_yet: notCheckable }),
+    ...(found.truncated || found.agents.length > MAX_OFFERS_READ ? { offers_truncated: true } : {}),
+  };
+}
+
 /**
  * What the graph holds about an agent beyond its own document: addresses its owner signed, and who
  * declared using it (task 65). A failure here says so beside the declared endpoints and never hides them.
@@ -262,19 +333,7 @@ async function agentPulse(agentChainId: number, tokenId: string, registry: `0x${
     const registryAddress = caip.split('/erc721:')[1]?.split('/')[0] ?? '';
     const agentRegistry = `eip155:${agentChainId}:${registryAddress}`;
     const client = chainClient();
-    const endpoints = await getAgentEndpoints(
-      { agentRegistry, agentId: tokenId, agentAtom },
-      {
-        graphqlUrl: GRAPHQL,
-        predicates: { hasEndpoint: binding, inContextOf: IN_CONTEXT_OF },
-        chain: {
-          ownerOf: ({ registry: at, agentId }) =>
-            client.readContract({ address: at, abi: REGISTRY_ABI, functionName: 'ownerOf', args: [agentId] }),
-          verifyMessage: ({ address, message, signature }) =>
-            client.verifyMessage({ address, message, signature }),
-        },
-      },
-    );
+    const endpoints = await signedEndpoints(binding, agentRegistry, tokenId, agentAtom);
     const bound = endpoints.filter((entry) => entry.status === 'bound');
     const boundNodes = bound.flatMap((entry) =>
       // Checksummed, as the index holds them and matches them case-sensitively.

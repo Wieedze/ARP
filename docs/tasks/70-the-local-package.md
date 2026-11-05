@@ -150,3 +150,15 @@ Then, reading each output:
 It writes that this skill failed for want of a program, which is true of a machine without `web2md`, permanently on testnet 13579. A second run of `arp share send` must say `sent 0`.
 
 **Note on item 4's evidence:** `wallets_worked 2, wallets_failed 1` predates `payers` reaching the agent path (`d590849`). It should now read 1 and 0 on that agent, and was not re-run.
+
+**Item 4, corrected after step 6 failed.** On 2026-11-05 at 18:56 UTC the agent searched with its own words, tried `domain: business`, and found no agent, while agent 2's node was up with its offer. The first version of the one search looked only in a domain, and the earlier runs had reached `document` by trying several words with `arp_find_agents`, which one search with an inferred domain does not do. `arp_pulse` now also reads the offers of up to ten agents with a signed address and returns those sharing at least two words with one of the need's phrases, as `offers_matching_need`. It compares words and reads no meaning, an offer is its author's text, and an agent with no offer or a stopped node is not found this way. Each search with words now asks those agents' newest addresses.
+
+```
+cd apps/mcp && ARP_TARGET=testnet ARP_NO_RECEIPTS=1 bunx vitest run
+ Tests  152 passed (152)
+arp_pulse {search_output: "", queries: ["internal project note", "company project notes"], domain: "business"}, live on 13579
+ 4.4 s; used_here: [], offers_matching_need: agent 2
+```
+
+The regression test uses the failed run's own phrases and domain, and the demo's offer as served. No agent in a session has run this yet: that is step 6 again.
+

@@ -2,6 +2,7 @@ import {
     AGENT_IDENTITIES_QUERY,
     ATTACHED_DOCUMENTS_QUERY,
     createGraphqlTransport,
+    ENDPOINT_SUBJECTS_QUERY,
     IDENTITY_CLAIMS_QUERY,
     DEFAULT_TIMEOUT_MS,
     defaultFetch,
@@ -290,6 +291,45 @@ export async function findAgentsInDomains(
         if (id !== null && object !== null) objects.set(id, readString(object, "label"));
     }
     if (objects.size === 0) return {agents: [], truncated: edgeRows.length >= LIMIT};
+    const found = await identifyAgents(objects, config);
+    return {agents: found.agents, truncated: edgeRows.length >= LIMIT || found.truncated};
+}
+
+/**
+ * The agents claiming an endpoint, newest first. An offer is read from these, so an agent can be found by
+ * what it says it does when nobody has declared using it in the domain a need's words led to. Writing
+ * many claims can push a real one out of this window, which denies and cannot divert.
+ */
+export async function findAgentsWithEndpoints(
+    config: IdentifyConfig & {hasEndpoint: string; limit?: number},
+): Promise<{agents: AgentInDomain[]; truncated: boolean}> {
+    const limit = config.limit ?? 100;
+    const rows = rowsOf(
+        await transportOf(config).request(ENDPOINT_SUBJECTS_QUERY, {hasEndpoint: config.hasEndpoint, limit}),
+    );
+    const objects = new Map<string, string | null>();
+    for (const row of rows) {
+        const atom = readString(row, "subject_id");
+        const subject = readRecord(row, "subject");
+        if (atom !== null && !objects.has(atom)) objects.set(atom, subject === null ? null : readString(subject, "label"));
+    }
+    const found = await identifyAgents(objects, config);
+    return {agents: found.agents, truncated: rows.length >= limit || found.truncated};
+}
+
+type IdentifyConfig = ReadConfig & {
+    chainId: number;
+    knownRegistries: readonly string[];
+    resolveStrict?: (ref: ResolvedAgentRef) => Promise<StrictIdentityAtom>;
+};
+
+/** Which of these atoms are agents, by the rule in {@link findAgentsInDomains}. */
+async function identifyAgents(
+    objects: ReadonlyMap<string, string | null>,
+    config: IdentifyConfig,
+): Promise<{agents: AgentInDomain[]; truncated: boolean}> {
+    if (objects.size === 0) return {agents: [], truncated: false};
+    const transport = transportOf(config);
     const identities = rowsOf(
         await transport.request(AGENT_IDENTITIES_QUERY, {atoms: [...objects.keys()], sameAs: SAME_AS, limit: LIMIT}),
     );
@@ -325,7 +365,30 @@ export async function findAgentsInDomains(
         }
         // Otherwise the identity belongs to another atom, and this one only claims it.
     }
-    return {agents, truncated: edgeRows.length >= LIMIT || identities.length >= LIMIT || refs.size > MAX_AGENTS};
+    return {agents, truncated: identities.length >= LIMIT || refs.size > MAX_AGENTS};
+}
+
+const OFFER_STOPWORDS = new Set([
+    "the", "and", "for", "from", "with", "that", "this", "any", "you", "your", "our", "are", "not", "but", "else",
+]);
+const offerWords = (text: string): string[] =>
+    (text.toLowerCase().match(/[a-z0-9]+/g) ?? [])
+        .filter((word) => word.length >= 3 && !OFFER_STOPWORDS.has(word))
+        .map((word) => (word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word));
+
+/**
+ * The words of the phrase that best fits what a node says it sells, or `null` under two shared words. A need's
+ * words are read against an offer directly, so no category has to agree. It compares words and reads no
+ * meaning, and an offer is its author's own text: this says where to look and not that it is true.
+ */
+export function wordsMatchingOffer(phrases: readonly string[], offer: string): string[] | null {
+    const said = new Set(offerWords(offer));
+    let best: string[] = [];
+    for (const phrase of phrases) {
+        const shared = [...new Set(offerWords(phrase))].filter((word) => said.has(word));
+        if (shared.length > best.length) best = shared;
+    }
+    return best.length >= 2 ? best : null;
 }
 
 function isSignedReceipt(value: unknown): value is SignedHireReceipt {

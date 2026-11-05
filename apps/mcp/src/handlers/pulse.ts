@@ -38,7 +38,7 @@ import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
 
 import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, READ_ONLY, reads } from '../config.js';
-import { agentsForDomain } from './agents.js';
+import { agentsForDomain, offersForNeed } from './agents.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
 const run = promisify(execFile);
@@ -274,13 +274,22 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
  * What you call, beside what you install: one search with two kinds of result (ADR `0139`). A failure here
  * says so and takes nothing from the skills.
  */
-async function agentsPart(domain: string | null): Promise<Record<string, unknown>> {
-  if (domain === null) return { agents: null, agents_note: 'no domain was read from the need, so no agent was looked for. Pass `domain`' };
-  try {
-    return { agents: await agentsForDomain(domain) };
-  } catch (error) {
-    return { agents: null, agents_note: `not read: ${error instanceof Error ? error.message : String(error)}` };
+async function agentsPart(domain: string | null, phrases: readonly string[]): Promise<Record<string, unknown>> {
+  if (domain === null && phrases.length === 0) {
+    return { agents: null, agents_note: 'no words and no domain to look for an agent with. Pass `queries` or `domain`' };
   }
+  const part = async (read: () => Promise<Record<string, unknown>>, name: string) => {
+    try {
+      return await read();
+    } catch (error) {
+      return { [`${name}_not_read`]: error instanceof Error ? error.message : String(error) };
+    }
+  };
+  const [declared, offers] = await Promise.all([
+    domain === null ? { used_here: [] } : part(() => agentsForDomain(domain), 'used_here'),
+    phrases.length === 0 ? { offers_matching_need: [] } : part(() => offersForNeed(phrases), 'offers'),
+  ]);
+  return { agents: { ...declared, ...offers } };
 }
 
 export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
@@ -315,7 +324,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
         next: READ_ONLY
           ? 'run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory'
           : 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`',
-        ...(await agentsPart(askedDomain)),
+        ...(await agentsPart(askedDomain, phrases)),
       });
     }
     lists = answered.map(parseSkillsFind);
@@ -373,7 +382,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     usageRead = false;
     console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
   }
-  if (results.length === 0) return text(id, { search: 'npx skills find', results: [], ...(await agentsPart(domain)) });
+  if (results.length === 0) return text(id, { search: 'npx skills find', results: [], ...(await agentsPart(domain, phrases)) });
 
   const atomOf = (result: SkillSearchResult) => {
     const uri = toolUriOf(result.source, result.skill);
@@ -463,6 +472,6 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       .filter((entry) => entry.reasons.length > 0)
       .slice(0, 10)
       .map((entry) => ({ name: entry.row.skill, source: entry.row.source, because: entry.reasons })),
-    ...(await agentsPart(domain)),
+    ...(await agentsPart(domain, phrases)),
   });
 }

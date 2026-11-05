@@ -123,3 +123,13 @@ export const PULSE_EDGE_WRITERS_QUERY = `query PulseEdgeWriters($edges: [String!
         creator_id
     }
 }`;
+
+/** The atoms claiming an endpoint, newest first. Anyone can write one, so each is only a place to look. */
+export const ENDPOINT_SUBJECTS_QUERY = `query EndpointSubjects($hasEndpoint: String!, $limit: Int!) {
+    triples(where: {predicate_id: {_eq: $hasEndpoint}}, order_by: {created_at: desc}, limit: $limit) {
+        subject_id
+        subject {
+            label
+        }
+    }
+}`;

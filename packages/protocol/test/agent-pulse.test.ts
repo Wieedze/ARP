@@ -12,7 +12,7 @@ import {describe, expect, it} from "vitest";
 import {canonicalAgentThing, thingUri} from "../src/declare/agent-atom.js";
 import {atomDataForUri} from "../src/declare/multivault.js";
 import {budgetRefusal} from "../src/declare/usage-context.js";
-import {atomIsCanonicalFor, findAgentsInDomains, readLineReceipts, receiptHolds, resolveAgentAtom, walletControlsSubject, type LineReceipt, type PaymentFacts} from "../src/agent-pulse.js";
+import {atomIsCanonicalFor, findAgentsInDomains, wordsMatchingOffer, readLineReceipts, receiptHolds, resolveAgentAtom, walletControlsSubject, type LineReceipt, type PaymentFacts} from "../src/agent-pulse.js";
 import type {StrictIdentityAtom} from "../src/declare/index.js";
 import type {AgentIdentityAtom} from "../src/verify/subject.js";
 import {signHireReceipt, type HireReceipt, type SignedHireReceipt} from "../src/hire-receipt.js";
@@ -234,6 +234,21 @@ describe("readLineReceipts", () => {
         });
         expect(urls).toHaveLength(1);
         expect(receiptHolds(receipt!)).toBe(true);
+    });
+});
+
+describe("wordsMatchingOffer", () => {
+    const offer = "Answers from a private collection of internal project notes that are published nowhere else.";
+
+    it("matches a need in its own words, singular or plural", () => {
+        expect(wordsMatchingOffer(["internal project note"], offer)).toEqual(["internal", "project", "note"]);
+        expect(wordsMatchingOffer(["orchard-17 review budget", "company project notes"], offer)).toEqual(["project", "note"]);
+    });
+
+    it("does not match on one word or on small words", () => {
+        expect(wordsMatchingOffer(["project budget"], offer)).toBeNull();
+        expect(wordsMatchingOffer(["from the that"], offer)).toBeNull();
+        expect(wordsMatchingOffer([], offer)).toBeNull();
     });
 });
 

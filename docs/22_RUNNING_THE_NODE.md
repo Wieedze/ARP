@@ -132,8 +132,9 @@ raw.githubusercontent.com   the skill's own bytes, passed through, never cached
 gateway.pinata.cloud   a pinned document: an agent's registration file when it published an
                        `ipfs://` one, a proof the index does not hold, or a skill atom's document
 ipfs.io                the same, when Pinata does not serve it
-the signed addresses   `arp_agent_endpoints` asks `/` of an agent's three newest signed addresses,
-                       somebody else's servers, through the same guard as any probe
+the signed addresses   `arp_agent_endpoints` asks `/` of an agent's three newest signed addresses, and
+                       `arp_pulse` the newest of up to ten agents on every search with words:
+                       somebody else's servers, through the same guard as any probe. Your words stay here
 ```
 
 **`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
