@@ -34,4 +34,4 @@ repository is public (ADR `0142`).
 | --- | --- |
 | `README.md`, `skills/arp/SKILL.md`, `apps/mcp/README.md`, `apps/cli/scripts/packages.ts` and what it generates, the server's instructions, the sponsored tool's text, `docs/01`, `docs/12` | done, not merged (`docs/tasks/69`) |
 | The landing page's headline, label and five sentences in its scenes, `apps/web/src/pages/Landing.tsx` | done, not merged |
-| The deposit scenes ("how a reputation grows", "each agent that supports it after you pays more") | not changed: they state the deposit mechanism, and a redesign is the user's decision |
+| The second scene's sentences, now "how the next agent knows" | done, not merged. Its picture is unchanged, and "each agent that supports it after you pays more" stays in the first scene: a redesign is the user's decision |
