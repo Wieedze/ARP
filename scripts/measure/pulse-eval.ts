@@ -27,7 +27,7 @@ import {join, resolve} from "node:path";
 
 import {githubPulseSource, readPulse} from "../../packages/protocol/src/pulse.ts";
 
-type Arm = "A" | "B";
+type Arm = "A" | "B" | "C" | "D";
 type Need = {id: string; ask: string; domain: string; have: string[]; words?: string};
 
 const MACHINE = ["ffmpeg", "ffprobe", "python3", "node", "npx", "git"];
@@ -166,6 +166,10 @@ async function run(need: Need, arm: Arm, rep: number): Promise<Record<string, un
                 env: {
                     ARP_TARGET: "testnet",
                     ARP_TOOLS: "read",
+                    // Task 63 §9: `C` reads the real graph, `B` none, `D` the proxy with invented lines.
+                    ...(arm === "C" || arm === "A"
+                        ? {}
+                        : {INTUITION_GRAPHQL_URL: arm === "D" ? "http://127.0.0.1:3070/" : "http://127.0.0.1:9/"}),
                     ARP_NO_RECEIPTS: "1",
                     ...(process.env["GITHUB_TOKEN"] === undefined ? {} : {GITHUB_TOKEN: process.env["GITHUB_TOKEN"]}),
                 },
@@ -179,7 +183,7 @@ async function run(need: Need, arm: Arm, rep: number): Promise<Record<string, un
         "--output-format", "stream-json", "--verbose",
         "--setting-sources", "project",
         "--strict-mcp-config",
-        ...(arm === "B" ? ["--mcp-config", mcp] : []),
+        ...(arm === "A" ? [] : ["--mcp-config", mcp]),
         "--tools", "Bash",
         "--allowedTools", allowed.join(","),
         "--no-session-persistence",
@@ -248,7 +252,8 @@ if (existsSync(out)) {
         if (line.trim() !== "") spent += (JSON.parse(line) as {costUsd?: number}).costUsd ?? 0; // this file's own rows
     }
 }
-const arms: Arm[] = round === "before" || round === "fixed" ? ["A", "B"] : ["B"];
+const armsArg = arg("arms")?.split(",") as Arm[] | undefined; // the operator's own flag
+const arms: Arm[] = armsArg ?? (round === "before" || round === "fixed" ? ["A", "B"] : ["B"]);
 for (let rep = 1; rep <= reps; rep += 1) {
     for (const need of needs) {
         const row = await Promise.all(

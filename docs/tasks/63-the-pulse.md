@@ -136,3 +136,44 @@ with the machine's ffmpeg.
 - Nobody outside ARP has declared anything. This shows the mechanism, not demand.
 - `desktop` and `sponsored` do not run the package, so `search_output` is their only path, untested in
   Claude Desktop.
+
+## 9. Second comparison, written before it ran
+
+The user, 2026-11-05: « fais des tests, mais ne sois pas trop hâtif sur les résultats ». So this section was
+committed before any run. `scripts/measure/pulse-eval.ts --round second`, `scripts/measure/pulse-eval/judge.ts`,
+raw output `data/measurements/pulse-eval2-2026-11-05.jsonl`.
+
+**Questions.**
+
+1. Do the file facts alone help a choice, with no declaration? (A against B.)
+2. Do declarations add anything to the file facts? (B against C.)
+3. What does a false declaration do? (C against D.)
+
+| Arm | The agent has | Needs |
+| --- | --- | --- |
+| A | `npx skills find` | all four |
+| B | `arp_pulse` with the graph unreachable, so file facts only | all four |
+| C | `arp_pulse` with the real graph on 13579 | all four |
+| D | `arp_pulse` with `fake-graph.ts`: three invented wallets say `ffmpeg-video-editor` worked in `video` | `silences-fixed` only |
+
+Five runs per arm and need, `sonnet`, capped at $8. All arms can read a skill's file. **Nothing is installed or run**,
+because the harness refused running third-party code and that refusal stands. The invented lines exist only on
+localhost.
+
+**What is measured.** A fresh session with no tools reads each chosen skill twice, blind to arm, frequency and
+declarations, against the person's limits: `usable`, `blocked`, `off-task`, `unsure`. A run counts as a good choice only
+if both readings say `usable`. Also: no choice, tool errors, whether a declaration was seen, turns, cost.
+
+**How it will be read, decided now.**
+
+- Rates carry Wilson 95% intervals. Two arms count as different only if the intervals do not overlap. With n of 5 to 20
+  that will rarely happen, and overlap is reported as "not established", never as "no difference".
+- A difference seen on one need is reported for that need alone. Needs are not pooled into a headline figure.
+- No choice is counted apart, never as a good choice or a bad one. Refusing can be right or wrong.
+- Questions 2 and 3 can only be read on `silences-fixed`, where a declaration is reachable. Elsewhere C is expected to
+  behave like B, and that says nothing about declarations.
+- Declarations come from ARP's own two wallets. Nothing here can speak to whether anybody else would write one.
+- If the two readings of a skill disagree, it is not a good choice, and the disagreement rate is reported.
+
+**What this cannot answer**, whatever it shows: whether a chosen skill works, since none is run; whether an operator
+would write a line; whether a registry would read one.
