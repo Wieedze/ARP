@@ -19,13 +19,14 @@ first result, whose repository also carries translated copies.
 1. **A skill is read when someone asks**, from its repository, on the asker's machine. Nothing is
    written anywhere by reading.
 2. **A result names a skill by its frontmatter `name`, and ties follow the installer's order**
-   (`skills` 1.7.4, `PRIORITY_PREFIXES`, first name kept). Off that order, differing files stay
+   (`skills` 1.7.6, `PRIORITY_PREFIXES`, first name kept). Off that order, differing files stay
    `ambiguous`.
 3. **The content id is git's tree id of the skill's directory.** It covers every file and anyone can
    recompute it with `git rev-parse HEAD:<directory>`.
 4. **Every failure is a status.** A skill not read is never shown as a skill needing nothing.
-5. **The search is the official CLI, pinned, with four environment variables, and no `/api/` route of
-   skills.sh is called**: its `robots.txt` disallows them. It does not run where an agent key is kept, and
+5. **The search is the official CLI, pinned, with four environment variables, and ARP itself calls no
+   `/api/` route of skills.sh**, which its `robots.txt` disallows. The vendor's CLI calls its own
+   `/api/search`, and that is the whole reason to go through it rather than around it. It does not run where an agent key is kept, and
    `ARP_PULSE_SEARCH=off` stops it. `search_output` takes the command's text and runs nothing.
 
 ## Alternatives considered

@@ -122,7 +122,7 @@ ipfs.io                an agent's registration document, when it published an `i
 ```
 
 **`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
-it runs `npx --yes skills@1.7.4 find <query>`: the pinned npm package executes on your machine, as your
+it runs `npx --yes skills@1.7.6 find <query>`: the pinned npm package executes on your machine, as your
 OS user, so it can read what that user can read. It gets four environment variables (`PATH`, `HOME` set to
 a temporary directory, and two that turn off telemetry and colour), none of your secrets, and the query as
 one argument with no shell. **Your search words reach skills.sh**, and `npx` reaches the npm registry.

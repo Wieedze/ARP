@@ -118,7 +118,7 @@ What that table can and cannot carry:
 
 ## 7. Safety
 
-**The search package.** `arp_pulse` runs `skills@1.7.4` from npm with four environment variables and not in
+**The search package.** `arp_pulse` runs `skills@1.7.6` from npm with four environment variables and not in
 the modes that keep an agent key. The first version ran it unpinned with the server's whole environment,
 which `task-verifier` found and neither review had raised. Reachable on every call with a `query`; no misuse
 is known. It still runs as the operator's OS user, which `docs/22` says.

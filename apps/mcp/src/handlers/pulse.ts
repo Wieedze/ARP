@@ -27,8 +27,11 @@ const run = promisify(execFile);
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 20;
 
-/** The version `parseSkillsFind`'s format was captured from. A newer one is a change to review. */
-export const SKILLS_CLI = 'skills@1.7.4';
+/**
+ * The version the comparison ran on. 1.7.4 returns 20 results where this returns 100, so a bump changes
+ * what an agent can find, and is a change to review.
+ */
+export const SKILLS_CLI = 'skills@1.7.6';
 
 /**
  * How the search runs, as data so a test can hold it to this: a pinned package, the query as one

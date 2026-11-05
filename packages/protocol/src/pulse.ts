@@ -7,7 +7,7 @@
  * ## Which file a search result means
  *
  * The result names a skill by the `name` in its frontmatter, because that is what the installer
- * matches (`skills` 1.7.4, `filterSkills`). A directory name is only the cheap first guess, and a
+ * matches (`skills` 1.7.6, `filterSkills`). A directory name is only the cheap first guess, and a
  * repository is free to disagree with it: `resolveContentPath` in `content-path.ts` matches
  * directories because it serves an atom's file, and this one has to find what an install would take.
  * Two differing files are resolved only where the installer's own order resolves them; `differsAt`
@@ -104,7 +104,7 @@ export const MAX_SKILL_FILES_READ = 200;
 const MAX_SCRIPTS_READ = 5;
 
 /**
- * Where the installer looks first, in its order (`skills` 1.7.4, `PRIORITY_PREFIXES`). It keeps the
+ * Where the installer looks first, in its order (`skills` 1.7.6, `PRIORITY_PREFIXES`). It keeps the
  * first file carrying a name and drops the rest, so this order decides which of two differing
  * files an install gets, and `docs/zh-CN/skills/x/SKILL.md` loses to `skills/x/SKILL.md`.
  */
