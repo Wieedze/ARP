@@ -1,0 +1,39 @@
+{
+ "measuredAt": "2026-11-04T07:38:33.666Z",
+ "question": "What can ARP show on each chain, and can it plan a new declaration there?",
+ "chains": [
+  {
+   "chainId": 1155,
+   "usesEdges": 188,
+   "creators": 118,
+   "subjects": 84,
+   "objects": 85,
+   "edgesByArpAddress": 0,
+   "subjectsWithSameAs": 1,
+   "subjectsWithBaseIdentity": 0,
+   "edgesFromBaseIdentities": 0,
+   "skillAtomsInCatalogue": 604,
+   "skillAtomsOnChain": 0,
+   "atomCostWei": "100000000001000000",
+   "tripleCostWei": "100000000002000000",
+   "previewNewTerm": "reverts"
+  },
+  {
+   "chainId": 13579,
+   "usesEdges": 181,
+   "creators": 115,
+   "subjects": 103,
+   "objects": 79,
+   "edgesByArpAddress": 30,
+   "subjectsWithSameAs": 35,
+   "subjectsWithBaseIdentity": 0,
+   "edgesFromBaseIdentities": 0,
+   "skillAtomsInCatalogue": 604,
+   "skillAtomsOnChain": 604,
+   "atomCostWei": "1000000001000000",
+   "tripleCostWei": "1000000002000000",
+   "previewNewTerm": "answers"
+  }
+ ],
+ "createTriplesSimulatedOn1155": "succeeds"
+}

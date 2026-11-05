@@ -15,7 +15,6 @@ function tool(overrides: Partial<ToolListing> = {}): ToolListing {
         declarers: [],
         pricedEdges: 1,
         sponsoredDeposits: 0,
-        wallets: null,
         sponsoredWallets: 0,
         declaredDeposits: 1,
         supportAssetsSum: 10n ** 18n,
