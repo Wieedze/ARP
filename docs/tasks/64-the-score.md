@@ -1,6 +1,6 @@
 # Task 64 — The score: a search that starts on what exists and moves to what agents did
 
-**Status:** in progress, 2026-11-05, on `feat/pulse`. A trial, by the user's « oui vazy essaye ».
+**Status:** **stopped** 2026-11-05 on `feat/pulse`, by the user: « on arrête ici pour les tests, on va reprendre différemment ». A trial, not pushed, and `task-verifier` was not run.
 **ADR:** `0136` (the product is the search), `0137` (ARP will compute a score).
 **Depends on:** task 63.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
