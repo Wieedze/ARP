@@ -1,0 +1,95 @@
+{
+ "cost": 0.118985,
+ "judged": [
+  {
+   "need": "silences-fixed",
+   "source": "agenticluke/claude-skill-video-editing-plus",
+   "skill": "video-editing",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill covers silence detection with ffmpeg silencedetect, accurate cutting, concatenation and re-encoded export, all doable with the installed ffmpeg and no account, payment or API key."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill covers silence detection with ffmpeg silencedetect and accurate cutting/concatenation with ffmpeg, which together with the local ffmpeg suffice to remove silent passages from clip.mp4 into output.mp4 without accounts, payment, or API keys."
+    }
+   ]
+  },
+  {
+   "need": "silences",
+   "source": "kappaemme-git/codex-video-short-maker-skill",
+   "skill": "video-short-maker",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill's base workflow uses only ffmpeg silencedetect to cut silent passages and concatenate the rest, needing no account, payment, or API key, though its default 45s target duration and --output option mean the user must set a large --duration (and the output path) to keep all non-silent content in output.mp4."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill's base workflow uses only ffmpeg/ffprobe silencedetect to cut silent passages and concatenate the rest, with no account, payment, or API key, and `--output` can target output.mp4; the caveat is that it targets a fixed duration (default 45s), so a duration large enough to keep all non-silent segments must be set, and the hardcoded /Users/francescomistero script path would need adjusting."
+    }
+   ]
+  },
+  {
+   "need": "silences",
+   "source": "agenticluke/claude-skill-video-editing-plus",
+   "skill": "video-editing",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill covers silence detection with ffmpeg silencedetect and accurate cuts/concatenation with ffmpeg, which are enough to remove silent passages from clip.mp4 into output.mp4 using only the installed free tools, though it gives no single ready-made command for removing silences."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill covers silence detection with ffmpeg silencedetect and accurate cutting/concatenation with ffmpeg, which together suffice to remove silent passages from clip.mp4 into output.mp4 using only the installed free tools."
+    }
+   ]
+  },
+  {
+   "need": "voiceover",
+   "source": "minhhoangho/idea-to-video-skill",
+   "skill": "idea-to-video",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "Track B (narrated) turns a written script into a voice-over video using free edge-tts (no account, payment or API key; needs only internet and a free pip package) and renders via Remotion/ffmpeg to an mp4, all within the allowed tools."
+    },
+    {
+     "verdict": "usable",
+     "why": "Track B (narrated) turns a written script into a voice-over video using free edge-tts (no account, payment, or API key) with Remotion/ffmpeg rendering, all installable for free, though narration needs internet and the clarification/proposal phases add some overhead."
+    }
+   ]
+  },
+  {
+   "need": "markdown",
+   "source": "easyzoom/aix-skills",
+   "skill": "webpage-to-markdown",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill covers converting a public URL to clean Markdown with source link and file output, needs no account, payment or key, and can be repeated per page in the list (the 'one URL' rule is a scope note, not a blocker), using whatever fetch tools are available plus free packages."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill covers converting a public URL into clean Markdown with title and source, and a list of pages is just repeated single-page use that can be saved as separate .md files, needing no account, payment or API key."
+    }
+   ]
+  },
+  {
+   "need": "silences",
+   "source": "makemyclip/editor",
+   "skill": "editor",
+   "verdicts": [
+    {
+     "verdict": "usable",
+     "why": "The skill documents a `silence_remove <input> [noiseDb] [minSilenceSec]` command that uses ffmpeg silencedetect to cut and concatenate non-silent parts, runs locally via a free npx package with no account or API key, and the result can be moved to output.mp4."
+    },
+    {
+     "verdict": "usable",
+     "why": "The skill's `silence_remove <input> [noiseDb] [minSilenceSec]` command removes silent passages locally via ffmpeg using a free npx package with no account, payment, or API key (output can then be moved to output.mp4)."
+    }
+   ]
+  }
+ ]
+}
