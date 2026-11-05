@@ -53,7 +53,8 @@ export type Step =
       diff: string[];
     }
   | { kind: 'command'; argv: string[]; summary: string; diff: string[] }
-  | { kind: 'skip'; summary: string };
+  /** `failed`: something was meant to change here and could not, which a run has to say at its end. */
+  | { kind: 'skip'; summary: string; failed?: true };
 
 export type Commands = {
   mcp: McpServer;
@@ -61,6 +62,8 @@ export type Commands = {
   hook: string;
   /** Where `init` copies the hook. Its path is how our hook entries are recognised. */
   hookFile: string;
+  /** The `cli.js` this `arp` runs from. A local install's MCP entry names it. */
+  cliPath: string;
   /**
    * `arp init --capture` (task 33i): the hook also keeps each payload, redacted, and is installed
    * in the runtimes whose payload it cannot read yet, so that it can learn to.
@@ -69,6 +72,26 @@ export type Commands = {
 };
 
 const SERVER_NAME = 'arp';
+
+/**
+ * Whether what a config holds under `arp` is what `init` writes: the package through `npx`, or a built
+ * `cli.js` of it. A person's own server may carry the name, and `uninstall` is not there to take it.
+ * Takes text so that an entry and the output of `claude mcp get` are read the same way.
+ */
+function namesOurServer(text: string, cliPath: string): boolean {
+  return (
+    text.includes('@arp-protocol/cli') ||
+    text.includes(cliPath) ||
+    /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text)
+  );
+}
+
+function foreignServerStep(where: string): Step {
+  return {
+    kind: 'skip',
+    summary: `MCP server "arp" in ${where} is not one ARP wrote; left as it is`,
+  };
+}
 
 function read(path: string): string | null {
   try {
@@ -96,7 +119,12 @@ const SPONSORED_ENV: Record<string, string> = {
 };
 
 /** The commands `init` installs, from where this `arp` is running. */
-export function commandsFor(env: InstallEnv, cliPath: string, capture = false, sponsored = false): Commands {
+export function commandsFor(
+  env: InstallEnv,
+  cliPath: string,
+  capture = false,
+  sponsored = false,
+): Commands {
   const hookFile = join(env.home, '.arp', 'bin', 'hook.js');
   // Run from `npx`'s cache, a path written into a config would vanish with the cache. The MCP
   // server starts once per session, so launching it through `npx` is affordable; the hook runs on
@@ -121,7 +149,7 @@ export function commandsFor(env: InstallEnv, cliPath: string, capture = false, s
     env: sponsored ? SPONSORED_ENV : SERVER_ENV,
   };
   const hook = `"${env.node}" "${hookFile}"${capture ? ' --capture' : ''}`;
-  return { mcp, hook, hookFile, capture };
+  return { mcp, hook, hookFile, cliPath, capture };
 }
 
 /** `- ` lines for what was there, `+ ` lines for what will be. Nothing for an absent side. */
@@ -156,6 +184,7 @@ function jsonStep(
   if (parsed instanceof Error) {
     return {
       kind: 'skip',
+      failed: true,
       summary: `${path} is not valid JSON (${parsed.message}); left as it is`,
     };
   }
@@ -163,6 +192,14 @@ function jsonStep(
   // A config left empty holds nothing to lose, and its backup is kept: the file goes.
   const after = Object.keys(next).length === 0 ? null : formatJson(next);
   return { kind: 'file', path, before, after, summary, diff: diffLines(view(parsed), view(next)) };
+}
+
+/** An `arp` entry in this file that `init` did not write. */
+function hasForeignServer(path: string, commands: Commands): boolean {
+  const config = parseJsonConfig(read(path));
+  if (config instanceof Error) return false; // reported as not valid JSON by the step itself
+  const entry = serversOf(config)[SERVER_NAME];
+  return entry !== undefined && !namesOurServer(JSON.stringify(entry), commands.cliPath);
 }
 
 function claudeFiles(env: InstallEnv, project: boolean) {
@@ -224,10 +261,13 @@ function claudeMcpSteps(
       summary: 'claude mcp add-json arp … --scope user',
       diff: diffLines(undefined, entry),
     };
-    if (remove)
-      return present
+    if (remove) {
+      if (!present)
+        return [{ kind: 'skip', summary: 'MCP server "arp" not declared (claude mcp get arp)' }];
+      return namesOurServer(got.stdout, commands.cliPath)
         ? [removeStep]
-        : [{ kind: 'skip', summary: 'MCP server "arp" not declared (claude mcp get arp)' }];
+        : [foreignServerStep('claude mcp get arp')];
+    }
     if (same)
       return [
         {
@@ -237,6 +277,7 @@ function claudeMcpSteps(
       ];
     return present ? [removeStep, addStep] : [addStep];
   }
+  if (remove && hasForeignServer(files.mcp, commands)) return [foreignServerStep(files.mcp)];
   return [
     jsonStep(
       files.mcp,
@@ -425,6 +466,10 @@ function jsonMcpRuntime(options: {
     withMcpServer(config, SERVER_NAME, commands === null ? null : mcpEntry(commands.mcp, typed));
   const steps = (env: InstallEnv, commands: Commands, project: boolean, remove: boolean) => {
     const withHook = remove || commands.capture;
+    const foreign = remove && hasForeignServer(path(env, project), commands);
+    const serverEdit = foreign
+      ? (config: Record<string, unknown>) => config
+      : mcpEdit(remove ? null : commands);
     // One file holding both the server and the hooks (Gemini's settings.json) gets one edit:
     // two steps computed from the same text would each undo the other.
     // One file holding both the server and the hooks (Gemini's settings.json) gets one edit:
@@ -436,14 +481,16 @@ function jsonMcpRuntime(options: {
           path(env, project),
           (config) =>
             withHooks(
-              mcpEdit(remove ? null : commands)(config),
+              serverEdit(config),
               hook.spec,
               withHook && !remove ? commands.hook : null,
               commands.hookFile,
             ),
-          remove
-            ? 'mcpServers.arp and the arp hook removed'
-            : `mcpServers.arp${commands.capture ? ' and the hook, capturing' : ''}`,
+          foreign
+            ? 'the arp hook removed; MCP server "arp" is not one ARP wrote, and stays'
+            : remove
+              ? 'mcpServers.arp and the arp hook removed'
+              : `mcpServers.arp${commands.capture ? ' and the hook, capturing' : ''}`,
           (config) => ({
             mcpServers: { arp: serversOf(config)[SERVER_NAME] },
             hooks: hooksOf(config, hook.spec, commands.hookFile),
@@ -452,14 +499,16 @@ function jsonMcpRuntime(options: {
       ];
     }
     return [
-      jsonStep(
-        path(env, project),
-        mcpEdit(remove ? null : commands),
-        remove
-          ? 'mcpServers.arp removed'
-          : `mcpServers.arp → ${commands.mcp.command} ${commands.mcp.args.join(' ')}`,
-        (config) => serversOf(config)[SERVER_NAME],
-      ),
+      foreign
+        ? foreignServerStep(path(env, project))
+        : jsonStep(
+            path(env, project),
+            serverEdit,
+            remove
+              ? 'mcpServers.arp removed'
+              : `mcpServers.arp → ${commands.mcp.command} ${commands.mcp.args.join(' ')}`,
+            (config) => serversOf(config)[SERVER_NAME],
+          ),
       withHook
         ? hookStep(hookPath(env, project), hook.spec, commands, remove)
         : noHook(hookPath(env, project), hook.spec, commands),
@@ -484,7 +533,7 @@ function codexStep(env: InstallEnv, entry: McpServer | null, project: boolean): 
   const before = read(path);
   const after = withCodexServer(before, entry);
   if (after instanceof Error)
-    return { kind: 'skip', summary: `${path}: ${after.message}; left as it is` };
+    return { kind: 'skip', failed: true, summary: `${path}: ${after.message}; left as it is` };
   return {
     kind: 'file',
     path,

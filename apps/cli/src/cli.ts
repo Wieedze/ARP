@@ -67,7 +67,7 @@ docs: https://github.com/Wieedze/ARP/blob/main/docs/22_RUNNING_THE_NODE.md
 `;
 
 /** Exit codes, mapped to what went wrong rather than all 1 (clig.dev, "The Basics"). */
-const EXIT = { ok: 0, usage: 2 } as const;
+const EXIT = { ok: 0, usage: 2, writeFailed: 5 } as const;
 
 /** This file once bundled: `dist/cli.js`. `init` writes its path into the MCP entry. */
 const CLI_PATH = fileURLToPath(import.meta.url);
@@ -109,6 +109,34 @@ async function runNodeInit(rest: readonly string[]): Promise<number> {
   });
 }
 
+async function shareCommand(rest: readonly string[]): Promise<number> {
+  const { arpHome } = await import('@arp-protocol/core/node');
+  const { homedir } = await import('node:os');
+  const share = await import('./share.ts');
+  const env = { arpHome: arpHome(process.env, homedir()), home: homedir(), cwd: process.cwd() };
+  if (rest[0] === 'send') {
+    if (!share.decide(env).on) {
+      process.stderr.write('sharing is off: nothing was sent. `arp share on` turns it on\n');
+      return EXIT.ok;
+    }
+    process.env['ARP_TARGET'] ??= 'testnet';
+    const { writeLineHere } = await import('@arp/mcp/line');
+    const done = await share.sendShared(env, async (line) => {
+      await writeLineHere(line);
+    });
+    process.stdout.write(`sent ${done.sent}, failed ${done.failed}\n`);
+    if (done.firstError !== null) process.stderr.write(`${done.firstError}\n`);
+    return done.failed === 0 ? EXIT.ok : 1;
+  }
+  if (rest[0] === 'on' || rest[0] === 'off') share.setSharing(env, rest[0] === 'on');
+  else if (rest[0] !== undefined) {
+    process.stderr.write('usage: arp share [on|off|send]\n');
+    return EXIT.usage;
+  }
+  process.stdout.write(share.describe(share.decide(env)));
+  return EXIT.ok;
+}
+
 async function run(argv: readonly string[]): Promise<number> {
   const [command, ...rest] = argv;
   if (command === 'init' && rest.includes('--node')) return runNodeInit(rest);
@@ -122,33 +150,14 @@ async function run(argv: readonly string[]): Promise<number> {
       // The hook is a script: importing it reads stdin, writes at most one line and exits 0.
       await import(new URL('./hook.js', import.meta.url).href);
       return EXIT.ok;
-    case 'share': {
-      const { arpHome } = await import('@arp-protocol/core/node');
-      const { homedir } = await import('node:os');
-      const share = await import('./share.ts');
-      const env = { arpHome: arpHome(process.env, homedir()), home: homedir(), cwd: process.cwd() };
-      if (rest[0] === 'send') {
-        if (!share.decide(env).on) {
-          process.stderr.write('sharing is off: nothing was sent. `arp share on` turns it on\n');
-          return EXIT.ok;
-        }
-        process.env['ARP_TARGET'] ??= 'testnet';
-        const { writeLineHere } = await import('@arp/mcp/line');
-        const done = await share.sendShared(env, async (line) => {
-          await writeLineHere(line);
-        });
-        process.stdout.write(`sent ${done.sent}, failed ${done.failed}\n`);
-        if (done.firstError !== null) process.stderr.write(`${done.firstError}\n`);
-        return done.failed === 0 ? EXIT.ok : 1;
+    case 'share':
+      // Its files are the person's: a read-only home or a folder in a file's place is a sentence, not a stack.
+      try {
+        return await shareCommand(rest);
+      } catch (error) {
+        process.stderr.write(`arp share: ${error instanceof Error ? error.message : String(error)}\n`);
+        return EXIT.writeFailed;
       }
-      if (rest[0] === 'on' || rest[0] === 'off') share.setSharing(env, rest[0] === 'on');
-      else if (rest[0] !== undefined) {
-        process.stderr.write('usage: arp share [on|off|send]\n');
-        return EXIT.usage;
-      }
-      process.stdout.write(share.describe(share.decide(env)));
-      return EXIT.ok;
-    }
     case 'line': {
       const flag = (name: string) => {
         const at = rest.indexOf(`--${name}`);

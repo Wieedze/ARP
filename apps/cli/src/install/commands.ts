@@ -39,6 +39,8 @@ export const EXIT = {
   /** No supported runtime on this machine. */
   nothingFound: 4,
   writeFailed: 5,
+  /** The rest was done, and at least one file had to be left out. */
+  partly: 6,
 } as const;
 
 export type Flags = {
@@ -150,7 +152,11 @@ function hookFileStep(env: InstallEnv, commands: Commands, remove: boolean): Ste
   const before = read(commands.hookFile);
   const after = remove ? null : read(join(env.dist, 'hook.js'));
   if (!remove && after === null) {
-    return { kind: 'skip', summary: `no hook.js next to this arp (${env.dist}); build it first` };
+    return {
+      kind: 'skip',
+      failed: true,
+      summary: `no hook.js next to this arp (${env.dist}); build it first`,
+    };
   }
   return {
     kind: 'file',
@@ -180,6 +186,18 @@ async function change(
   verb: string,
 ): Promise<number> {
   const pending = plan.flatMap((group) => group.steps.filter(changes));
+  // The last thing a run prints, because `Done` above a list this long reads as all of it.
+  const leftOut = plan.flatMap((group) =>
+    group.steps.flatMap((step) =>
+      step.kind === 'skip' && step.failed === true ? [`${group.runtime}: ${step.summary}`] : [],
+    ),
+  );
+  const finish = (): number => {
+    if (leftOut.length === 0) return EXIT.ok;
+    env.err(`\nNot done in ${leftOut.length} place(s):`);
+    for (const line of leftOut) env.err(`  ${line}`);
+    return EXIT.partly;
+  };
   for (const group of plan) {
     env.out(group.runtime);
     for (const step of group.steps) {
@@ -196,11 +214,11 @@ async function change(
   }
   if (pending.length === 0) {
     env.out(`\nNothing to change.`);
-    return EXIT.ok;
+    return finish();
   }
   if (flags.dryRun) {
     env.out(`\n--dry-run: ${pending.length} change(s) shown, nothing written.`);
-    return EXIT.ok;
+    return finish();
   }
   env.out(`\nEach file is backed up as <file>.arp-backup-<date> before it is written.`);
   if (!(await consent(env, flags, `${verb} ${pending.length} change(s)?`))) return EXIT.refused;
@@ -211,7 +229,7 @@ async function change(
   env.out(
     `Done. ${verb === 'Install' ? 'Restart your agent runtime to load the MCP server; hooks load on their own.' : 'Removed.'}`,
   );
-  return EXIT.ok;
+  return finish();
 }
 
 export async function init(env: InstallEnv, flags: Flags, cliPath: string): Promise<number> {

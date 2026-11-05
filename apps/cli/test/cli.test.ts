@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -55,6 +55,16 @@ test('hook reads one payload and writes one line in the project', () => {
   const log = join(dir, '.arp', 'session.jsonl');
   expect(existsSync(log)).toBe(true);
   expect(readFileSync(log, 'utf8')).toContain('"call":"t1"');
+});
+
+test('share on a home it cannot write says so in a sentence, not a stack', () => {
+  const file = join(dir, 'a-file');
+  writeFileSync(file, '');
+  // Under a file, not a read-only folder: root writes through those, and this suite may run as root.
+  const { code, err } = arp(['share', 'on'], '', { ARP_HOME: join(file, 'arp') });
+  expect(code).toBe(5);
+  expect(err.startsWith('arp share: ')).toBe(true);
+  expect(err).not.toContain('\n    at ');
 });
 
 test('mcp speaks stdio by default', () => {

@@ -388,6 +388,50 @@ describe('uninstall and doctor', () => {
     expect(existsSync(join(home, '.arp', 'bin', 'hook.js'))).toBe(false);
   });
 
+  test('uninstall leaves a server named arp that ARP did not write, and says so', async () => {
+    const own = { command: 'python', args: ['/home/me/my-arp.py'] };
+    mkdirSync(join(home, '.claude'));
+    mkdirSync(join(home, '.cursor'));
+    writeFileSync(join(home, '.claude.json'), JSON.stringify({ mcpServers: { arp: own } }));
+    writeFileSync(join(home, '.cursor', 'mcp.json'), JSON.stringify({ mcpServers: { arp: own } }));
+    expect(await uninstall(env(), flags(['--yes']), CLI)).toBe(EXIT.ok);
+    expect(at(json(join(home, '.claude.json')), 'mcpServers', 'arp')).toEqual(own);
+    expect(at(json(join(home, '.cursor', 'mcp.json')), 'mcpServers', 'arp')).toEqual(own);
+    expect(lines.join('\n')).toContain('is not one ARP wrote; left as it is');
+  });
+
+  test('uninstall leaves a foreign arp behind the claude command too', async () => {
+    mkdirSync(join(home, '.claude'));
+    const claude = env({
+      which: (name) => (name === 'claude' ? '/usr/bin/claude' : null),
+      run: (argv): RunResult => {
+        ran.push([...argv]);
+        return { code: 0, stdout: 'arp:\n  Command: python\n  Args: /home/me/my-arp.py\n', stderr: '' };
+      },
+    });
+    expect(await uninstall(claude, flags(['--yes', '--runtime', 'claude']), CLI)).toBe(EXIT.ok);
+    expect(ran.some((argv) => argv.includes('remove'))).toBe(false);
+  });
+
+  test('uninstall still takes an entry an older package wrote', async () => {
+    mkdirSync(join(home, '.cursor'));
+    const old = { command: 'npx', args: ['-y', '@arp-protocol/cli@0.0.0', 'mcp'] };
+    writeFileSync(join(home, '.cursor', 'mcp.json'), JSON.stringify({ mcpServers: { arp: old } }));
+    expect(await uninstall(env(), flags(['--yes']), CLI)).toBe(EXIT.ok);
+    expect(existsSync(join(home, '.cursor', 'mcp.json'))).toBe(false);
+  });
+
+  test('a run that had to leave a file out does the rest, says which, and does not exit 0', async () => {
+    mkdirSync(join(home, '.claude'));
+    mkdirSync(join(home, '.cursor'));
+    writeFileSync(join(home, '.claude', 'settings.json'), '{ // a comment\n}');
+    expect(await init(env(), flags(['--yes']), CLI)).toBe(EXIT.partly);
+    expect(at(json(join(home, '.cursor', 'mcp.json')), 'mcpServers', 'arp')).toBeDefined();
+    const said = lines.join('\n');
+    expect(said.indexOf('Not done in 1 place(s):')).toBeGreaterThan(said.indexOf('Done.'));
+    expect(said).toContain('settings.json is not valid JSON');
+  });
+
   test('doctor passes after init and fails before it', async () => {
     mkdirSync(join(home, '.claude'));
     expect(doctor(env(), flags(), CLI)).toBe(EXIT.problems);

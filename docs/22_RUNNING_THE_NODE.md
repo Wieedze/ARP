@@ -615,7 +615,7 @@ cd apps/hook && bun run build      # once: writes apps/hook/dist/arp-hook.js
 
 `arp init` writes this for you (`@arp-protocol/cli`, `apps/cli`): it copies the hook to
 `~/.arp/bin/hook.js`, registers it on both events, and backs up `settings.json` first. `arp
-uninstall` takes it out again. By hand, it is:
+uninstall` takes it out again. It leaves an MCP server named `arp` that it did not write, and says so. A run that had to leave a file out, one that is not valid JSON for instance, does the rest, names the file at the end and exits 6. By hand, it is:
 
 <!-- prettier-ignore -->
 ```jsonc
