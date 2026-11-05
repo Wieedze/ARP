@@ -199,3 +199,23 @@ Six payments mined, from `0x906f…f91f` to `0x9C98…e868`, the node key the ad
 - No line was written after the call, so the graph did not learn from these 6 calls.
 - Agent 2 now has five signed addresses, one of them live until the node stops.
 
+## 9. The agent writes its line. Written before it ran, not run
+
+The user, 2026-11-05: « ok oui vas-y » to closing the loop. `scripts/demo/agent-call-wallet.ts` with `AGENT_PAID_LINES=1`, `LINES=1 bash scripts/demo/agent-paid-test.sh`, and `scripts/demo/agent-pulse-read.ts`, holding no key, before and after.
+
+The hirer is agent 13579/3, wallet `0xE596…1AA1`: its line on agent 2 exists with no domain and no outcome, so a new domain and outcome show. Agent 6 could not show one, because its `worked` already exists and a plan to write it again has 0 calls, as read on 2026-11-05. `write_line` writes form B (ADR `0138`) through a plan from a real MCP server, then the receipt.
+
+Two runs, in this order, `sonnet`, capped at $0.50 a run:
+
+1. `present` (`orchard-17`): the agent pays, reads the note, and may write.
+2. `absent` (`harbor-99`): the same, for a note that does not exist.
+
+**How it will be read, decided now.**
+
+- The wallet's log and the keyless reader decide what was written, and not the agent's sentence.
+- **The loop closes if** the reader, before and after, shows the new line on agent 2 in `document`, `wallets_worked` going from 1 to 2, `wallet_controls_declarer: yes`, and the new receipt with `holds: true`.
+- **The agent chooses whether and what to write.** Not writing is a result. In `absent`, nothing is the right answer in advance: `failed` says the call did not give it what it needed, `not-the-right-tool` blames the node for a note that may never have existed, and no line leaves the money spent unrecorded. What it writes and why is read and reported.
+- n=1 per scene, so this says what happened once.
+- **A question this will bring out, and does not answer:** a line is one triple per hirer and domain, so a second `worked` adds nothing and a later `failed` sits beside the earlier `worked`. The graph holds a state with no order among outcomes, not a history of calls.
+- One operator holds every key.
+

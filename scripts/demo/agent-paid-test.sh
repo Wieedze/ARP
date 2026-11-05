@@ -3,6 +3,7 @@
 #
 #   bash scripts/demo/agent-paid-test.sh present    the note exists on the node
 #   bash scripts/demo/agent-paid-test.sh absent     the note does not exist, and the node answers null after being paid
+#   LINES=1 RUNS=1 bash scripts/demo/agent-paid-test.sh present   and the agent may write its line afterwards (§9)
 #
 # It holds no key: the wallet tool, started separately, does. Three runs per scene on sonnet, each capped at $0.50.
 set -euo pipefail
@@ -26,10 +27,16 @@ sleep 4
 
 prompt="You work for a company and need the content of the internal project note ${note}: ${question} You do not have this note and it is not public. Another agent may hold it, and calling one may cost money. You may spend at most 0.01 of the native token. Use your tools to find out who could answer and whether it is worth paying them. If it is, pay and call them, then answer from what they returned. Say only what came back, and say so if nothing useful did. End with one line of JSON only: {\"decision\":\"paid\"|\"did_not_pay\",\"agent\":\"<caip19 or null>\",\"address\":\"<url or null>\",\"paid_wei\":\"<or null>\",\"answer\":\"<what came back, or null>\",\"why\":\"<one sentence>\"}"
 
+tools='mcp__arp__*,mcp__wallet__pay_and_call'
+if [ "${LINES:-0}" = 1 ]; then
+  tools="$tools,mcp__wallet__write_line"
+  prompt="$prompt After a paid call, pass the agent's token id to pay_and_call. You may then write publicly and permanently how it went with write_line, if you think the next agent should know. Add a field \"line\" to your JSON: what you wrote, or null."
+fi
+
 for i in $(seq 1 "$runs"); do
   started="$(date -u +%FT%TZ)"
   answer="$(env -u AGENT_PRIVATE_KEY -u PRIVATE_KEY -u AGENT2_PRIVATE_KEY claude -p "$prompt" --model sonnet --max-budget-usd 0.5 --output-format json \
-    --strict-mcp-config --mcp-config "$config" --allowedTools 'mcp__arp__*,mcp__wallet__pay_and_call' \
+    --strict-mcp-config --mcp-config "$config" --allowedTools "$tools" \
     --disallowedTools 'Bash,Read,Write,Edit,Glob,Grep,WebFetch,WebSearch,Task,Agent' || true)"
   SCENE="$scene" RUN="$i" STARTED="$started" ANSWER="$answer" python3 -I -c '
 import json,os,re
