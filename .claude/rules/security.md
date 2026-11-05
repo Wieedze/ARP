@@ -37,7 +37,7 @@ Walk through each item for every contract change. Document the result (clean pas
 ### Signature replay
 
 - If signatures are used (EIP-712, EIP-1271), they include a nonce + chainId + verifying contract.
-- Signatures are in use, so this section applies. Nine sites: `contracts/src/erc8004/IdentityRegistry.sol`
+- Signatures are in use, so this section applies. Ten sites: `contracts/src/erc8004/IdentityRegistry.sol`
   (ARP's testnet deployment of the reference registry, which verifies signatures); MetaMask
   Delegation Framework delegations (EIP-712, signed in the app, verified by `apps/sponsor` before
   it publishes one); the operator's EIP-712 statement on import
@@ -48,7 +48,7 @@ Walk through each item for every contract change. Document the result (clean pas
   (`packages/protocol/src/sponsor/mint-gas.ts`, ADR `0116`), which carries no verifying contract
   because no contract checks it, and whose nonce the sponsoring service spends once; the address's
   list-tool request (`packages/protocol/src/sponsor/list-tool.ts`, ADR `0123`), the same shape
-  with the URL in the signed message; and `ReceiptEnforcer`
+  with the URL in the signed message; the agent's line request (`packages/protocol/src/sponsor/line.ts`, ADR `0144`), the same shape with the line in the signed message; and `ReceiptEnforcer`
   (`contracts/src/enforcers/ReceiptEnforcer.sol`, task 43, not deployed), which verifies that hire
   receipt on chain. The content receipt and the sponsor request carry no verifying contract. For the
   content receipt the cause still holds: no contract checks it. The sponsor request's nonce is the
@@ -138,6 +138,7 @@ The `contract-reviewer` agent (in `.claude/agents/`) orchestrates these for you 
   | ARP's own                                               | the sponsoring service, for a new agent's mint gas, its identity atoms and its first `uses` triple, within the same budget | **testnet 13579 only** — ADR `0110`                      |
   | ARP's own                                               | the sponsoring service, for a tool listing (the tool's atom, a skill's repository and `source`), within its own daily caps and the same budget | **testnet 13579 only** — ADR `0123`                      |
   | ARP's own                                               | the sponsoring service, for an accepted category (its atom, its parent edge, one skill's tag) or a tag with an existing category, as an attestor the index reads, within their own daily caps and the same budget | **testnet 13579 only** — ADR `0124`                      |
+  | ARP's own                                               | the sponsoring service, for one form B line and the agent's position on each level, with no proof of use, within its own daily caps and the same budget | **testnet 13579 only** — ADR `0144`                      |
 
   Row 3 is the product (`docs/12` points 3 and 5), so a flat "no agent may ever sign a mainnet
   transaction" forbids the thing being built. Row 1 is the development hazard the rule exists for.

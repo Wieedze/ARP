@@ -57,7 +57,7 @@ const SCENARIOS: Scenario[] = [
     {...BASE, name: "strong-filter", filter: 0.95},
 ];
 
-type Arm = {name: string; legacy?: true; search?: true; domain: boolean; reason: boolean; proof: boolean; near: number; proven: number};
+type Arm = {name: string; legacy?: true; search?: true; threshold?: number; domain: boolean; reason: boolean; proof: boolean; near: number; proven: number};
 /** The weights this simulation ran on. `proven` is 2 here and 1 in the tool, by the user's decision after it ran. */
 const TESTED = {near: 0.5, proven: 2};
 const off = {domain: false, reason: false, proof: false, near: TESTED.near, proven: TESTED.proven};
@@ -123,6 +123,9 @@ function runFull(arm: Arm, scenario: Scenario, agents: number, seed: number): Ou
     const key = (domain: Domain, mask: number) => NEED_DOMAINS.indexOf(domain) * 8 + mask;
     const worked = Array.from({length: 24}, () => new Array<number>(count).fill(0));
     const failed = Array.from({length: 24}, () => new Array<number>(count).fill(0));
+    // Task 71: wallets behind each total, since a wallet here writes one line. Below the threshold the total does not count.
+    const workedWallets = Array.from({length: 24}, () => new Array<number>(count).fill(0));
+    const failedWallets = Array.from({length: 24}, () => new Array<number>(count).fill(0));
     const capsOf = (mask: number) => new Set(CAPS.filter((_cap, at) => mask & (1 << at)));
     const write = (skill: number, line: WeighedLine & {domain: Domain; outcome: UsageOutcome}) => {
         for (const domain of NEED_DOMAINS) {
@@ -130,6 +133,10 @@ function runFull(arm: Arm, scenario: Scenario, agents: number, seed: number): Ou
                 const weight = weigh(arm, line, domain, capsOf(mask));
                 const totals = (line.outcome === "worked" ? worked : failed)[key(domain, mask)] as number[];
                 totals[skill] = (totals[skill] ?? 0) + weight;
+                if (weight > 0) {
+                    const wallets = (line.outcome === "worked" ? workedWallets : failedWallets)[key(domain, mask)] as number[];
+                    wallets[skill] = (wallets[skill] ?? 0) + 1;
+                }
             }
         }
     };
@@ -167,7 +174,9 @@ function runFull(arm: Arm, scenario: Scenario, agents: number, seed: number): Ou
             const lacks = need[skill] !== null && !has.has(need[skill] as Capability);
             // The local filter reads what the skill's file states, and it costs nothing to run.
             if (lacks && live() < scenario.filter) continue;
-            const value = arm.search === true ? scoreFrom(prior[skill] ?? 0, 0, 0) : scoreFrom(prior[skill] ?? 0, worked[row]?.[skill] ?? 0, failed[row]?.[skill] ?? 0);
+            const heard = (totals: number[][], wallets: number[][]) =>
+                arm.threshold !== undefined && (wallets[row]?.[skill] ?? 0) < arm.threshold ? 0 : (totals[row]?.[skill] ?? 0);
+            const value = arm.search === true ? scoreFrom(prior[skill] ?? 0, 0, 0) : scoreFrom(prior[skill] ?? 0, heard(worked, workedWallets), heard(failed, failedWallets));
             if (value > top) {
                 top = value;
                 pick = skill;
@@ -249,6 +258,25 @@ if (process.argv.includes("--round") && process.argv[process.argv.indexOf("--rou
     }
     mkdirSync("data/measurements", {recursive: true});
     writeFileSync(`data/measurements/signal-sim2-${STAMP}.json`, `${JSON.stringify({worlds: WORLDS, rows}, null, 1)}\n`);
+    process.exit(0);
+}
+
+if (process.argv.includes("--round") && process.argv[process.argv.indexOf("--round") + 1] === "3") {
+    const without: Arm = {...off, name: "tool", domain: true, reason: true};
+    const withThreshold: Arm = {...without, name: "threshold", threshold: 3};
+    const rows: unknown[] = [];
+    console.log(`${WORLDS} worlds per cell. Exploratory (docs/tasks/71 §2). The threshold of 3 against none, success among the last 20%.`);
+    for (const scenario of [BASE, {...BASE, name: "sparse", declareShare: 0.05}, {...BASE, name: "1 false wallet", liars: 1}, {...BASE, name: "2 false wallets", liars: 2}, {...BASE, name: "20 false wallets", liars: 20}]) {
+        for (const agents of [50, 200, 1000]) {
+            const plain = Array.from({length: WORLDS}, (_v, world) => runFull(without, scenario, agents, (world + 1) * 7919).success);
+            const held = Array.from({length: WORLDS}, (_v, world) => runFull(withThreshold, scenario, agents, (world + 1) * 7919).success);
+            const diff = paired(held, plain);
+            rows.push({scenario: scenario.name, agents, without: mean(plain), threshold: mean(held), diff});
+            console.log(`${scenario.name.padEnd(18)} ${String(agents).padStart(5)} agents  without ${fmt(mean(plain))}  threshold ${fmt(mean(held))}  ${diff.mean >= 0 ? "+" : ""}${diff.mean.toFixed(1)} [${diff.low.toFixed(1)}, ${diff.high.toFixed(1)}]`);
+        }
+    }
+    mkdirSync("data/measurements", {recursive: true});
+    writeFileSync(`data/measurements/signal-sim3-${STAMP}.json`, `${JSON.stringify({worlds: WORLDS, rows}, null, 1)}\n`);
     process.exit(0);
 }
 

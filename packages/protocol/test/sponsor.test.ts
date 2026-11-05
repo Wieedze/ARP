@@ -514,6 +514,8 @@ describe("limits", () => {
         anonymousListingsPerDay: 2,
         categoriesPerDay: 2,
         categoryTagsPerDay: 2,
+        linesPerAgentPerDay: 5,
+        linesPerDay: 30,
         listingsPerDay: 4,
         withdrawalThresholdBps: null,
         belowProofCost: false,

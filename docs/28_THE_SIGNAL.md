@@ -43,6 +43,8 @@ This sentence is on testnet 13579 (`data/measurements/pulse-walk-2026-11-05.json
 | `missing-file` | It needed a file the agent did not have |
 | `not-the-right-tool` | It does not do this job |
 
+**Writing one from the plugin:** `arp line --tool <url> --outcome failed --reason missing-key [--domain video]`, through the local sponsoring service, testnet 13579 only (ADR `0144`). It takes no proof of use, and the service pays. The service's own wallet says nothing by paying.
+
 **A wallet declares a use by writing T1, or by holding a position on it and standing behind a domain or a result on it.** A position alone is support, not a declaration. One T1 can have several declarers, each with its own lines. **A level counts for a declarer who stands behind it**, by creating it or holding a position, and behind each level below it too. Anybody else's goes to `byOthers`, shown and not counted. A wallet that did not create the edge stops counting when it withdraws. One that created it keeps its place, and can take its deposit back. This reading is not tested on chain.
 
 ## How a line becomes a value
@@ -58,17 +60,21 @@ flowchart TD
     Q2 -- "yes" --> Z
     Q2 -- "no" --> V["The line's weight"]
     V --> S["Each wallet keeps its heaviest line per outcome"]
-    S --> F["score = (prior + worked) / (1 + worked + failed)"]
+    S --> T{"At least 3 wallets saying the same thing?"}
+    T -- "no" --> H["Shown, and adds nothing to the score"]
+    T -- "yes" --> F["score = (prior + worked) / (1 + worked + failed)"]
 ```
 
 `prior` comes from the rank in the search, from 0.8 to 0.2. `worked` and `failed` are sums of weights. `not-the-right-tool` counts only in the domain it names, not above or below it.
 
-**Example.** `cut-silences` has one line: `video`, `failed`, `missing-key`. A skill with a prior of 0.5:
+**Below 3 different wallets saying the same thing, a line is only shown** (ADR `0143`, the user's choice). So one false line no longer moves the ranking, and neither does one true line. It protects the ranking and not the reading: an agent still reads the line (`docs/tasks/71`).
 
-| Who searches in `video` | Failed | Score |
+**Example.** A skill with a prior of 0.5, `failed` in `video` because of `missing-key`:
+
+| Who searches in `video` | With `cut-silences`' one line today | With 3 wallets saying it |
 | --- | --- | --- |
-| Says it can supply a key (`can_provide: ["key"]`) | 0 | 0.50 |
-| Says nothing, or has no key | 1 | 0.25 |
+| Says it can supply a key (`can_provide: ["key"]`) | 0.50 | 0.50 |
+| Says nothing, or has no key | 0.50, and the line is shown | 0.125 |
 
 **What never counts: the amount deposited.** Rank is not for sale. A line written pays a fee per level. A line held on deposits, where the triples exist, loses about 50 times less on 13579 in small vaults (`scripts/measure/line-cost.ts`), which the user accepted on testnet and which blocks a mainnet port until it is answered. This corrects how `docs/12` reads for the score, and the reader does not ask for an amount.
 

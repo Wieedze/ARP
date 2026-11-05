@@ -162,6 +162,9 @@ const limits: SponsorLimits = {
   // Task 59, ADR `0124`: new categories the service writes as an attestor, all proposers together.
   categoriesPerDay: count('SPONSOR_CATEGORIES_PER_DAY', 10),
   categoryTagsPerDay: count('SPONSOR_CATEGORY_TAGS_PER_DAY', 50),
+  // ADR `0144`: a line asks no proof of use, so these and the budget are what bound it.
+  linesPerAgentPerDay: count('SPONSOR_LINES_PER_AGENT_PER_DAY', 5),
+  linesPerDay: count('SPONSOR_LINES_PER_DAY', 30),
   dailyBudget: wei('SPONSOR_DAILY_BUDGET_WEI', ADR_0092_LIMITS.dailyBudget),
   // Off unless set (ADR `0129`): on testnet the daily budget is the bound.
   depositsPerAgentPerDay:
@@ -342,6 +345,8 @@ const service = createSponsor({
   ],
   resolveTool: (url) => resolveOnGitHubCached(url),
   repoSpellings: (repo) => repoSpellingsOnGraph(deployments.chain.graphqlUrl, repo),
+  // ADR `0135`, `0144`: the predicate a line's domain is written with.
+  lines: { inContextOf: deployments.arp.endpointBinding.inContextOf as Hex },
   categories: {
     ...CATEGORY_TREE,
     isTool: toolCheck(deployments.chain.graphqlUrl),

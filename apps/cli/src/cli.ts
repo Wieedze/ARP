@@ -39,6 +39,8 @@ usage
   arp node           the hire endpoint. Opt-in: it listens on 127.0.0.1 and is reached through
                      a tunnel you rent (cloudflared or ngrok, or ARP_NODE_PUBLIC_URL)
 
+  arp line           write one public line on testnet 13579 through ARP's sponsor: --tool <url>
+                     --outcome worked|failed [--domain <category>] [--reason <reason>]
   arp init           add the MCP server and the hook to every runtime found here
   arp uninstall      remove them, and only them
   arp doctor         check what is installed and that the server answers
@@ -131,6 +133,33 @@ async function run(argv: readonly string[]): Promise<number> {
       }
       process.stdout.write(share.describe(share.decide(env)));
       return EXIT.ok;
+    }
+    case 'line': {
+      const flag = (name: string) => {
+        const at = rest.indexOf(`--${name}`);
+        return at === -1 ? undefined : rest[at + 1];
+      };
+      const toolUrl = flag('tool');
+      const outcome = flag('outcome');
+      if (toolUrl === undefined || outcome === undefined) {
+        process.stderr.write('usage: arp line --tool <url> --outcome worked|failed [--domain <category>] [--reason <reason>]\n');
+        return EXIT.usage;
+      }
+      process.env['ARP_TARGET'] ??= 'testnet';
+      const { lineFromArgs, writeLineHere } = await import('@arp/mcp/line');
+      const input = lineFromArgs({ toolUrl, outcome, domain: flag('domain'), reason: flag('reason') });
+      if (input instanceof Error) {
+        process.stderr.write(`arp line: ${input.message}\n`);
+        return EXIT.usage;
+      }
+      try {
+        const written = await writeLineHere(input);
+        process.stdout.write(`${JSON.stringify(written)}\n`);
+        return EXIT.ok;
+      } catch (error) {
+        process.stderr.write(`arp line: ${error instanceof Error ? error.message : String(error)}\n`);
+        return 1;
+      }
     }
     case 'backfill': {
       const { backfill } = await import('@arp/hook/backfill');

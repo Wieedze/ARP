@@ -69,6 +69,10 @@ export type SponsorLimits = {
      * 2026-11-03). One triple each, counted apart from new categories.
      */
     categoryTagsPerDay: number;
+    /** Sponsored lines a UTC day for one agent (ADR `0144`). A line asks no proof, so this and the next bound it. */
+    linesPerAgentPerDay: number;
+    /** Sponsored lines a UTC day, all agents together. A fresh key is free to make, so the per-agent limit alone does not bound a caller. */
+    linesPerDay: number;
     /**
      * Past this share of its sponsored shares withdrawn, in basis points, an agent is no longer
      * sponsored. A **mainnet** rule: `null`, not enforced, on testnet, where everything proven is
@@ -100,7 +104,8 @@ export type SponsorRecord = {
      * `mint-gas` is the transfer for an unregistered address's `register()`; `identity` the atoms
      * and triples that give an agent its identity; `create` a `uses` triple a deposit lands on
      * (ADR `0110`); `list-tool` the terms of a sponsored tool listing (ADR `0123`), whose subject
-     * is the signing address, or {@link ANONYMOUS_LISTER} for an unsigned request.
+     * is the signing address, or {@link ANONYMOUS_LISTER} for an unsigned request; `line` every term and
+     * position of one sponsored line (ADR `0144`), whose subject is the agent.
      */
     kind:
         | "deposit"
@@ -110,6 +115,7 @@ export type SponsorRecord = {
         | "identity"
         | "create"
         | "list-tool"
+        | "line"
         | "category";
     subject: Address;
     /** The `value` the service sent for it, in wei. A publication's term fees are in it; the gas of the transaction is not. */
@@ -281,6 +287,22 @@ export function checkMintGasLimits(
         return {ok: false, reason: `${limits.newAgentsPerDay} new agents a day, reached`};
     }
     return budget(records, limits.mintGas, now, limits) ?? {ok: true};
+}
+
+/** Whether one more sponsored line for `agent`, costing `value`, fits (ADR `0144`). */
+export function checkLineLimits(
+    records: readonly SponsorRecord[],
+    params: {agent: Address; value: bigint; now: number; limits: SponsorLimits},
+): LimitDecision {
+    const {agent, value, now, limits} = params;
+    if (countOnDay(records, "line", agent, now) >= limits.linesPerAgentPerDay) {
+        return {ok: false, reason: `${limits.linesPerAgentPerDay} sponsored lines a day per agent, reached`};
+    }
+    const day = utcDay(now);
+    if (records.filter((r) => r.kind === "line" && utcDay(r.at) === day).length >= limits.linesPerDay) {
+        return {ok: false, reason: `${limits.linesPerDay} sponsored lines a day, reached`};
+    }
+    return budget(records, value, now, limits) ?? {ok: true};
 }
 
 /**

@@ -112,7 +112,7 @@ type Stream = {
     is_error?: boolean;
     num_turns?: number;
     total_cost_usd?: number;
-    message?: {content?: {type?: string; name?: string; input?: Record<string, unknown>; is_error?: boolean}[]};
+    message?: {content?: {type?: string; name?: string; input?: Record<string, unknown>; is_error?: boolean; content?: unknown}[]};
 };
 
 function runClaude(args: string[], cwd: string, env: NodeJS.ProcessEnv): Promise<string> {
@@ -205,6 +205,7 @@ async function run(need: Need, arm: Arm, rep: number): Promise<Record<string, un
     const tools: string[] = [];
     let sawUsage = false;
     let toolErrors = 0;
+    let order: string[] | null = null;
     for (const line of text.split("\n")) {
         if (line.trim() === "") continue;
         let parsed: Stream;
@@ -222,6 +223,15 @@ async function run(need: Need, arm: Arm, rep: number): Promise<Record<string, un
         if (parsed.type === "user") {
             for (const block of parsed.message?.content ?? []) {
                 if (block.type === "tool_result" && block.is_error === true) toolErrors += 1;
+                // Task 71: what the tool returned, in order, so two arms' rankings can be compared.
+                if (block.type === "tool_result" && order === null && Array.isArray(block.content)) {
+                    const first: unknown = block.content[0];
+                    const body = typeof first === "object" && first !== null ? (first as {text?: unknown}).text : null; // read by shape
+                    if (typeof body === "string" && body.includes('"results_found"')) {
+                        const parsedBody = JSON.parse(body) as {skills?: {source?: string; name?: string}[]}; // the tool's own answer
+                        order = (parsedBody.skills ?? []).map((skill) => `${skill.source}@${skill.name}`);
+                    }
+                }
             }
         }
         if (parsed.type === "result") result = parsed;
@@ -242,6 +252,7 @@ async function run(need: Need, arm: Arm, rep: number): Promise<Record<string, un
         chosen,
         judged,
         sawUsage,
+        order,
         toolErrors,
         tools,
         turns: result?.num_turns ?? 0,

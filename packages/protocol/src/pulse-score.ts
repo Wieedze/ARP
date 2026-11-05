@@ -12,15 +12,19 @@ import type {PulseUsage} from "./pulse-usage.js";
  * full wallet's word. The amount a wallet deposited is never read: rank is not for sale. So:
  *
  * - with nothing declared, the score is the prior, and the search's own order stands;
- * - one wallet cannot lift a skill above the search's first result, and two can;
+ * - below {@link WALLETS_TO_MOVE} wallets saying the same thing, a line is shown and moves nothing (ADR `0143`);
+ * - three wallets lift all but the search's last result above its first;
  * - a skill absent from the search starts at the bottom of the range;
  * - each new wallet weighs less than the last, so the score moves from the search to the use.
  *
  * It says how a skill ranks for this search, today, from these signals. It does not say the skill works.
  */
-export const SCORE_VERSION = "pulse-score-2";
+export const SCORE_VERSION = "pulse-score-3";
 const PRIOR_TOP = 0.8;
 const PRIOR_BOTTOM = 0.2;
+
+/** How many different wallets have to say the same thing before the ranking moves (ADR `0143`, the user's choice). */
+export const WALLETS_TO_MOVE = 3;
 
 export type PulseScore = {
     score: number;
@@ -89,7 +93,7 @@ export function lineWeight(line: WeighedLine, context: SignalContext, weights = 
 export function signalOf(
     usage: PulseUsage | undefined,
     context: SignalContext,
-): {worked: number; failed: number; failuresThatDoNotApply: number} {
+): {worked: number; failed: number; failuresThatDoNotApply: number; heard: {worked: number; failed: number}} {
     const best = {worked: new Map<string, number>(), failed: new Map<string, number>()};
     const excused = new Set<string>();
     for (const row of usage?.declarations ?? []) {
@@ -101,8 +105,16 @@ export function signalOf(
         }
     }
     const failuresThatDoNotApply = [...excused].filter((wallet) => !best.failed.has(wallet)).length;
-    const sum = (map: Map<string, number>) => [...map.values()].reduce((total, weight) => total + weight, 0);
-    return {worked: sum(best.worked), failed: sum(best.failed), failuresThatDoNotApply};
+    // Below the threshold the weight is 0, and `heard` says how many wallets were left out of the ranking.
+    const sum = (map: Map<string, number>) =>
+        map.size < WALLETS_TO_MOVE ? 0 : [...map.values()].reduce((total, weight) => total + weight, 0);
+    const heard = (map: Map<string, number>) => (map.size < WALLETS_TO_MOVE ? map.size : 0);
+    return {
+        worked: sum(best.worked),
+        failed: sum(best.failed),
+        failuresThatDoNotApply,
+        heard: {worked: heard(best.worked), failed: heard(best.failed)},
+    };
 }
 
 /** The formula alone, so a caller that already holds the weights runs the same one. */

@@ -14,7 +14,7 @@ import { declareUsed, getSkill, type LoopConfig } from './loop.js';
 
 let agent: AgentSender | undefined;
 
-function config(): LoopConfig {
+export function loopConfig(): LoopConfig {
   const registry = record.arp?.identityRegistry;
   if (typeof registry !== 'string') throw new Error('this chain has no ARP identity registry');
   return { contentUrl: CONTENT_URL, sponsorUrl: SPONSOR_URL, registry: getAddress(registry), multiVault: getAddress(MULTI_VAULT), stateDir: arpHome(),
@@ -22,7 +22,7 @@ function config(): LoopConfig {
   };
 }
 
-function agentFor(): AgentSender {
+export function agentFor(): AgentSender {
   agent ??= agentSender(loadOrCreateAgentKey(agentKeyPath()), RPC);
   return agent;
 }
@@ -32,7 +32,7 @@ export async function desktopTool(id: JsonRpcId, name: string, args: Record<stri
   if (typeof atom !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(atom)) {
     return fail(id, -32602, 'id must be the 0x + 32 bytes id from arp_find_tools');
   }
-  const loop = config();
+  const loop = loopConfig();
   try {
     if (name === 'arp_get_skill') {
       const skill = await getSkill(loop, agentFor(), atom as Hex); // checked to be 32 bytes of hex above

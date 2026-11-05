@@ -282,6 +282,12 @@ export const IN_CONTEXT_OF: Hex = (() => {
   return (typeof id === 'string' && id.startsWith('0x') ? id : `0x${'0'.repeat(64)}`) as Hex; // 0x-prefixed by the check
 })();
 
+/** The sponsoring service's own wallet, which pays for a line and says nothing by it (ADR `0144`). */
+export const LINE_PAYERS: readonly string[] = (() => {
+  const arp = (record as { arp?: { deployer?: string } }).arp; // a JSON record this repo writes
+  return typeof arp?.deployer === 'string' ? [arp.deployer] : [];
+})();
+
 /** The domain tree a declaration's domain has to be in: ARP's reading, as a search uses it. */
 export function domainWalk() {
   return {

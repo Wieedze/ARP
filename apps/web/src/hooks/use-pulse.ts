@@ -16,6 +16,7 @@ export function usePulse(source: string, skill: string): PulseRead {
                 rpcUrl: deployments.chain.rpcUrl,
                 graphqlUrl: deployments.chain.graphqlUrl,
                 inContextOf: deployments.arp.endpointBinding.inContextOf,
+                linePayers: [deployments.arp.deployer],
             }),
         staleTime: 15 * 60 * 1000,
         retry: 1,

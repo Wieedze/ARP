@@ -17,6 +17,8 @@ export type PulseChain = {
     rpcUrl: string;
     graphqlUrl: string;
     inContextOf: Hex;
+    /** The sponsoring service's wallet: it pays for a line and says nothing by it (ADR `0144`). */
+    linePayers: readonly string[];
 };
 
 export type PulseView = {pulse: SkillPulse; atomId: Hex | null; usage: PulseUsage | null};
@@ -41,6 +43,7 @@ export async function loadPulse(source: string, skill: string, chain: PulseChain
             inContextOf: chain.inContextOf,
             hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
             because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+            payers: chain.linePayers,
         });
         return {pulse, atomId, usage: read.get(atomId.toLowerCase()) ?? null};
     } catch {

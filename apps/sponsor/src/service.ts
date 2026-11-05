@@ -5,7 +5,7 @@
  *  over the queue, the allow-list and the agent checks they share (`routes/context.ts`); this file
  *  holds the types, the guard every request passes first, and the dispatch.
  *
- *  **Seven routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
+ *  **Eight routes that spend, and each checks before it spends** (ADR `0092` item 2, ADR `0094`):
  *
  *  | route           | what it pays for                                     | what it checks first                 |
  *  | --------------- | ---------------------------------------------------- | ------------------------------------ |
@@ -16,6 +16,7 @@
  *  | `POST /identity`| the atoms and triples of an agent's identity        | a registered agent, the pins, the cap |
  *  | `POST /list-tool`| a tool's atom, and a skill's repository and `source` | the URL exists, the pins, a daily cap |
  *  | `POST /propose-category`| a new category, its parent edge and one skill's tag | `planCategory`'s rules, a daily cap |
+ *  | `POST /line`    | one form B line, with the agent's position on each level | a registered agent's signature, daily caps |
  *
  *  `/mint-gas`, `/identity`, and the `uses` triple `/deposit` creates when it is missing, are ADR
  *  `0110`. `/list-tool` is ADR `0123`; it and `/propose-category` are the only routes a browser may
@@ -81,6 +82,7 @@ import { gas } from './routes/gas.ts';
 import { identity } from './routes/identity.ts';
 import { info } from './routes/info.ts';
 import { mintGas } from './routes/mint-gas.ts';
+import { line } from './routes/line.ts';
 import { listTool } from './routes/list-tool.ts';
 import { proposeCategory, type CategoryLogEntry } from './routes/propose-category.ts';
 import { publish } from './routes/publish.ts';
@@ -189,6 +191,8 @@ export type SponsorOptions = {
     attestors: readonly Address[];
     log(entry: CategoryLogEntry): void;
   } | null;
+  /** What `POST /line` needs (ADR `0144`), with `categories` for the domain. Absent, it answers 503. */
+  lines?: { inContextOf: Hex } | null;
   /** Milliseconds. Injected so a test can move the day. */
   now?: () => number;
   /** Where a failed request's detail goes, redacted. `console.error` by default. */
@@ -252,6 +256,7 @@ export function createSponsor(options: SponsorOptions): {
       '/publish': publish,
       '/list-tool': listTool,
       '/propose-category': proposeCategory,
+      '/line': line,
     }[url.pathname];
     if (route === undefined)
       return json(

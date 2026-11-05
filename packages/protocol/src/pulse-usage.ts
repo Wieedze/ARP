@@ -86,6 +86,12 @@ export type PulseUsageConfig = {
     inContextOf: string;
     hasOutcome: string;
     because: string;
+    /**
+     * Wallets that pay for lines and say nothing by it: the sponsoring service creates the terms of a
+     * sponsored line, so as a creator it would read as saying every one of them (ADR `0144`). Their row
+     * stays, since they did write the edge, and they stand behind no qualifier.
+     */
+    payers?: readonly string[];
     limit?: number;
     fetch?: FetchLike;
     timeoutMs?: number;
@@ -277,6 +283,7 @@ export async function getPulseUsage(
         edges.set(key(tripleId), {tool: key(tool), declarers});
     }
 
+    const payers = new Set((config.payers ?? []).map(key));
     const writers = [...new Set([...edges.values()].flatMap((edge) => [...edge.declarers.values()].map((row) => row.writer)))];
     const qualifiers = async (subjects: string[], predicates: string[]) =>
         subjects.length === 0
@@ -296,7 +303,10 @@ export async function getPulseUsage(
             wallets
                 .filter((wallet): wallet is string => wallet !== null)
                 .map(key)
-                .filter((wallet) => edge.declarers.has(wallet) && (below === undefined || below.has(wallet))),
+                .filter(
+                    (wallet) =>
+                        edge.declarers.has(wallet) && !payers.has(wallet) && (below === undefined || below.has(wallet)),
+                ),
         );
     };
     const parts = (row: Record<string, unknown>) => {

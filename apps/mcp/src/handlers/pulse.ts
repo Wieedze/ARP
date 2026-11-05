@@ -36,7 +36,7 @@ import {
 import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
 
-import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, READ_ONLY, reads } from '../config.js';
+import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, READ_ONLY, reads } from '../config.js';
 import { agentsForDomain } from './agents.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
@@ -366,6 +366,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       inContextOf: IN_CONTEXT_OF,
       hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
       because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+      payers: LINE_PAYERS,
     });
   } catch (error) {
     usageRead = false;

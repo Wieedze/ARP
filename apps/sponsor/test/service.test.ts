@@ -13,6 +13,8 @@ import {
   sponsorRequestTypedData,
   planCategory,
   planToolListing,
+  multiVaultDeclareAbi,
+  signLineRequest,
   signListToolRequest,
   thingUri,
   type MultiVaultReads,
@@ -79,6 +81,8 @@ const LIMITS: SponsorLimits = {
   categoriesPerDay: 2,
   categoryTagsPerDay: 2,
   listingsPerDay: 4,
+  linesPerAgentPerDay: 2,
+  linesPerDay: 3,
   dailyBudget: 10n ** 18n,
   depositsPerAgentPerDay: 2,
   publicationsPerDelegatorPerDay: 2,
@@ -2020,5 +2024,176 @@ describe('intuitionJsonPinner', () => {
     } finally {
       globalThis.fetch = original;
     }
+  });
+});
+
+describe('POST /line', () => {
+  const TOOL = `0x${'77'.repeat(32)}` as Hex;
+  const IN_CONTEXT = `0x${'cd'.repeat(32)}` as Hex;
+  /** A send that makes its terms exist, as the chain does, so the levels after it can be planned. */
+  const chainLike = (w: World): SponsorWallet => {
+    const wallet = fakeWallet(w);
+    return {
+      ...wallet,
+      send: async (call) => {
+        const answer = await wallet.send(call);
+        if (call.kind === 'create-triple' || call.kind === 'create-atom') {
+          const { args } = decodeFunctionData({ abi: multiVaultDeclareAbi, data: call.data });
+          const made = call.kind === 'create-atom'
+            ? keccak256((args?.[0] as Hex[])[0] as Hex)
+            : keccak256(`0x${[0, 1, 2].map((at) => ((args?.[at] as Hex[])[0] as Hex).slice(2)).join('')}`);
+          w.terms.add(made.toLowerCase());
+        }
+        return answer;
+      },
+    };
+  };
+  const lineService = (w: World, over: Partial<Parameters<typeof createSponsor>[0]> = {}) =>
+    sponsor(w, {
+      wallet: chainLike(w),
+      lines: { inContextOf: IN_CONTEXT },
+      categories: {
+        isCategory: async (label) => label === 'video',
+        isKnown: async () => true,
+        isTool: async () => true,
+        invalidate: () => undefined,
+        compounds: new Map(),
+        attestors: [],
+        log: () => undefined,
+      },
+      ...over,
+    });
+  const seeded = () => {
+    const w = world();
+    w.terms.add(TOOL.toLowerCase());
+    w.terms.add(SUBJECT.toLowerCase());
+    return w;
+  };
+  let nonce = 0;
+  const request = (over: Record<string, unknown> = {}, account = AGENT) =>
+    signLineRequest(
+      {
+        agent: account.address,
+        agentRegistry: REGISTRY,
+        agentId: '7',
+        tool: TOOL,
+        domain: 'video',
+        outcome: 'failed',
+        reason: 'missing-key',
+        nonce: keccak256(stringToBytes(`line-${++nonce}`)),
+        expiresAt: Math.floor(NOW / 1000) + 600,
+        ...over,
+      } as Parameters<typeof signLineRequest>[0],
+      CHAIN,
+      account,
+    );
+  const post = async (service: ReturnType<typeof createSponsor>, body: unknown) => call(service, '/line', body);
+
+  test('is off without its configuration', async () => {
+    const answer = await post(sponsor(seeded()), { request: await request() });
+    expect(answer.status).toBe(503);
+  });
+
+  test('writes the four levels, and a position in the agent name on each', async () => {
+    const w = seeded();
+    const answer = await post(lineService(w), { request: await request() });
+    expect(answer.status).toBe(200);
+    const triples = w.sent.filter((c) => c.kind === 'create-triple');
+    expect(triples).toHaveLength(4);
+    const deposits = w.sent.filter((c) => c.kind === 'deposit');
+    expect(deposits).toHaveLength(4);
+    for (const d of deposits) {
+      expect(decodeFunctionData({ abi: depositAbi, data: d.data }).args[0]).toBe(AGENT.address);
+    }
+    expect(w.sent.findIndex((c) => c.kind === 'deposit')).toBeGreaterThanOrEqual(w.sent.lastIndexOf(triples.at(-1) as PreparedCall));
+  });
+
+  test('sends everything to the MultiVault', async () => {
+    const w = seeded();
+    await post(lineService(w), { request: await request() });
+    expect(new Set(w.sent.map((c) => c.to))).toEqual(new Set([MULTIVAULT]));
+  });
+
+  test('writes nothing twice for one nonce', async () => {
+    const w = seeded();
+    const service = lineService(w);
+    const signed = await request();
+    expect((await post(service, { request: signed })).status).toBe(200);
+    const count = w.sent.length;
+    const again = await post(service, { request: signed });
+    expect(again.status).toBe(409);
+    expect(w.sent.length).toBe(count);
+  });
+
+  test('refuses a signer who does not hold the agent, before anything is sent', async () => {
+    const w = seeded();
+    const answer = await post(lineService(w), { request: await request({}, STRANGER) });
+    expect(answer.status).toBe(403);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a forged request', async () => {
+    const w = seeded();
+    const signed = await request();
+    const answer = await post(lineService(w), { request: { ...signed, request: { ...signed.request, outcome: 'worked', reason: '' } } });
+    expect(answer.status).toBe(401);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a domain outside the tree, so free text never reaches the chain', async () => {
+    const w = seeded();
+    const answer = await post(lineService(w), { request: await request({ domain: 'my wedding video' }) });
+    expect(answer.status).toBe(422);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a reason outside the list, and a reason on a success', async () => {
+    const w = seeded();
+    expect((await post(lineService(w), { request: await request({ reason: 'the moon' }) })).status).toBe(401);
+    expect((await post(lineService(w), { request: await request({ outcome: 'worked' }) })).status).toBe(401);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('refuses a tool with no atom, and says to list it', async () => {
+    const w = world();
+    w.terms.add(SUBJECT.toLowerCase());
+    const answer = await post(lineService(w), { request: await request() });
+    expect(answer.status).toBe(422);
+    expect(String(answer.body.error)).toContain('list-tool');
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('asks for the approval before anything is spent', async () => {
+    const w = seeded();
+    w.simulateOk = false;
+    const answer = await post(lineService(w), { request: await request() });
+    expect(answer.status).toBe(409);
+    expect(answer.body.approve).toBeDefined();
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('holds to the cap per agent, spending nothing past it', async () => {
+    const w = seeded();
+    const service = lineService(w);
+    expect((await post(service, { request: await request({ tool: TOOL }) })).status).toBe(200);
+    expect((await post(service, { request: await request({ domain: '', reason: 'missing-file' }) })).status).toBe(200);
+    const count = w.sent.length;
+    const third = await post(service, { request: await request({ domain: '', reason: 'missing-program' }) });
+    expect(third.status).toBe(429);
+    expect(w.sent.length).toBe(count);
+  });
+
+  test('holds to the budget', async () => {
+    const w = seeded();
+    const service = lineService(w, { limits: { ...LIMITS, dailyBudget: MILLI } });
+    expect((await post(service, { request: await request() })).status).toBe(429);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('writes an outcome with no domain on the edge itself', async () => {
+    const w = seeded();
+    const answer = await post(lineService(w), { request: await request({ domain: '', outcome: 'worked', reason: '' }) });
+    expect(answer.status).toBe(200);
+    expect(w.sent.filter((c) => c.kind === 'create-triple')).toHaveLength(2);
   });
 });

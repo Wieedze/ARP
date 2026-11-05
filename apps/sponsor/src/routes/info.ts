@@ -24,6 +24,8 @@ export function info(ctx: SponsorContext): Record<string, unknown> {
       listingsPerDay: limits.listingsPerDay,
       categoriesPerDay: limits.categoriesPerDay,
       categoryTagsPerDay: limits.categoryTagsPerDay,
+      linesPerAgentPerDay: limits.linesPerAgentPerDay,
+      linesPerDay: limits.linesPerDay,
       withdrawalThresholdBps: limits.withdrawalThresholdBps ?? 'unset',
       belowProofCost: limits.belowProofCost,
       spentTodayWei: spentOnDay(ledger.relevant(now()), now()),

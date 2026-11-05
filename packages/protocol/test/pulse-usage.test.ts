@@ -215,6 +215,38 @@ describe("a position on the edge lets a wallet's details count", () => {
     });
 });
 
+describe("the wallet that pays for a line", () => {
+    const paid = (rows: unknown[]) =>
+        getPulseUsage([TOOL], {
+            graphqlUrl: "unused",
+            inContextOf: CONTEXT,
+            hasOutcome: OUTCOME,
+            because: BECAUSE,
+            payers: ["0xTREASURY"],
+            transport: transport([{...use("0x1", "a", "0xTreasury"), positions: [{account_id: "0xAgent"}]}], rows),
+        });
+    const onBehalf = (row: ReturnType<typeof qualifier>) => ({...row, positions: [{account_id: "0xAgent"}]});
+
+    it("says nothing by paying: only the agent holds the line", async () => {
+        const usage = (
+            await paid([
+                onBehalf(qualifier("0x1", CONTEXT, "video", "0xTreasury")),
+                onBehalf(qualifier("0x1-video", OUTCOME, "failed", "0xTreasury")),
+                onBehalf(qualifier("0x1-video-failed", BECAUSE, "missing-key", "0xTreasury")),
+            ])
+        ).get(TOOL);
+        expect(usage?.declarations.find((row) => row.writer === "0xAgent")?.lines).toEqual([
+            {domain: "video", outcome: "failed", reasons: ["missing-key"], form: "nested"},
+        ]);
+        expect(usage?.declarations.find((row) => row.writer === "0xTreasury")?.lines).toEqual([]);
+    });
+
+    it("keeps its row, since it did write the edge", async () => {
+        const usage = (await paid([])).get(TOOL);
+        expect(usage?.declarations.map((row) => row.writer)).toEqual(["0xTreasury"]);
+    });
+});
+
 describe("form B", () => {
     const chain = (by = writer) => [
         qualifier("0x1", CONTEXT, "video", by),

@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 
-import {inferDomain, lineWeight, priorFromRank, scoreSkill, signalOf, type SignalContext} from "../src/pulse-score.js";
+import {inferDomain, lineWeight, priorFromRank, scoreSkill, signalOf, WALLETS_TO_MOVE, type SignalContext} from "../src/pulse-score.js";
 import type {UsageReason} from "../src/declare/usage-context.js";
 import type {PulseUsage} from "../src/pulse-usage.js";
 
@@ -57,7 +57,7 @@ describe("scoreSkill", () => {
             const {score, version} = scoreSkill({rank: 3, total: 10, worked, failed});
             expect(score).toBeGreaterThanOrEqual(0);
             expect(score).toBeLessThanOrEqual(1);
-            expect(version).toBe("pulse-score-2");
+            expect(version).toBe("pulse-score-3");
         }
     });
 
@@ -122,19 +122,23 @@ describe("lineWeight", () => {
 });
 
 describe("signalOf", () => {
+    const worked = (...wallets: string[]) => wallets.map((wallet) => line(wallet, ["video"], ["worked"]));
+    const failed = (...wallets: string[]) => wallets.map((wallet) => line(wallet, ["video"], ["failed"]));
+    const none = {worked: 0, failed: 0};
+
     it("counts one wallet once, however many lines it writes", () => {
-        const read = usage(line("0xA", ["video"], ["worked"]), line("0xa", ["video"], ["worked"]), line("0xB", ["video"], ["failed"]));
-        expect(signalOf(read, video())).toEqual({worked: 1, failed: 1, failuresThatDoNotApply: 0});
+        const read = usage(...worked("0xA", "0xa", "0xB", "0xC"));
+        expect(signalOf(read, video())).toMatchObject({worked: 3, heard: none});
     });
 
     it("keeps a wallet's heaviest line, so a near line does not add to an exact one", () => {
-        const read = usage(line("0xA", ["video-editing"], ["worked"]), line("0xA", ["video"], ["worked"]));
-        expect(signalOf(read, video()).worked).toBe(1);
+        const read = usage(line("0xA", ["video-editing"], ["worked"]), ...worked("0xA", "0xB", "0xC"));
+        expect(signalOf(read, video()).worked).toBe(3);
     });
 
     it("says how many failures did not apply, so the score's parts explain themselves", () => {
         const read = usage(line("0xA", ["video"], ["failed"], ["missing-key"]));
-        expect(signalOf(read, video({canProvide: new Set(["key"])}))).toEqual({worked: 0, failed: 0, failuresThatDoNotApply: 1});
+        expect(signalOf(read, video({canProvide: new Set(["key"])})).failuresThatDoNotApply).toBe(1);
     });
 
     it("counts wallets there too, and not a wallet with a failure that does apply", () => {
@@ -144,7 +148,7 @@ describe("signalOf", () => {
             line("0xB", ["video"], ["failed"], ["missing-key"]),
             line("0xB", ["video"], ["failed"]),
         );
-        expect(signalOf(read, video({canProvide: new Set(["key"])}))).toEqual({worked: 0, failed: 1, failuresThatDoNotApply: 1});
+        expect(signalOf(read, video({canProvide: new Set(["key"])}))).toMatchObject({failuresThatDoNotApply: 1, heard: {failed: 1}});
     });
 
     it("does not call a failure in another domain one that does not apply", () => {
@@ -153,7 +157,53 @@ describe("signalOf", () => {
     });
 
     it("returns nothing for a tool nobody declared", () => {
-        expect(signalOf(undefined, video())).toEqual({worked: 0, failed: 0, failuresThatDoNotApply: 0});
+        expect(signalOf(undefined, video())).toEqual({worked: 0, failed: 0, failuresThatDoNotApply: 0, heard: none});
+    });
+
+    describe("the threshold", () => {
+        const scoreOf = (read: PulseUsage | undefined, rank: number) =>
+            scoreSkill({rank, total: 10, ...signalOf(read, video())}).score;
+
+        it("is 3", () => {
+            expect(WALLETS_TO_MOVE).toBe(3);
+        });
+
+        it("a false worked line no longer moves a skill above another", () => {
+            const others = scoreOf(undefined, 2);
+            expect(scoreOf(usage(...worked("0xLiar")), 9)).toBeLessThan(others);
+            expect(scoreOf(usage(...worked("0xLiar", "0xLiar2")), 9)).toBeLessThan(others);
+        });
+
+        it("a false failed line no longer moves the first result down", () => {
+            const first = usage(...failed("0xLiar"));
+            expect(scoreOf(first, 0)).toBe(scoreOf(undefined, 0));
+            expect(scoreOf(first, 0)).toBeGreaterThan(scoreOf(undefined, 1));
+        });
+
+        it("leaves one wallet's line to be shown", () => {
+            expect(signalOf(usage(...failed("0xLiar")), video())).toMatchObject({failed: 0, heard: {failed: 1, worked: 0}});
+        });
+
+        it("moves from three wallets that say the same thing", () => {
+            expect(scoreOf(usage(...worked("0xA", "0xB", "0xC")), 8)).toBeGreaterThan(scoreOf(undefined, 0));
+            expect(scoreOf(usage(...failed("0xA", "0xB", "0xC")), 0)).toBeLessThan(scoreOf(undefined, 8));
+        });
+
+        it("does not add a worked and a failed to reach it", () => {
+            const read = usage(...worked("0xA", "0xB"), ...failed("0xC"));
+            expect(signalOf(read, video())).toMatchObject({worked: 0, failed: 0, heard: {worked: 2, failed: 1}});
+        });
+
+        it("counts only wallets whose line concerns this search", () => {
+            const read = usage(...worked("0xA", "0xB"), line("0xC", ["audio"], ["worked"]));
+            expect(signalOf(read, video())).toMatchObject({worked: 0, heard: {worked: 2}});
+        });
+
+        it("does not count a failure excused for this person", () => {
+            const excused = (wallet: string) => line(wallet, ["video"], ["failed"], ["missing-key"]);
+            const read = usage(excused("0xA"), excused("0xB"), excused("0xC"));
+            expect(signalOf(read, video({canProvide: new Set(["key"])}))).toMatchObject({failed: 0, failuresThatDoNotApply: 3});
+        });
     });
 });
 

@@ -33,6 +33,8 @@ import {
   INTUITION_USES_TERM_ID,
   multiVaultDeclareAbi,
   receiptMatchesContent,
+  signLineRequest,
+  signListToolRequest,
   signMintGasRequest,
   signSponsorRequest,
   skillRefFromUrl,
@@ -40,6 +42,8 @@ import {
   verifyContentReceipt,
   type BundleFile,
   type SignedContentReceipt,
+  type UsageOutcome,
+  type UsageReason,
 } from '@arp-protocol/core';
 
 import { DESKTOP_CHAIN_ID, type AgentSender } from './agent-key.js';
@@ -233,6 +237,111 @@ async function ensureAgent(config: LoopConfig, agent: AgentSender): Promise<Agen
   throw new Error(`register() in ${receipt.transactionHash} emitted no Registered event for this agent`);
 }
 
+/** The agent's identity atom, created by the sponsor the first time. */
+async function ensureIdentity(config: LoopConfig, state: AgentState): Promise<Hex> {
+  if (state.identityAtom !== undefined) return state.identityAtom;
+  const made = await post(config, '/identity', { agentRegistry: registryRef(config), agentId: state.agentId });
+  if (made.status !== 200 || typeof made.body['identityAtom'] !== 'string') {
+    throw new Error(`the identity could not be created (${made.status}): ${String(made.body['error'] ?? '')}`);
+  }
+  state.identityAtom = made.body['identityAtom'] as Hex; // a string, checked on the line above
+  writeAgent(config, state);
+  return state.identityAtom;
+}
+
+/** The one approval this key signs, built here: the sponsor's answer to /gas does not choose it. */
+async function sponsorApproval(config: LoopConfig) {
+  const info = await json(await (config.fetch ?? fetch)(config.sponsorUrl, { signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) }));
+  // The record's address, not the sponsor's: a wrong sponsor endpoint must not redirect the approval.
+  const multiVault = getAddress(config.multiVault);
+  if (String(info['multiVault']).toLowerCase() !== multiVault.toLowerCase()) {
+    throw new Error(`the sponsor names MultiVault ${String(info['multiVault'])}, not ${multiVault}`);
+  }
+  return { to: multiVault, data: encodeApproveDeposit(getAddress(String(info['sponsor']))) };
+}
+
+/** The sponsor sends the gas, and this key sends the approval it planned. */
+async function approveSponsor(config: LoopConfig, agent: AgentSender, ref: object, approval: { to: Address; data: Hex }) {
+  const gas = await post(config, '/gas', ref);
+  if (gas.status !== 200) throw new Error(`no gas for the approval (${gas.status}): ${String(gas.body['error'] ?? '')}`);
+  const next = gas.body['next'] as { to: Address; data: Hex; value: string | number }; // the sponsor's PreparedCall
+  await agent.send({ to: next.to, data: next.data, value: BigInt(next.value), chainId: DESKTOP_CHAIN_ID }, [approval]);
+}
+
+export type LineInput = { toolUrl: string; domain?: string; outcome: UsageOutcome; reason?: UsageReason };
+export type WrittenLine = { termId: Hex; levels: Hex[]; created: boolean; transactions: Hex[] };
+
+/**
+ * Writes one form B line about a tool through ARP's sponsoring service (ADR `0144`): the tool is listed if it
+ * has no atom, and the agent is registered and approved the first time. This key signs requests, `register()`
+ * and the approval, and nothing that sends value.
+ */
+export async function writeLine(config: LoopConfig, agent: AgentSender, input: LineInput): Promise<WrittenLine> {
+  try {
+    const state = await ensureAgent(config, agent);
+    const ref = { agentRegistry: registryRef(config), agentId: state.agentId };
+    await ensureIdentity(config, state);
+    const approval = await sponsorApproval(config);
+    const expiresAt = () => Math.floor(Date.now() / 1000) + 600;
+
+    const listing = await signListToolRequest(
+      { address: agent.address, url: input.toolUrl, nonce: keccak256(stringToBytes(`list-${input.toolUrl}-${Date.now()}`)), expiresAt: expiresAt() },
+      DESKTOP_CHAIN_ID,
+      agent.account,
+    );
+    const listed = await post(config, '/list-tool', { url: input.toolUrl, request: listing });
+    if (listed.status !== 200 || typeof listed.body['atomId'] !== 'string') {
+      throw new Error(`the tool could not be listed (${listed.status}): ${String(listed.body['error'] ?? '')}`);
+    }
+    const tool = listed.body['atomId'] as Hex; // a string, checked on the line above
+
+    const wait = config.sleep ?? ((ms: number) => new Promise<void>((done) => setTimeout(done, ms)));
+    const deadline = Date.now() + (config.indexerWaitMs ?? 120_000);
+    let approved = false;
+    for (;;) {
+      const request = await signLineRequest(
+        {
+          agent: agent.address,
+          ...ref,
+          tool,
+          domain: input.domain ?? '',
+          outcome: input.outcome,
+          reason: input.reason ?? '',
+          nonce: keccak256(stringToBytes(`line-${tool}-${Date.now()}`)),
+          expiresAt: expiresAt(),
+        },
+        DESKTOP_CHAIN_ID,
+        agent.account,
+      );
+      const answer = await post(config, '/line', { request });
+      if (answer.status === 200) {
+        return {
+          termId: answer.body['termId'] as Hex, // the service's own answer
+          levels: answer.body['levels'] as Hex[], // the service's own answer
+          created: answer.body['created'] === true,
+          transactions: answer.body['transactions'] as Hex[], // the service's own answer
+        };
+      }
+      const error = String(answer.body['error'] ?? '');
+      if (answer.status === 403 && /no identity atom on the graph/.test(error) && Date.now() < deadline) {
+        await wait(5_000);
+        continue;
+      }
+      if (answer.status === 409 && answer.body['approve'] !== undefined && !approved) {
+        await approveSponsor(config, agent, ref, approval);
+        approved = true;
+        continue;
+      }
+      throw new Error(`the sponsor refused the line (${answer.status}): ${error}`);
+    }
+  } catch (error) {
+    if (error instanceof TypeError || (error instanceof Error && /fetch failed|ECONNREFUSED|Unable to connect|TimeoutError/.test(`${error.name} ${error.message}`))) {
+      throw new Error(`ARP's sponsoring service did not answer at ${config.sponsorUrl}. Is it running? (${error.message})`, { cause: error });
+    }
+    throw error;
+  }
+}
+
 export type Declared = { skill: string; created: boolean; sent: Hex };
 
 /**
@@ -246,31 +355,18 @@ export async function declareUsed(config: LoopConfig, agent: AgentSender, atom: 
   const state = await ensureAgent(config, agent);
   const ref = { agentRegistry: registryRef(config), agentId: state.agentId };
 
-  if (state.identityAtom === undefined) {
-    const made = await post(config, '/identity', ref);
-    if (made.status !== 200 || typeof made.body['identityAtom'] !== 'string') {
-      throw new Error(`the identity could not be created (${made.status}): ${String(made.body['error'] ?? '')}`);
-    }
-    state.identityAtom = made.body['identityAtom'] as Hex; // a string, checked on the line above
-    writeAgent(config, state);
-  }
+  const identityAtom = await ensureIdentity(config, state);
 
-  const info = await json(await (config.fetch ?? fetch)(config.sponsorUrl, { signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) }));
-  // The record's address, not the sponsor's: a wrong sponsor endpoint must not redirect the approval.
   const multiVault = getAddress(config.multiVault);
-  if (String(info['multiVault']).toLowerCase() !== multiVault.toLowerCase()) {
-    throw new Error(`the sponsor names MultiVault ${String(info['multiVault'])}, not ${multiVault}`);
-  }
-  // The one approval this key signs, built here: the sponsor's answer to /gas does not choose it.
-  const approval = { to: multiVault, data: encodeApproveDeposit(getAddress(String(info['sponsor']))) };
+  const approval = await sponsorApproval(config);
   const termId = await agent.client.readContract({
     address: multiVault,
     abi: multiVaultDeclareAbi,
     functionName: 'calculateTripleId',
-    args: [state.identityAtom, INTUITION_USES_TERM_ID, served.atom],
+    args: [identityAtom, INTUITION_USES_TERM_ID, served.atom],
   });
   const proof = { kind: 'content' as const, receipt: served.receipt };
-  const triple = { subjectId: state.identityAtom, predicateId: INTUITION_USES_TERM_ID, objectId: served.atom };
+  const triple = { subjectId: identityAtom, predicateId: INTUITION_USES_TERM_ID, objectId: served.atom };
 
   const wait = config.sleep ?? ((ms: number) => new Promise<void>((done) => setTimeout(done, ms)));
   const deadline = Date.now() + (config.indexerWaitMs ?? 120_000);
@@ -302,10 +398,7 @@ export async function declareUsed(config: LoopConfig, agent: AgentSender, atom: 
     }
     // Not approved yet: the sponsor sends the gas, and this key sends the approval it planned.
     if (answer.status === 409 && answer.body['approve'] !== undefined && !approved) {
-      const gas = await post(config, '/gas', ref);
-      if (gas.status !== 200) throw new Error(`no gas for the approval (${gas.status}): ${String(gas.body['error'] ?? '')}`);
-      const next = gas.body['next'] as { to: Address; data: Hex; value: string | number }; // the sponsor's PreparedCall, checked against `approval`
-      await agent.send({ to: next.to, data: next.data, value: BigInt(next.value), chainId: DESKTOP_CHAIN_ID }, [approval]);
+      await approveSponsor(config, agent, ref, approval);
       approved = true;
       continue;
     }

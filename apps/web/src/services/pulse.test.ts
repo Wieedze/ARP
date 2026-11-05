@@ -24,6 +24,7 @@ const chain: PulseChain = {
     rpcUrl: "http://rpc",
     graphqlUrl: "http://graph",
     inContextOf: "0x01",
+    linePayers: [],
 };
 const read = {source: "a/b", skill: "x", status: "read"};
 

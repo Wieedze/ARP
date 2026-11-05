@@ -578,15 +578,6 @@ export {
     type ShareDecision,
     type SharedLine,
 } from "./share-failures.js";
-export {
-    decideShare,
-    installedFromSkillLock,
-    isSharingOn,
-    sharedLineKey,
-    type InstalledSkill,
-    type ShareDecision,
-    type SharedLine,
-} from "./share-failures.js";
 
 /** The score of a skill in a context: public, recomputable, never on chain (ADR `0137`). */
 export {
@@ -598,6 +589,7 @@ export {
     SCORE_VERSION,
     SIGNAL_WEIGHTS,
     signalOf,
+    WALLETS_TO_MOVE,
     type Capability,
     type PulseScore,
     type SignalContext,
@@ -822,6 +814,18 @@ export {
     type ToolListingPlan,
 } from "./sponsor/list-tool.js";
 export {
+    LINE_MAX_DOMAIN_LENGTH,
+    LINE_MAX_TTL_SECONDS,
+    LINE_REQUEST_TYPES,
+    lineRequestTypedData,
+    signLineRequest,
+    verifyLineRequest,
+    type LineRequest,
+    type LineRequestSigner,
+    type LineRequestVerdict,
+    type SignedLineRequest,
+} from "./sponsor/line.js";
+export {
     checkSponsorProof,
     type AgentIdentityRef,
     type AgentKeyReads,
@@ -842,6 +846,7 @@ export {
     checkGasLimits,
     checkIdentityLimits,
     checkCategoryLimits,
+    checkLineLimits,
     checkListToolLimits,
     checkMintGasLimits,
     checkPublishLimits,

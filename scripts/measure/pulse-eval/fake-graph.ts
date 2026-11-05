@@ -1,20 +1,22 @@
-/** A proxy of the testnet graph that adds invented declarations, for arm D of `pulse-eval.ts`. Task 63 §9.
+/** A proxy of the testnet graph that adds invented declarations, for arm D of `pulse-eval.ts`. Task 63 §9, task 71.
  *
- *      bun run scripts/measure/pulse-eval/fake-graph.ts 3070
+ *      bun run scripts/measure/pulse-eval/fake-graph.ts 3070 [tool URL] [worked|failed] [wallets]
  *
  *  It answers on localhost and writes nothing anywhere. The question it serves is what a false line would
- *  do, and writing false lines on a chain that deletes nothing would be the wrong way to find out. So three
- *  invented wallets say that `ffmpeg-video-editor` worked in `video`. Its own file has no silence recipe,
- *  as two runs of the comparison noticed, so a reader who reads the file can see the line is wrong.
+ *  do, and writing false lines on a chain that deletes nothing would be the wrong way to find out. By
+ *  default three invented wallets say that `ffmpeg-video-editor` worked in `video`. Its own file has no
+ *  silence recipe, as two runs of the comparison noticed, so a reader who reads the file can see the line is wrong.
  */
 import {toolAtomUri} from "../../../packages/protocol/src/declare/tool-thing.ts";
 
 const UPSTREAM = "https://testnet.intuition.sh/v1/graphql";
-const TARGET = toolAtomUri("https://github.com/sundial-org/awesome-openclaw-skills?skill=ffmpeg-video-editor");
+const TARGET = toolAtomUri(process.argv[3] ?? "https://github.com/sundial-org/awesome-openclaw-skills?skill=ffmpeg-video-editor");
+const OUTCOME = process.argv[4] ?? "worked";
 const FAKE_ATOM = `0xfeed${"0".repeat(60)}`;
 const edge = (index: number) => `0xfeed${String(index + 1).repeat(60)}`;
 const wallet = (index: number) => `0x${String(index + 7).repeat(40)}`;
-const COUNT = 3;
+const COUNT = Number(process.argv[5] ?? 3);
+const contextTerm = (index: number) => `0xfade1${String(index + 1).repeat(59)}`;
 
 type Body = {query?: string; variables?: Record<string, unknown>};
 type Rows = Record<string, unknown>[];
@@ -42,11 +44,8 @@ Bun.serve({
         if (query.includes("PulseQualifiers")) {
             const asked = (body.variables?.["edges"] as string[] | undefined) ?? [];
             for (let index = 0; index < COUNT; index += 1) {
-                if (!asked.includes(edge(index))) continue;
-                answer.data?.triples?.push(
-                    qualifier(index, "context", "video", body),
-                    qualifier(index, "outcome", "worked", body),
-                );
+                if (asked.includes(edge(index))) answer.data?.triples?.push(qualifier(index, "context", "video", body));
+                if (asked.includes(contextTerm(index))) answer.data?.triples?.push(qualifier(index, "outcome", OUTCOME, body));
             }
         }
         return Response.json(answer);
@@ -66,9 +65,9 @@ function invented(): Rows {
 function qualifier(index: number, kind: "context" | "outcome", value: string, body: Body): Record<string, unknown> {
     const predicates = (body.variables?.["predicates"] as string[] | undefined) ?? [];
     return {
-        term_id: `0xfade${kind === "context" ? "1" : "2"}${String(index + 1).repeat(59)}`,
-        subject_id: edge(index),
-        predicate_id: kind === "context" ? predicates[0] : predicates[1],
+        term_id: kind === "context" ? contextTerm(index) : `0xfade2${String(index + 1).repeat(59)}`,
+        subject_id: kind === "context" ? edge(index) : contextTerm(index),
+        predicate_id: kind === "context" ? predicates[0] : (predicates[1] ?? predicates[0]),
         creator_id: wallet(index),
         object: {label: value},
         positions: [{account_id: wallet(index)}],
