@@ -56,7 +56,7 @@ export type PulseDeclaration = {
     agent: {atomId: string; label: string | null};
     writer: string;
     /** Wallets holding a position on the line. A triple has one creator, so a later declarer is here. */
-    holders: string[];
+    holders?: string[];
     declaredAt: string | null;
     domains: string[];
     outcomes: string[];

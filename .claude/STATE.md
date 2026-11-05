@@ -65,7 +65,9 @@ and not dropped.
 - Sybil and deny-only griefing, deferred by the user. ADR `0141` lists them: the 250-claim push-out, a stranger's canonical atom beating a mirror-only claim, the 5-document window.
 - Each node start writes a dead signed address at 0.008 tTRUST; agent 2 has four and none answers. A stable address is needed.
 - An agent whose atom carries registration metadata reads no lines until the comparison includes it.
-- No agent has yet walked from the decision to the call.
+- An agent has walked from a need to a paid call and a written line (`docs/tasks/65` §8, §9), one operator, n small. All paid for a note that does not exist: nothing before paying says what a node holds.
+- A line is a state and not a history: one wallet reads `worked` and `failed` in one domain with no order.
+- `write_line` in the demo wallet does not state its cost first, and one run went over its budget.
 - Gateways rest on one machine on one day; four scripts and `apps/web/src/services/agent-endpoints.ts` still use `ipfs.io`.
 
 ## Where the work is right now
