@@ -67,4 +67,4 @@
 | [57](57-the-signal.md) | `docs/tasks/66-the-signal.md` | PASS (third pass; the second and third checked only the changed sites) | The signal: what a line on chain is worth to the next search |
 | [58](58-the-positioning.md) | `docs/tasks/69-the-positioning.md` | part 1, PASS on the fourth pass, which checked only the two edits the third pass asked for | The positioning, parts 1 and 2: what ARP says in public |
 | [59](59-the-field-memory.md) | `docs/tasks/68-the-field-memory.md`, phases 1 to 4. Phases 5 and 6 are not started and are out of this close. | PASS on the fourth pass | The field memory: a failure the hook sees, read back at the next search |
-| [60](60-the-agent-pulse.md) | `docs/tasks/65-the-agent-pulse.md` | PASS (second pass; the first failed on seven items, all closed) | The agent pulse: the same walk for agents, with a second party |
+| [60](60-the-agent-pulse.md) | `docs/tasks/65-the-agent-pulse.md` | PASS (second pass; the first failed on seven items, all closed), and PASS again on §§8 and 9 and the two merges of `feat/pulse` | The agent pulse: the same walk for agents, with a second party |

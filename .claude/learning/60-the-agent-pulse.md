@@ -2,8 +2,8 @@
 
 **Task:** `docs/tasks/65-the-agent-pulse.md`
 **Completed:** 2026-11-05
-**Commit:** uncommitted (branch `feat/agent-pulse`)
-**Verifier verdict:** PASS (second pass; the first failed on seven items, all closed). Numbered 60 because 57 to 59 are taken on `feat/pulse`.
+**Commit:** `06422e8` for §§8 and 9 (branch `feat/agent-pulse`, not pushed)
+**Verifier verdict:** PASS (second pass; the first failed on seven items, all closed), and PASS again on §§8 and 9 and the two merges of `feat/pulse`. Numbered 60 because 57 to 59 are taken on `feat/pulse`.
 
 ## What shipped
 
@@ -12,6 +12,7 @@
 - `apps/mcp/src/handlers/agents.ts`, `tools.ts` — `arp_find_agents` takes `domain`; `arp_agent_endpoints` returns signed addresses, `answers_now`, the offer and the lines, and joins `ARP_TOOLS=read`.
 - `apps/node/src/task.ts`, `node.ts` — a handler may export an `offer`; `GET /` no longer publishes the handler's path.
 - `scripts/demo/agent-pulse-*.ts`, `agent-call-*` — the walk, the reader, and the test of whether an agent controls before paying.
+- `scripts/demo/agent-call-wallet.ts`, `agent-paid-test.sh` — `pay_and_call` and `write_line`, with the key in the wallet's own process and limits the agent cannot change.
 - `scripts/measure/tunnel-reachable.ts`, `agent-identity-canonical.ts`; `node-outbound.ts` now counts `guardedFetchText`. Raw runs in `data/measurements/`.
 
 ## Surprises
@@ -23,9 +24,13 @@
 - `bun run` loads a `.env` from the cwd even under `env -i`, so "no secret in its environment" needed `--no-env-file`.
 - `docs/22`'s outbound figures had drifted before this task (the script already printed 15 modules and 4 outbound against "six modules" and 6). The guarded path it could not see is why.
 
+- All 6 agents in §8 paid, including the 3 for a note that does not exist. Nothing before a payment says whether a node holds the thing asked for.
+- A line is one triple per hirer and domain, so the graph holds `worked` and `failed` for one wallet with no order. It is a state and not a history (§9).
+- `write_line` does not state a line's cost first, and one run spent 0.011 tTRUST against a budget of 0.01. Still open.
+
 ## Decisions made
 
-- **A receipt is attached to the line, and counts by what it proves** — no new predicate, each check returned, and it holds only if the wallet that paid controls the agent named. ADR: `.claude/choices/0141-an-agent-line-carries-the-receipt-of-the-hire.md` (becomes `0141` at commit).
+- **A receipt is attached to the line, and counts by what it proves** — no new predicate, each check returned, and it holds only if the wallet that paid controls the agent named. ADR: `.claude/choices/0141-an-agent-line-carries-the-receipt-of-the-hire.md`.
 - **One search, two kinds of result, four uses for an agent you can call** — the user's direction, not evidence. ADR: `.claude/choices/0139-one-search-two-kinds-of-result.md`.
 - **Sybil and deny-only griefing deferred** — by the user, and listed as open in the first ADR.
 
@@ -41,10 +46,12 @@
 - Run each package's own `test` script: `serveFetch` times out under plain `bun test` and passes under `vitest run`. Tests do not typecheck either, so run `lint`.
 - When a test batch's scene depends on a live state, record that state in the raw row rather than the scene's intended label.
 - Run the known-registry fix in `atomIsCanonicalFor` through its own `intuition-integrator` round. It has unit and handler tests over a mocked graph, no reviewer round, and no attack on chain.
-- Before any figure is built on `wallets_worked`, take up Sybil: every check on this run passed with one operator holding all three keys.
+- Before any figure is built on `wallets_worked`, take up Sybil: every check on this run passed with one operator holding all three keys. In §9 the count includes `0xE596…1AA1`, the owner of the hired agent, which the chain alone can show.
+- Give a test wallet the Host and Origin check `apps/mcp` has: `agent-call-wallet.ts` accepts any POST on 127.0.0.1:3192, so a web page open in the operator's browser could spend within its limits while it runs.
+- Have `write_line` return the cost and take a limit before it sends.
 
 ## Evidence ladder
 
 **Which tier of the evidence ladder does this serve, and does it move ARP up it?**
 
-It serves the proven rung (`docs/09` §3), a line backed by a mined payment and the hired node's signature, and moves ARP up on the mechanism and not on independent witnesses: one operator on testnet 13579, and no caveat enforced in this path, unlike that tier's wording.
+It serves the proven rung (`docs/09` §3), a line backed by a mined payment and the hired node's signature, and moves ARP up on the mechanism and not on independent witnesses: one operator on testnet 13579, and no caveat enforced in this path, unlike that tier's wording. §9 adds that an agent's paid call reached the next reader's search through the plugin's tools, n=1 per scene, with the tool offered in the prompt.

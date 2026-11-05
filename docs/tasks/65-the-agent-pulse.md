@@ -194,7 +194,7 @@ Six payments mined, from `0x906f…f91f` to `0x9C98…e868`, the node key the ad
 **What it does not show, and what it exposes.**
 
 - **All 6 paid, including the 3 for a note that does not exist.** The offer cannot say what the node holds, so nothing before the payment separated the two scenes. Controlling before paying checks that the address answers and has a paid history. It says nothing about whether this node holds this thing. 0.001 was spent for nothing in each `absent` run, and that was the risk this measures.
-- Every agent cited the earlier receipt, which was for another job and from the same operator. Nobody questioned it, and there was one candidate.
+- Every agent's result mentions the earlier receipt, which was for another job and from the same operator, and there was one candidate.
 - The prompt still says another agent may hold the note, and tells it to pay if worth it.
 - No line was written after the call, so the graph did not learn from these 6 calls.
 - Agent 2 now has five signed addresses, one of them live until the node stops.
@@ -228,7 +228,7 @@ The first two runs, at 18:05:15 and 18:05:55, were launched without `LINES=1`, s
 | `present`, 18:07:25 | 0.001, got the note, answered 14 March and 41,300 | `document`, `worked`, with the receipt | 0.008 tTRUST |
 | `absent`, 18:08:19 | 0.001, got `text: null`, said so | `document`, `failed`, `missing-file`, with the receipt | 0.010 tTRUST |
 
-The reader, holding no key, after them: `document` has 2 lines reaching agent 2, against 1 before. Agent 3's row reads `worked` and `failed`, in form B. `wallets_worked` went from 1 to 2 and `wallets_failed` from 0 to 1, with `lines_not_counted: 0`. Both new receipts hold, each with `requesterControlsTheSubject` true and `namesThisLine` true. **So the loop closes on this run:** an agent's paid call reached the next reader's search, through the plugin's tools. The two earlier wallets count is one operator: `0xE596…1AA1` owns agent 3 and agent 2.
+The reader, holding no key, after them: `document` has 2 lines reaching agent 2, against 1 before. Agent 3's row reads `worked` and `failed`, in form B. `wallets_worked` went from 1 to 2 and `wallets_failed` from 0 to 1, with `lines_not_counted: 0`. Both new receipts hold, each with `requesterControlsTheSubject` true and `namesThisLine` true. **So the loop closes on this run:** an agent's paid call reached the next reader's search, through the plugin's tools. The count of two wallets is one operator: `0xE596…1AA1` owns agents 3 and 2, and the same person holds the key of `0x906f…f91f`.
 
 Cost of these 4 runs and the node: $1.05 of model, and 0.030 tTRUST before gas: 0.008 for the address, 0.004 of payments, 0.018 for the lines.
 
@@ -238,4 +238,4 @@ Cost of these 4 runs and the node: $1.05 of model, and 0.030 tTRUST before gas: 
 - **The node reads `failed` for a note that may never have existed.** The agent chose `missing-file`, a reason ADR `0138` treats as something the person can supply. Whether that lowers the node is the score's reading, and it was not tested here.
 - **A line's cost was not stated before writing, and it broke the budget in one run.** The prompt says 0.01. The wallet's limit per line is 0.02. `absent` spent 0.011, and the agent said afterwards that it should have checked. That is a defect in `write_line`.
 - **Both agents wrote without being pushed beyond "if you think the next agent should know"**, n=1 per scene, and with the prompt offering it. It says nothing about an agent that was not offered the tool.
-
+- **The demo wallet has no Host or Origin check**, unlike `apps/mcp`. By reading the code, a web page in the operator's browser could post to it and spend within its limits while it runs, on testnet. Not tested. Run it only for the length of a trial.
