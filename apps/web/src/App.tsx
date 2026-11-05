@@ -35,6 +35,9 @@ const AtomPanel = lazy(() =>
     import("./pages/AtomPanel").then((module) => ({default: module.AtomPanel})),
 );
 /** Reads both indexes, so it is lazy like the pages it searches (task 48). */
+const PulsePage = lazy(() =>
+    import("./pages/PulsePage").then((module) => ({default: module.PulsePage})),
+);
 const SearchPage = lazy(() =>
     import("./pages/SearchPage").then((module) => ({default: module.SearchPage})),
 );
@@ -145,6 +148,15 @@ function App() {
                         element={
                             <Suspense fallback={<RouteFallback label="your path" />}>
                                 <StartPage />
+                            </Suspense>
+                        }
+                    />
+                    {/* What a skill implies and what agents wrote about it (task 63). */}
+                    <Route
+                        path="/pulse/:owner/:repo/:skill"
+                        element={
+                            <Suspense fallback={<RouteFallback label="pulse" />}>
+                                <PulsePage />
                             </Suspense>
                         }
                     />

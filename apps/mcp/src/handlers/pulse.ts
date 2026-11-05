@@ -73,6 +73,9 @@ export function setAsideBecause(pulse: SkillPulse, constraints: Constraints): st
   }
   if (constraints.noPaid && pulse.paidWords.length > 0) reasons.push(`mentions ${pulse.paidWords.join(', ')}`);
   if (constraints.noScripts && pulse.scripts > 0) reasons.push(`ships ${pulse.scripts} script(s)`);
+  if (constraints.haveCommands !== null && pulse.runsAbsentFiles.length > 0) {
+    reasons.push(`runs ${pulse.runsAbsentFiles.join(', ')}, which its repository does not hold`);
+  }
   if (constraints.haveCommands !== null) {
     const missing = [...pulse.requires.cli, ...pulse.requires.runs].filter(
       (name) => !constraints.haveCommands?.has(name),
@@ -88,6 +91,15 @@ async function atomOf(pulse: SkillPulse): Promise<Hex | null> {
   const url = `https://github.com/${pulse.source}?skill=${encodeURIComponent(pulse.skill)}`;
   if (skillRefFromUrl(url) === null) return null;
   return reads.atomId(stringToHex(toolAtomUri(url)));
+}
+
+/** A few at a time, because each atom id is one read of a public RPC. */
+async function inBatches<T, R>(items: readonly T[], read: (item: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = [];
+  for (let at = 0; at < items.length; at += 4) {
+    out.push(...(await Promise.all(items.slice(at, at + 4).map(read))));
+  }
+  return out;
 }
 
 function usageLine(usage: PulseUsage | undefined, domain: string | null) {
@@ -133,6 +145,7 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
     },
     declares_cli: pulse.requires.cli,
     runs: pulse.requires.runs,
+    ...(pulse.runsAbsentFiles.length === 0 ? {} : { runs_files_not_in_its_repository: pulse.runsAbsentFiles }),
     ...(pulse.repository === null ? {} : { repository: pulse.repository }),
     ...(same.length === 0
       ? {}
@@ -182,17 +195,31 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const source = githubPulseSource(token === undefined ? {} : { token });
   // Read more than asked, because the constraints and the copies can remove most of a short list.
   const window = results.slice(0, Math.min(limit * 3, 30));
-  const pulses = await Promise.all(window.map((result) => readPulse(result, source)));
-
-  const atoms = await Promise.all(pulses.map(atomOf));
-  const usage = await getPulseUsage(
-    atoms.filter((atom): atom is Hex => atom !== null),
-    {
-      graphqlUrl: GRAPHQL,
-      inContextOf: IN_CONTEXT_OF,
-      hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
-    },
+  const pulses = await inBatches(window, (result) =>
+    readPulse(result, source).catch(
+      (): SkillPulse => ({ ...result, status: 'repository_unreachable' }),
+    ),
   );
+
+  // What agents wrote is one half of the answer, and the chain being busy must not cost the other
+  // half: the first comparison lost 4 of 9 runs to one failed read. So it degrades to "unknown".
+  let atoms: (Hex | null)[] = pulses.map(() => null);
+  let usage = new Map<string, PulseUsage>();
+  let usageRead = true;
+  try {
+    atoms = await inBatches(pulses, atomOf);
+    usage = await getPulseUsage(
+      atoms.filter((atom): atom is Hex => atom !== null),
+      {
+        graphqlUrl: GRAPHQL,
+        inContextOf: IN_CONTEXT_OF,
+        hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
+      },
+    );
+  } catch (error) {
+    usageRead = false;
+    console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
+  }
 
   const copies = new Map<string, SkillPulse[]>();
   for (const group of groupByContent(pulses)) copies.set(group.contentId, group.members);
@@ -229,7 +256,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     skills: distinct.slice(0, limit).map((entry) => ({
       ...factsOf(entry.row, copies),
       ...(entry.atom === null ? {} : { atom_id: entry.atom }),
-      usage: usageLine(entry.usage, domain),
+      usage: usageRead ? usageLine(entry.usage, domain) : { unknown: 'the public record did not answer' },
     })),
     set_aside: rows
       .filter((entry) => entry.reasons.length > 0)

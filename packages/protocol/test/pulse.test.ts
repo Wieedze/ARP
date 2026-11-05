@@ -126,6 +126,29 @@ describe("readSkillFacts", () => {
     });
 });
 
+describe("runsAbsentFiles", () => {
+    const listed = [
+        {path: ".claude/skills/x/SKILL.md", sha: "1", size: 1},
+        {path: ".claude/skills/x/scripts/cut.mjs", sha: "2", size: 1},
+    ];
+
+    it("names a script the instructions run and the repository does not hold", () => {
+        // The shape of nateherkai/herk-edit-kit's cut-silences, 2026-11-05.
+        const facts = readSkillFacts("node scripts/transcribe-elevenlabs.mjs raw.mp4", listed);
+        expect(facts.runsAbsentFiles).toEqual(["scripts/transcribe-elevenlabs.mjs"]);
+    });
+
+    it("does not name a script the repository holds, whatever the layout", () => {
+        expect(readSkillFacts("node scripts/cut.mjs a.json", listed).runsAbsentFiles).toEqual([]);
+        expect(readSkillFacts("python3 ./.claude/skills/x/scripts/cut.mjs", listed).runsAbsentFiles).toEqual([]);
+    });
+
+    it("leaves out a placeholder and a path outside the repository", () => {
+        const text = "python path/to/script.py\nnode /usr/lib/x.js\nbash ~/.claude/run.sh\npython your_script.py";
+        expect(readSkillFacts(text, listed).runsAbsentFiles.filter((name) => name !== "your_script.py")).toEqual([]);
+    });
+});
+
 describe("readPulse", () => {
     it("finds a skill whose directory does not carry its name, as an installer would", async () => {
         const source = sourceOf({"skills/other/SKILL.md": skillMd("other"), "skills/renamed/SKILL.md": skillMd("wanted")});

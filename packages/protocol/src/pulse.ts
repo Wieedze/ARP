@@ -42,6 +42,11 @@ export type SkillFacts = {
     paidWords: string[];
     /** Hosts the file names, GitHub and placeholder domains left out. */
     hosts: string[];
+    /**
+     * Files its instructions run that the repository does not hold. `cut-silences` runs
+     * `scripts/transcribe-elevenlabs.mjs`, and no key name in its file says what that needs.
+     */
+    runsAbsentFiles: string[];
     requires: SkillRequires;
 };
 
@@ -211,8 +216,25 @@ const NOT_A_SERVICE = /(^|\.)(github\.com|githubusercontent\.com|example\.(com|o
 const LOOKS_LIKE_A_FILE = /\.(jpe?g|png|gif|webp|mp[34]|wav|mov|webm|pdf|md|json|txt)$/;
 const SCRIPT = /\.(sh|bash|py|js|mjs|cjs|ts|rb|pl)$/i;
 
+const RUNS_FILE = /\b(?:node|bun|deno|tsx|python3?|bash|sh)\s+((?:~|\.{1,2})?\/?[\w.@-]+(?:\/[\w.@-]+)*\.(?:mjs|cjs|js|ts|py|sh))\b/g;
+const PLACEHOLDER = /(^|\/)(path|your|my|foo|example|script|file|input|output)(\/|\.|$)/i;
+
+/** Scripts the text runs that no file in the repository could be. Suffix match, so a layout cannot fool it. */
+function absentFiles(markdown: string, repositoryFiles: readonly {path: string}[]): string[] {
+    const named = [...markdown.matchAll(RUNS_FILE)].map((match) => match[1] ?? "");
+    return [...new Set(named)].filter((name) => {
+        if (name.startsWith("/") || name.startsWith("~") || PLACEHOLDER.test(name)) return false;
+        const tail = name.replace(/^(\.{1,2}\/)+/, "");
+        return !repositoryFiles.some((file) => file.path === tail || file.path.endsWith(`/${tail}`));
+    });
+}
+
 /** What a directory's listing and its `SKILL.md` show. Pure. */
-export function readSkillFacts(markdown: string, filesInDirectory: readonly ListedFile[]): SkillFacts {
+export function readSkillFacts(
+    markdown: string,
+    filesInDirectory: readonly ListedFile[],
+    repositoryFiles: readonly {path: string}[] = filesInDirectory,
+): SkillFacts {
     const hosts = [...markdown.matchAll(HOST)]
         .map((match) => (match[1] ?? "").toLowerCase())
         .filter((host) => !NOT_A_SERVICE.test(host) && !LOOKS_LIKE_A_FILE.test(host));
@@ -223,6 +245,7 @@ export function readSkillFacts(markdown: string, filesInDirectory: readonly List
         keys: [...new Set(markdown.match(KEY_NAME) ?? [])],
         paidWords: [...new Set((markdown.match(PAID_WORD) ?? []).map((word) => word.toLowerCase()))],
         hosts: [...new Set(hosts)],
+        runsAbsentFiles: absentFiles(markdown, repositoryFiles),
         requires: readRequires(markdown),
     };
 }
@@ -319,7 +342,7 @@ export async function readPulse(result: SkillSearchResult, source: PulseSource):
         contentId: directory === "" ? listing.rootTreeId : (listing.trees.get(directory) ?? located.file.sha),
         skillMdSha: located.file.sha,
         repository: await source.repository(result.source),
-        ...readSkillFacts(located.markdown, inDirectory),
+        ...readSkillFacts(located.markdown, inDirectory, listing.files),
     };
 }
 

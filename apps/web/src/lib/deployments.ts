@@ -49,6 +49,8 @@ export type Deployments = {
         domainScopeEnforcer: Address;
         trustStakeCapEnforcer: Address;
         identityRegistry: Address;
+        /** The predicates nested claims are written with on this chain (ADRs `0095`, `0135`). */
+        endpointBinding: {hasEndpoint: Hex; inContextOf: Hex};
         deployedTxs: {
             moduleRegistry: Hex;
             domainScopeEnforcer: Hex;

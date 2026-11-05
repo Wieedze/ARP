@@ -22,6 +22,7 @@ const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): S
     keys: [],
     paidWords: [],
     hosts: [],
+    runsAbsentFiles: [],
     requires: {cli: [], runs: [], login: null, description: null},
     ...overrides,
 });
