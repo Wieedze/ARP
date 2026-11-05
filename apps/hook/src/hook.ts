@@ -50,7 +50,8 @@
  * ```
  * Skill            the skill's own name, and its source when the runtime gives one
  * mcp__<server>__  the MCP server, and the URL its configuration names (`mcp-config.ts`)
- * everything else  ignored. `Read`, `Bash` and `Edit` are not tools anybody registered
+ * Bash             only a failure of a command a skill in this session asked for (`skill-failure.ts`)
+ * everything else  ignored. `Read` and `Edit` are not tools anybody registered
  * ```
  *
  * A skill name alone does **not** identify a tool: measured 2026-10-29, 104 of the catalogue's
@@ -76,6 +77,7 @@ import { type Classified, classifyCall } from './classify.ts';
 import { readMcpServers, serverUrlOf } from './mcp-config.ts';
 import { capture } from './capture.ts';
 import { type PayloadFormat, type ToolCall, toolCallOf } from './payload.ts';
+import { recordSkillFailure } from './skill-failure.ts';
 
 type Invocation = {
   at: string;
@@ -261,6 +263,14 @@ const call = toolCallOf(parsed);
 if (call === null) process.exit(0);
 
 const cwd = call.cwd ?? process.cwd();
+
+// A failed shell command says nothing by itself. It counts only when a skill used in this session
+// asked for that command (`skill-failure.ts`). The command and its output are never kept.
+if (call.tool === 'Bash') {
+  recordSkillFailure(call, cwd);
+  process.exit(0);
+}
+
 const what = whatOf(call, cwd, () => fetchedRefs(cwd));
 if (what === null) process.exit(0);
 

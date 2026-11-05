@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { chmodSync, mkdirSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -15,6 +15,8 @@ import {
   type Capability,
   HAS_OUTCOME_LABEL,
   inferDomain,
+  type LocalFailure,
+  parseLocalFailures,
   parseSkillsFind,
   readDomainTree,
   readPulse,
@@ -29,6 +31,7 @@ import {
   type SkillPulse,
   type SkillSearchResult,
   workedInDomain,
+  yourFailures,
 } from '@arp-protocol/core';
 import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
@@ -197,6 +200,28 @@ export function usageLine(usage: PulseUsage | undefined, domain: string | null) 
       .map((row) => ({ agent: row.agent.label, by: row.writer, domains: row.domains, outcomes: row.outcomes, lines: row.lines })),
     ...(usage.byOthers.length === 0 ? {} : { written_by_others: usage.byOthers }),
     ...(usage.truncated ? { truncated: true } : {}),
+  };
+}
+
+/** What this machine already hit (`docs/tasks/68`). Unreadable is empty: it must not cost the search. */
+function readYourFailures(): LocalFailure[] {
+  try {
+    const path = join(arpHome(process.env, homedir()), 'failures.jsonl');
+    return existsSync(path) ? parseLocalFailures(readFileSync(path, 'utf8')) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function yourFailuresLine(rows: readonly LocalFailure[], skill: string, source: string) {
+  const found = yourFailures(rows, skill, source);
+  if (found === null) return {};
+  return {
+    failed_on_this_machine: {
+      reasons: found.reasons,
+      last: found.last,
+      ...(found.byNameOnly ? { matched_by_name_only: true } : {}),
+    },
   };
 }
 
@@ -389,6 +414,8 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     return true;
   });
 
+  const mine = readYourFailures();
+
   return text(id, {
     search: typeof given === 'string' ? 'search_output' : 'npx skills find',
     ...(phrases.length > 1 ? { phrases } : {}),
@@ -405,6 +432,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       'not requirements. Installs are the search\'s figure, not a count of use. What agents wrote is what they paid to say.',
     skills: distinct.slice(0, limit).map((entry) => ({
       ...factsOf(entry.row, copies),
+      ...yourFailuresLine(mine, entry.row.skill, entry.row.source),
       ...(scored ? { score: Number(scoreOf(entry.row).score.toFixed(3)), score_parts: scoreOf(entry.row) } : {}),
       ...(toCheck(entry.row, constraints).length === 0 ? {} : { check_against_constraints: toCheck(entry.row, constraints) }),
       ...(entry.atom === null ? {} : { atom_id: entry.atom }),

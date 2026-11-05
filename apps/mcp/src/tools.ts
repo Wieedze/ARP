@@ -146,7 +146,7 @@ export const TOOLS = [
       'declarations agents paid to write, with their domain and outcome. `status` other than `read` means ' +
       'it was not read, so what it needs is unknown. Pass `constraints`: they stay in this call. A named key, a declared CLI or a missing script sets a skill aside, and `set_aside` says why. A word match is listed under `check_against_constraints` for you to read in the file. ' +
       ' Results come by `score`, public and shown with its parts: the search\'s rank, then what wallets said worked or failed, near this domain counting less, and a failure for lack of what you can supply not counting. The amount deposited never counts. It ranks and does not say a skill works. `domain` is read from your words when you leave it out. ' +
-      'Nothing here is a verdict, and nothing is written.',
+      '`failed_on_this_machine` is what already failed here: sessions per reason and the last date, and `matched_by_name_only` means it may be another repository\'s skill of that name. Check it before installing or running the skill again. Nothing here is a verdict, and nothing is written.',
     inputSchema: {
       type: 'object',
       properties: {

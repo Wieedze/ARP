@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {edgeWriterWarning} from "../src/handlers/declare.js";
-import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, toCheck, usageLine} from "../src/handlers/pulse.js";
+import {canSearch, searchInvocation, setAsideBecause, SKILLS_CLI, toCheck, usageLine, yourFailuresLine} from "../src/handlers/pulse.js";
 import type {SkillPulse} from "@arp-protocol/core";
 
 const read = (overrides: Partial<Extract<SkillPulse, {status: "read"}>> = {}): SkillPulse => ({
@@ -122,5 +122,24 @@ describe("edgeWriterWarning", () => {
 
     it("says nothing when no edge exists yet", () => {
         expect(edgeWriterWarning(new Map(), undefined)).toEqual({});
+    });
+});
+
+describe("yourFailuresLine", () => {
+    const row = {at: "2026-11-05T10:00:00Z", skill: "clip", source: "a/b", reason: "missing-key" as const};
+
+    it("adds nothing for a skill that never failed here", () => {
+        expect(yourFailuresLine([row], "other", "a/b")).toEqual({});
+    });
+
+    it("says what failed here and why", () => {
+        expect(yourFailuresLine([row], "clip", "a/b")).toEqual({
+            failed_on_this_machine: {reasons: {"missing-key": 1}, last: row.at},
+        });
+    });
+
+    it("says when only the name matched", () => {
+        const found = yourFailuresLine([{...row, source: null}], "clip", "a/b");
+        expect(found).toMatchObject({failed_on_this_machine: {matched_by_name_only: true}});
     });
 });

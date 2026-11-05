@@ -566,6 +566,7 @@ export {
     type SkillSearchResult,
 } from "./pulse.js";
 export {readRequires, type SkillRequires} from "./skill-requires.js";
+export {parseLocalFailures, yourFailures, type LocalFailure, type YourFailures} from "./local-failures.js";
 
 /** The score of a skill in a context: public, recomputable, never on chain (ADR `0137`). */
 export {

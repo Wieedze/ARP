@@ -2,8 +2,11 @@
   "name": "@arp/hook",
   "version": "0.0.1",
   "private": true,
-  "description": "A runtime PostToolUse hook: records what a session invoked, as the runtime sees it, to .arp/session.jsonl.",
+  "description": "A runtime PostToolUse hook: records what a session invoked to .arp/session.jsonl, and a skill's failures to ~/.arp/failures.jsonl.",
   "type": "module",
+  "exports": {
+    "./backfill": "./src/backfill.ts"
+  },
   "bin": {
     "arp-hook": "dist/arp-hook.js"
   },

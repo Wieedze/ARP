@@ -83,6 +83,9 @@ reaches the outbound URL.** `packages/protocol/test/content-serve.test.ts` has a
 ```
 ~/.arp/receipt-key     the signing key. Generated on first run, mode 0600
 .arp/session.jsonl     what the hook recorded, if you wired the hook
+~/.arp/failures.jsonl  a skill's failures the hook saw, or `arp backfill` read from old transcripts:
+                       the skill, its source, the session, the date and a closed reason. Never
+                       the command or its output. Stays on this machine
 .arp/receipts.jsonl    what you fetched through a server, and the receipts
 .arp/skills/<name>/SKILL.md   files you fetched, if you used arp-fetch-skill.ts
 ~/.arp/skills-cli/     the search package's home, mode 0700, with npm's cache of that package.
@@ -292,7 +295,9 @@ ARP_TOOLS              read: the four reads only. desktop or sponsored: the read
                        and arp_declare_used, with a local agent key in ~/.arp/agent-key (ADR 0110),
                        over stdio only: the server refuses to start them over HTTP (ADR 0116).
                        Unset: every tool
-ARP_SKILLS_DIR         desktop/sponsored only, set by `arp init --sponsored`: arp_get_skill writes
+ARP_SKILLS_DIR         also read by the hook, to find a skill's SKILL.md and decide whether a failed
+                       command is one that skill asks for.
+                       desktop/sponsored only, set by `arp init --sponsored`: arp_get_skill writes
                        <dir>/<name>/**, relative to the working directory, refusing (and writing
                        nothing) when a different file is already at one of those paths, and
                        appends the receipt to ARP_RECEIPTS

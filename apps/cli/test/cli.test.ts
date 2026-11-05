@@ -77,6 +77,12 @@ test('the bundle leaves the optional delegation kit out: it is a peer, not 1 MB 
   }
 });
 
+test('the packaged hook imports no dependency, as it has to start with none installed', () => {
+  const hook = readFileSync(join(import.meta.dir, '..', '..', '..', 'packaging', 'claude', 'arp', 'bin', 'hook.js'), 'utf8');
+  const imported = [...hook.matchAll(/^import .* from "([^"]+)";?$/gm)].map((match) => match[1] ?? '');
+  expect(imported.filter((name) => !name.startsWith('node:'))).toEqual([]);
+});
+
 test('packaging/ is what `bun run packages` writes from this build: nothing stale is committed', () => {
   const proc = Bun.spawnSync([
     'bun',
