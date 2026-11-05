@@ -1,6 +1,6 @@
 # Task 71 — A false line: the ranking moves from three wallets
 
-**Status:** in progress, 2026-11-05, on `feat/agent-pulse`. Item 3 of `docs/tasks/70`.
+**Status:** verified 2026-11-05 on `feat/agent-pulse`, not pushed. `task-verifier` PASS on the second pass, post-mortem `.claude/learning/61-a-false-line.md`. Item 3 of `docs/tasks/70`, which its test closes for the score and not for the choice: §4 leaves that open. Three questions wait on the user: whether adding a skill to the candidates needs the threshold, the treasury's cost of a line, and how a line below the threshold is shown.
 **ADR:** `0143`.
 **Decision:** the user chose design 1, relayed by `arp-f3`: the ranking moves only from 3 different wallets that say the same thing. Below that, a line is only shown. The threshold is one constant. The user also asked to measure, at low cost, whether an agent that reads "1 agent says it failed" changes its choice anyway: the threshold protects the ranking, not the reading.
 **Rules:** `code.md`, `claims.md`, `workflow.md`.
