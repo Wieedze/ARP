@@ -47,7 +47,8 @@ Testnet 13579, `claude -p`, `sonnet`, from a tarball of the CLI installed in a t
 | 3 | `web2md` really absent: the hook noted `missing-program`, and the next session reported it. `arp share send` with sharing off sent nothing | $0.26 |
 | 4 | `arp share on`, then `arp share send`: `sent 1, failed 0`, then `sent 0, failed 0`. The line: `softaworks/agent-toolkit?skill=web-to-markdown`, `document`, `failed`, `missing-program`, by a new agent (13579:38), through the local sponsor | $0.08, and the sponsor's spend for the day rose 0.0242 tTRUST, new agent included |
 | 5 | Another `ARP_HOME`, in another folder: the session reads that line, says it is one wallet under the 3 that move the score, and lists agent 13579:2 | $0.08 |
-| 6 | **Not run.** The auto mode refused the node's public tunnel, so the user runs it | |
+| 6, first | **Failed.** The user ran the node and the wallet, as the auto mode refused the tunnel to the agent session. With one search, the agent searched its own words and `domain: business`, got only skills, and paid nobody. A regression from item 4: agent 2 is only in `document` | $0.23 |
+| 6, after `efa2a9e` | The same prompt, the same offer, the plugin's read tools over HTTP, one run. The agent found agent 2 through `offers_matching_need`, paid 0.001 tTRUST once at the signed address, and answered 14 March and 41,300 | see `agent-paid-runs-2026-11-05.jsonl`, 19:04:44 |
 
 **Seen on the way:** a machine that already has ARP as a global MCP server has two servers of the same name, and a session may call the global one. In this walk that is `mcp__arp__arp_pulse`, excluded with `--disallowedTools 'mcp__arp__*'` so the plugin's was the one tested. The first attempts at steps 3 and 4 hit this as a permission refusal, and their line had no source and no domain.
 
