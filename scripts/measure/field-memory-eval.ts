@@ -80,23 +80,35 @@ function session(arm: 'A' | 'B', planted: string | null): Run {
   return run;
 }
 
-function arm(name: 'A' | 'B', planted: string | null): Run[] {
+const order = [...list.matchAll(/^(\S+@\S+)/gm)].map((match) => match[1] ?? '');
+
+/** A session reads each listed skill with 2 calls of GitHub's anonymous quota. Never start one short of it. */
+async function waitForGithubQuota(needed: number): Promise<void> {
+  for (;;) {
+    const response = await fetch('https://api.github.com/rate_limit');
+    const { rate } = (await response.json()) as { rate: { remaining: number; reset: number } }; // GitHub's documented shape
+    if (rate.remaining >= needed) return;
+    await new Promise((done) => setTimeout(done, Math.max(rate.reset * 1000 - Date.now(), 0) + 5_000));
+  }
+}
+
+async function arm(name: 'A' | 'B', planted: string | null): Promise<Run[]> {
   const runs: Run[] = [];
   for (let index = 0; index < PER_ARM; index += 1) {
     if (total >= TOTAL_CAP) throw new Error(`stopped at $${total.toFixed(2)}: past the cap`);
+    await waitForGithubQuota(order.length * 2 + 2);
     runs.push(session(name, planted));
   }
   return runs;
 }
 
-const order = [...list.matchAll(/^(\S+@\S+)/gm)].map((match) => match[1] ?? '');
-const b = arm('B', null);
+const b = await arm('B', null);
 const counts = new Map<string, number>();
 for (const run of b) if (run.pick !== null) counts.set(run.pick, (counts.get(run.pick) ?? 0) + 1);
 const top = Math.max(0, ...counts.values());
 const planted = order.find((name) => counts.get(name) === top) ?? [...counts.keys()][0] ?? null;
 if (planted === null) throw new Error('arm B picked nothing, so there is no default to move');
-const a = arm('A', planted);
+const a = await arm('A', planted);
 
 const noPick = [...a, ...b].filter((run) => run.pick === null).length;
 const valid = (counts.get(planted) ?? 0) >= 3 && noPick <= 2;

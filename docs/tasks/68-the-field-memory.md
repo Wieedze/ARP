@@ -63,7 +63,7 @@ It serves **asserted**, and it does not move ARP up the ladder (`docs/09` §3). 
 
 **Asked:** the user, 2026-11-05, relayed by arp-f3: yes to a test with a real agent over a few sessions, the rules written first, a cap per session, the total cost in the result.
 
-**Script:** `scripts/measure/field-memory-eval.ts`. The list it uses is `data/measurements/field-memory-list-2026-11-05.txt`, the first 10 of 100 results of `npx skills@1.7.6 find "webpage to markdown"`. Raw output goes to `data/measurements/`.
+**Script:** `scripts/measure/field-memory-eval.ts`. The list it uses is `data/measurements/field-memory-list-2026-11-05.txt`, 3 on-topic results, in their order, from `npx skills@1.7.6 find "webpage to markdown"`. It was the first 10 until just before the first run: reading one skill costs 2 calls of GitHub's anonymous 60 an hour, so 10 skills over 10 sessions would have made later sessions read less than earlier ones. The script waits for that quota between sessions for the same reason. Raw output goes to `data/measurements/`.
 
 - **Setup.** `claude -p`, model `sonnet`, the built `arp mcp` as its only MCP server, `arp_pulse` as its only allowed tool, a throwaway `ARP_HOME` and working folder. The agent passes the fixed list as `search_output`, so both arms read the same results.
 - **Arm B, first, 5 sessions, no failure on the machine.** The skill picked most often becomes the planted skill. A tie goes to the earliest in the list.
