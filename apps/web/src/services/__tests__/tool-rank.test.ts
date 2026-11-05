@@ -18,7 +18,8 @@ const row = (overrides: Partial<ToolRow> = {}): ToolRow => ({
     label: null,
     href: "/atom/0x",
     declarations: 0,
-    provenDeposits: null,
+    sponsoredDeposits: null,
+    wallets: null,
     supportTrust: "0.001",
     opposeTrust: null,
     stakers: 0,
@@ -63,7 +64,7 @@ describe("rankTools", () => {
         facts.set("0xdead", {liveness: "dead", installs: 5_000_000});
         facts.set("0xalive", {liveness: "alive", installs: 1});
 
-        expect(rankTools([dead, alive], "usage", read).map((r) => r.key)).toEqual([
+        expect(rankTools([dead, alive], "signals", read).map((r) => r.key)).toEqual([
             "0xalive",
             "0xdead",
         ]);
@@ -74,14 +75,14 @@ describe("rankTools", () => {
 
     it("ranks an unknown reading with the alive, above the dead", () => {
         // A repository newer than the bundled readings, with the most deposits on the page.
-        const unknown = row({key: "0xunknown", provenDeposits: 30});
-        const alive = row({key: "0xalive", provenDeposits: 0});
-        const dead = row({key: "0xdead", provenDeposits: 99});
+        const unknown = row({key: "0xunknown", sponsoredDeposits: 30});
+        const alive = row({key: "0xalive", sponsoredDeposits: 0});
+        const dead = row({key: "0xdead", sponsoredDeposits: 99});
         facts.set("0xalive", {liveness: "alive", installs: null});
         facts.set("0xdead", {liveness: "dead", installs: null});
         facts.delete("0xunknown");
 
-        expect(rankTools([dead, unknown, alive], "usage", read).map((r) => r.key)).toEqual([
+        expect(rankTools([dead, unknown, alive], "signals", read).map((r) => r.key)).toEqual([
             "0xunknown",
             "0xalive",
             "0xdead",
@@ -89,21 +90,21 @@ describe("rankTools", () => {
     });
 
     it("sorts by the axis the reader picked, inside the gate", () => {
-        const many = row({key: "0xmany", stakers: 1, provenDeposits: 1});
-        const staked = row({key: "0xstaked", stakers: 9, provenDeposits: 0});
+        const many = row({key: "0xmany", stakers: 1, sponsoredDeposits: 1});
+        const staked = row({key: "0xstaked", stakers: 9, sponsoredDeposits: 0});
         facts.set("0xmany", {liveness: "alive", installs: 2});
         facts.set("0xstaked", {liveness: "alive", installs: 9_000});
 
         expect(rankTools([many, staked], "installs", read)[0]?.key).toBe("0xstaked");
-        // Usage is the Usage figure; the stake has no order of its own.
-        expect(rankTools([staked, many], "usage", read)[0]?.key).toBe("0xmany");
+        // Signals is the Signals figure; the stake has no order of its own.
+        expect(rankTools([staked, many], "signals", read)[0]?.key).toBe("0xmany");
     });
 
-    it("breaks a tie in Usage on installs, and no deposit outside the sponsor moves it", () => {
+    it("breaks a tie in Signals on installs, and no deposit outside the sponsor moves it", () => {
         const installed = row({
             key: "0xinstalled",
             name: "b",
-            provenDeposits: 2,
+            sponsoredDeposits: 2,
             declarations: 0,
             stakers: 0,
             supportTrust: "0.1",
@@ -111,14 +112,14 @@ describe("rankTools", () => {
         const backed = row({
             key: "0xbacked",
             name: "a",
-            provenDeposits: 2,
+            sponsoredDeposits: 2,
             declarations: 99,
             stakers: 99,
             supportTrust: "99",
         });
         facts.set("0xinstalled", {liveness: "alive", installs: 5});
         facts.set("0xbacked", {liveness: "alive", installs: 1});
-        expect(rankTools([backed, installed], "usage", read)[0]?.key).toBe("0xinstalled");
+        expect(rankTools([backed, installed], "signals", read)[0]?.key).toBe("0xinstalled");
     });
 
     it("falls to the name when nothing else separates two tools, whatever their stake", () => {
@@ -126,15 +127,15 @@ describe("rankTools", () => {
         const early = row({key: "0xearly", name: "alpha", stakers: 0, supportTrust: "0"});
         facts.set("0xlate", {liveness: "alive", installs: null});
         facts.set("0xearly", {liveness: "alive", installs: null});
-        expect(rankTools([late, early], "usage", read)[0]?.key).toBe("0xearly");
+        expect(rankTools([late, early], "signals", read)[0]?.key).toBe("0xearly");
     });
 
-    it("orders Most used by the Usage figure, not by the edge count no column shows", () => {
-        const deep = row({key: "0xdeep", declarations: 2, provenDeposits: 6});
-        const wide = row({key: "0xwide", declarations: 3, provenDeposits: 3});
+    it("orders Most signals by the Signals figure, not by the edge count no column shows", () => {
+        const deep = row({key: "0xdeep", declarations: 2, sponsoredDeposits: 6});
+        const wide = row({key: "0xwide", declarations: 3, sponsoredDeposits: 3});
         facts.set("0xdeep", {liveness: "alive", installs: null});
         facts.set("0xwide", {liveness: "alive", installs: null});
-        expect(rankTools([wide, deep], "usage", read).map((r) => r.key)).toEqual([
+        expect(rankTools([wide, deep], "signals", read).map((r) => r.key)).toEqual([
             "0xdeep",
             "0xwide",
         ]);
@@ -147,27 +148,27 @@ describe("rankTools", () => {
         facts.set("0xused", {liveness: "alive", installs: null, stars: 10});
         expect(rankTools([used, starred], "stars", read)[0]?.key).toBe("0xstarred");
         expect(toolSortAxesFor("skills", true).map((axis) => axis.id)).toEqual([
-            "usage",
+            "signals",
             "installs",
         ]);
-        expect(toolSortAxesFor("repos", true).map((axis) => axis.id)).toEqual(["usage", "stars"]);
+        expect(toolSortAxesFor("repos", true).map((axis) => axis.id)).toEqual(["signals", "stars"]);
     });
 
-    it("offers no order on Usage when Usage cannot be read", () => {
+    it("offers no order on Signals when Signals cannot be read", () => {
         expect(toolSortAxesFor("skills", false).map((axis) => axis.id)).toEqual(["installs"]);
         expect(toolSortAxesFor("repos", false).map((axis) => axis.id)).toEqual(["stars"]);
     });
 
-    it("reads the Usage column down in order under Most used, unknown below a known zero", () => {
-        const proven = row({key: "0xproven", provenDeposits: 15});
-        const zero = row({key: "0xzero", provenDeposits: 0});
-        const unread = row({key: "0xunread", provenDeposits: null, declarations: 9});
-        for (const key of ["0xproven", "0xzero", "0xunread"]) {
+    it("reads the Signals column down in order under Most signals, unknown below a known zero", () => {
+        const signalled = row({key: "0xsignalled", sponsoredDeposits: 15});
+        const zero = row({key: "0xzero", sponsoredDeposits: 0});
+        const unread = row({key: "0xunread", sponsoredDeposits: null, declarations: 9});
+        for (const key of ["0xsignalled", "0xzero", "0xunread"]) {
             facts.set(key, {liveness: "alive", installs: null});
         }
 
-        expect(rankTools([unread, zero, proven], "usage", read).map((r) => r.key)).toEqual([
-            "0xproven",
+        expect(rankTools([unread, zero, signalled], "signals", read).map((r) => r.key)).toEqual([
+            "0xsignalled",
             "0xzero",
             "0xunread",
         ]);
@@ -190,7 +191,7 @@ describe("rankTools", () => {
         facts.set("0xa", {liveness: "dead", installs: null});
         facts.set("0xb", {liveness: "alive", installs: null});
         const input = [first, second];
-        rankTools(input, "usage", read);
+        rankTools(input, "signals", read);
         expect(input.map((r) => r.key)).toEqual(["0xa", "0xb"]);
     });
 });

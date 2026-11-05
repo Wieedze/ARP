@@ -24,6 +24,7 @@ import {
 } from "../services/atom-standing-view";
 import {splitFirstSentence} from "../services/skill-md";
 import {intuitionPortalUrl, truncateMiddle} from "../services/trust-format";
+import {ToolWallets} from "../components/atom/ToolWallets";
 import {Block, ClsRow, Install, Panel, RecordRow, Signal} from "../components/atom/AtomPageParts";
 import {formatDay, githubApiUrlOf, LABEL} from "../lib/atom-page";
 
@@ -118,6 +119,8 @@ export function SkillPage({
             <div className="mt-10 max-w-[48rem]">
                 <DeclareUse object={atomId} objectLabel={skill} onDeclared={onDeclared} />
             </div>
+
+            <ToolWallets atomId={atomId} />
 
             <Block title="Relations" label="Every declaration about this skill">
                 <ClaimField

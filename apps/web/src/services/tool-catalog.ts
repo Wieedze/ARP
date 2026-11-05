@@ -157,15 +157,17 @@ export type ToolRow = {
      */
     declarations: number;
     /**
-     * Deposits on the tool's edges that ARP's sponsoring service sent to an agent, so each one passed
-     * the proof gate (ADR `0094` §2). Its own creation deposit is not one (ADR `0143`). The "Usage"
-     * column, and the only figure on the page that word is true
-     * of. `null` when this read cannot say.
+     * Deposits on the tool's edges that ARP's sponsoring service sent to an agent: a proof it checked
+     * (ADR `0094`) or a line it wrote in the agent's name (ADR `0144`), which nothing on chain tells
+     * apart. Its own creation deposit is not one (ADR `0143`). The "Signals" column. `null` when this
+     * read cannot say.
      *
      * Read from the deposit events, not from positions: a position merges a sponsored deposit with
      * the agent's own, and a withdrawal does not say which part it takes.
      */
-    provenDeposits: number | null;
+    sponsoredDeposits: number | null;
+    /** How many distinct wallets received those deposits. The "Wallets" column. */
+    wallets: number | null;
     supportTrust: string;
     /**
      * TRUST deposited against the tool's declarations, or `null`.
@@ -259,7 +261,8 @@ function rowOf(tool: ToolListing): ToolRow {
         label: label ?? null,
         href: `/atom/${tool.atomId}`,
         declarations: tool.edgeCount,
-        provenDeposits: tool.provenDeposits,
+        sponsoredDeposits: tool.sponsoredDeposits,
+        wallets: tool.sponsoredWallets,
         supportTrust: formatTrust(tool.supportAssetsSum),
         // Not when it is below the smallest figure shown: that is the counter vault's creation
         // deposit, "<0.00000001 against" that nobody put there (task 48).
@@ -284,7 +287,8 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         // read, so they are **unknown** here. A tool whose edges that read did find appears as a
         // declared row instead and carries the figure. A zero would read as "nobody deposited",
         // a claim this read cannot make — the oppose column stays empty for the same reason.
-        provenDeposits: null,
+        sponsoredDeposits: null,
+        wallets: null,
         supportTrust: formatTrust(tool.assets),
         opposeTrust: null,
         stakers: tool.positionCount,
@@ -356,17 +360,17 @@ export function livenessOf(fact: {archived: boolean; gone: boolean} | null): Liv
  * axis belongs to the reader, and every axis's figure sits on the row beside the others, so it is
  * visible which one is doing the work.
  */
-export type ToolSortAxis = "usage" | "installs" | "stars";
+export type ToolSortAxis = "signals" | "installs" | "stars";
 
 /**
  * The axes per index, and only ones that mean something there (user, 2026-10-30).
  *
- * **Most used** is the one ARP measures: the Usage column, deposits the sponsoring service sent to an
- * agent after checking a proof, so the order reads down the figure it is named for. That proof is
- * what lets it carry the word the user refused on 2026-10-27 for unproven edges (`docs/14`). A deposit
- * that did not come through the sponsor counts for nothing here: "Most declared" and its column are
- * gone, the user's filter (ADR `0143`). It is offered only where Usage can be read, so mainnet starts
- * from installs or stars until a sponsor exists there.
+ * **Most signals** is the one ARP measures: the Signals column, what the sponsoring service deposited
+ * in an agent's name, so the order reads down the figure it is named for. Not "used", which the user
+ * refused on 2026-10-27 (`docs/14`), and a sponsored line asks no proof (ADR `0144`). A deposit that
+ * did not come through the sponsor counts for nothing here: the user's filter (ADR `0143`). It is
+ * offered only where Signals can be read, so mainnet starts from installs or stars until a sponsor
+ * exists there.
  *
  * The other axis is somebody else's figure: skills.sh's installs for a skill, GitHub's stars for a
  * repository. A skill's stars would be its repository's, tied across every skill in it, so skills do
@@ -374,12 +378,12 @@ export type ToolSortAxis = "usage" | "installs" | "stars";
  */
 export function toolSortAxesFor(
     index: ToolIndex,
-    readsUsage: boolean,
+    readsSignals: boolean,
 ): readonly {id: ToolSortAxis; label: string}[] {
-    const usage = readsUsage ? [{id: "usage" as const, label: "Most used"}] : [];
+    const signals = readsSignals ? [{id: "signals" as const, label: "Most signals"}] : [];
     return index === "skills"
-        ? [...usage, {id: "installs", label: "Most installs"}]
-        : [...usage, {id: "stars", label: "Most stars"}];
+        ? [...signals, {id: "installs", label: "Most installs"}]
+        : [...signals, {id: "stars", label: "Most stars"}];
 }
 
 /**
@@ -468,9 +472,9 @@ export function rankTools(
             return (b.installs ?? -1) - (a.installs ?? -1);
         if (axis === "stars" && a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
         // `null` (unknown) ranks below a known zero, on every axis: the figure is the column's.
-        const leftProven = left.provenDeposits ?? -1;
-        const rightProven = right.provenDeposits ?? -1;
-        if (leftProven !== rightProven) return rightProven - leftProven;
+        const leftSignals = left.sponsoredDeposits ?? -1;
+        const rightSignals = right.sponsoredDeposits ?? -1;
+        if (leftSignals !== rightSignals) return rightSignals - leftSignals;
         // Ties go to figures no deposit can move: a stake or an edge count here would let a deposit
         // outside the sponsor change the order, which is the filter (ADR `0143`).
         if (a.installs !== b.installs) return (b.installs ?? -1) - (a.installs ?? -1);

@@ -3,6 +3,7 @@ import {Link} from "react-router-dom";
 import {BackLink} from "../components/brand/BackLink";
 import type {Hex} from "viem";
 
+import {ToolWallets} from "../components/atom/ToolWallets";
 import {Block, ClsRow, Install, Panel, RecordRow, Signal} from "../components/atom/AtomPageParts";
 import {ClaimField} from "../components/atom/ClaimField";
 import {Group} from "../components/atom/ClaimList";
@@ -119,6 +120,8 @@ export function RepoPage({
             {skills.length === 0 ? null : <Skills rows={skills} />}
 
             {owner === null ? null : <SamePack repo={repo} />}
+
+            <ToolWallets atomId={atomId} />
 
             <Block title="Relations" label="Declarations about this repository, besides its skills">
                 <ClaimField

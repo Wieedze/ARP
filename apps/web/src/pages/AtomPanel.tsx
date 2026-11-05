@@ -6,6 +6,7 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {AtomSigil} from "../components/atom/AtomSigil";
 import {Backing, Empty, Group} from "../components/atom/ClaimList";
 import {ClaimField} from "../components/atom/ClaimField";
+import {ToolWallets} from "../components/atom/ToolWallets";
 import {AtomMarket} from "../components/market/AtomMarket";
 import {actionCardClass} from "../lib/surface-class";
 import {linkClass} from "../lib/control-class";
@@ -287,6 +288,7 @@ export function AtomPanel() {
                                     )}
                                 </div>
                             )}
+                            {!view.offersMarket ? null : <ToolWallets atomId={atomId} />}
                             {view.groups.length === 0 ? (
                                 <Empty atomId={view.atomId} />
                             ) : (

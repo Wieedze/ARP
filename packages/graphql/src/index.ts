@@ -67,6 +67,11 @@ export {
     termActivityQuery,
 } from "./queries/term-shape.js";
 export {BY_URL_QUERY} from "./queries/tool-atom.js";
-export {TOOL_LISTING_QUERY, TOOL_LISTING_SPONSORED_QUERY} from "./queries/tool-listing.js";
+export {
+    TOOL_LISTING_QUERY,
+    TOOL_LISTING_SPONSORED_QUERY,
+    SPONSORED_WALLETS_QUERY,
+    TOOL_WALLETS_QUERY,
+} from "./queries/tool-listing.js";
 export {PULSE_ATOMS_QUERY, PULSE_DOMAIN_EDGES_QUERY, PULSE_EDGE_TOOLS_QUERY, PULSE_EDGE_WRITERS_QUERY, PULSE_QUALIFIERS_QUERY, PULSE_USES_QUERY} from "./queries/pulse-usage.js";
 export {ATTESTED_TOOL_USAGE_QUERY, TOOL_USAGE_QUERY} from "./queries/tool-usage.js";

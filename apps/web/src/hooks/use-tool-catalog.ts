@@ -66,7 +66,7 @@ const fetchRegisteredTools =
  * mainnet heading, which is `rules/claims.md` §2 rendered as a page. The curve is in for the same
  * reason one paragraph down.
  *
- * **The sponsor is in the key** because it decides which deposits read as proven: a page read
+ * **The sponsor is in the key** because it decides which deposits read as signals: a page read
  * without one must not be served once one is configured.
  */
 export function toolCatalogQueryKey(
@@ -93,14 +93,14 @@ export function toolCatalogQueryOptions(
     return {
         queryKey: toolCatalogQueryKey(chain.chainId, order, curveId, sponsor),
         queryFn: async (): Promise<ToolCatalogView> => {
-            // In parallel: two independent reads of the same endpoint, and neither needs the other.
+            // In parallel: independent reads of the same endpoint, and neither needs the other.
             const [declared, registered] = await Promise.all([
                 fetchListing(order, curveId, sponsor),
                 fetchRegistered(curveId),
             ]);
             return buildToolCatalogView(declared, registered);
         },
-        // Two graph reads, and both populations move on the order of days at most.
+        // Graph reads, and both populations move on the order of days at most.
         staleTime: 120_000,
         retry: 1,
         // Switching order keeps the list on screen instead of replacing it with
@@ -109,7 +109,7 @@ export function toolCatalogQueryOptions(
     };
 }
 
-function useSponsorAddress(): string | null {
+export function useSponsorAddress(): string | null {
     const chain = useChainChoice();
     // Vite types every `import.meta.env` key through an index signature, so the value arrives as
     // `any`; annotating it here keeps that from crossing into a typed parameter.
@@ -117,8 +117,8 @@ function useSponsorAddress(): string | null {
     return sponsorAddressFor(chain.chainId, configured);
 }
 
-/** Whether Usage can be read on this chain. Known without a read, so a control is right while one runs. */
-export function useReadsUsage(): boolean {
+/** Whether Signals can be read on this chain. Known without a read, so a control is right while one runs. */
+export function useReadsSignals(): boolean {
     return useSponsorAddress() !== null;
 }
 

@@ -17,7 +17,8 @@ function tool(atomId: string, overrides: Partial<ToolListing> = {}): ToolListing
         type: "Thing",
         edgeCount: 1,
         pricedEdges: 1,
-        provenDeposits: 0,
+        sponsoredDeposits: 0,
+        sponsoredWallets: 0,
         declaredDeposits: 1,
         supportAssetsSum: 1_980_000_001_000_000n,
         opposeAssetsSum: 1_000_000n,
@@ -98,7 +99,7 @@ describe("toolCatalogQueryOptions", () => {
     });
 
     it("passes the chain's sponsor to the read and keys on it", async () => {
-        // The sponsor decides which deposits read as proven, so a page read without one must
+        // The sponsor decides which deposits read as signals, so a page read without one must
         // never be served from cache once one is configured.
         const sponsor = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
         const fetchListing = vi.fn(async () => pageOf());

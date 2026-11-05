@@ -11,7 +11,7 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useDomainTree} from "../hooks/use-domain-tree";
 import {useTagIndex} from "../hooks/use-tag-index";
-import {useReadsUsage, useToolCatalog} from "../hooks/use-tool-catalog";
+import {useReadsSignals, useToolCatalog} from "../hooks/use-tool-catalog";
 import {
     livenessOf,
     pageOfTools,
@@ -27,7 +27,7 @@ import {
 import {useSkillFacts} from "../hooks/use-skill-facts";
 
 /**
- * `/tools` — tools, ordered by the deposits the sponsor made for an agent after checking a proof.
+ * `/tools` — tools, ordered by what the sponsor deposited in an agent's name.
  *
  * Agent declarations only. The `uses` predicate is shared and most of what sits on it is ordinary
  * prose, filtered out in the query rather than shown under a caveat.
@@ -56,7 +56,7 @@ export function ToolCatalog() {
      * which nobody can pay to change, and above it the axis belongs to the reader with every
      * figure beside the others.
      */
-    const [chosenAxis, setChosenAxis] = useState<ToolSortAxis>("usage");
+    const [chosenAxis, setChosenAxis] = useState<ToolSortAxis>("signals");
     // Where the reader is in the ranked list. Every control that changes what is ranked sends it
     // back to the first page: page 9 of one order is not a place in another.
     const [offset, setOffset] = useState(0);
@@ -77,13 +77,13 @@ export function ToolCatalog() {
     const index: ToolIndex = searchParams.get("index") === "repos" ? "repos" : "skills";
     const query = useToolCatalog(order, curveId);
     const view = query.data;
-    const axes = toolSortAxesFor(index, useReadsUsage());
+    const axes = toolSortAxesFor(index, useReadsSignals());
     // Installs are a skill's figure and stars a repository's: switching index keeps the reader's
     // axis when the other index has it, and falls back to the index's first when it does not. Where
-    // Usage cannot be read, that is its installs or stars.
+    // Signals cannot be read, that is its installs or stars.
     const axis: ToolSortAxis = axes.some((entry) => entry.id === chosenAxis)
         ? chosenAxis
-        : (axes[0]?.id ?? "usage");
+        : (axes[0]?.id ?? "signals");
     const chooseIndex = (next: ToolIndex) => {
         setSearchParams(next === "skills" ? {} : {index: next}, {replace: true});
         setOffset(0);

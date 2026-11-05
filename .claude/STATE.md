@@ -438,7 +438,8 @@ Ethereum, IPFS, Claude, Obsidian and Bitcoin.
 
 One line each; the ADR or the commit holds the story.
 
-- `/tools` did not move under testnet writes — closed 2026-11-05, ADR `0143`: Usage now counts only what the sponsor deposited for an agent, it is the page's order (**Most used**) and Declared is gone; a repository missing from `repo-facts.json` no longer sinks; mainnet offers installs or stars until it has a sponsor. `VITE_ARP_SPONSOR_ADDRESS` goes in `apps/web/.env`, not committed.
+- Two sponsor ledgers (`~/.arp` and the repo's `.arp/`) — merged into `~/.arp/sponsor-ledger.jsonl` on 2026-11-05, the user's call: 31 deposit keys, none in both files. Copies beside it, `.bak-before-merge-2026-11-05` and `repo-copy-2026-11-05`. Rows are concatenated, not sorted; `SponsorLedger` indexes by key.
+- `/tools` did not move under testnet writes — closed 2026-11-05, ADR `0143`: **Signals** counts only what the sponsor deposited for an agent, proof or not (ADR `0144`), with **Wallets** beside it; it is the page's order (**Most signals**) and Declared is gone; a repository missing from `repo-facts.json` no longer sinks; mainnet offers installs or stars until it has a sponsor. `VITE_ARP_SPONSOR_ADDRESS` goes in `apps/web/.env`, not committed.
 - Two ARP enforcers on mainnet 1155 while three files said none — closed, ADR `0065` (re-checked 2026-10-30).
 - `scripts/` outside every gate — closed 2026-10-27, task 21, `416f41e` (`check:scripts`; still linted by nothing).
 - A declare-only run left an edge with no position — closed 2026-10-21, ADR `0053`. Residue: 6 positionless atoms on testnet 13579.

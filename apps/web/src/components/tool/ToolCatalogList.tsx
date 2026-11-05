@@ -9,10 +9,10 @@ import {shortTrust} from "../../services/trust-format";
  * Tools as a list, not as N boxes.
  *
  * One grid, one hairline under each row, every figure in mono and right-aligned so the columns read
- * down. Three columns and no more: the name, the deposits that passed ARP's proof gate ("Usage"),
- * and the TRUST summed across the edges. Nothing else counts here: a deposit that did not come
- * through the sponsor has no column, the user's filter (ADR `0143`). Nothing restates a column in
- * prose.
+ * down. Four columns and no more: the name, what the sponsor deposited in an agent's name ("Signals"),
+ * the wallets those deposits went to ("Wallets"), and the TRUST summed across the edges. A deposit
+ * that did not come through the sponsor has no column, the user's filter (ADR `0143`). Nothing
+ * restates a column in prose.
  *
  * **A row says which population it came from**, under the name and in small type rather than as a
  * further column. The figure means something different in each: a `declared` row's TRUST is summed
@@ -21,22 +21,21 @@ import {shortTrust} from "../../services/trust-format";
  * markets and **not** the atom's vault, so it does not yet spell the distinction out; until it does,
  * this sub-label is the only place it is said.
  *
- * Below `sm` the three columns collapse to two and the name spans two rows, one per numeric cell, as
- * `CohortList` does.
+ * Below `sm` the four columns collapse to two and the name spans three rows, one per numeric cell.
  *
  * `Headers` is built from `ROW_GRID` rather than a hand-written copy — the string already carries
  * its own `sm:` variants, so there is nothing to prefix and no second grid to keep in step.
  */
 
 const ROW_GRID =
-    "grid grid-cols-[minmax(0,1fr)_minmax(6rem,9rem)] sm:grid-cols-[minmax(0,1fr)_5rem_minmax(7rem,10rem)] items-start gap-x-4 gap-y-0.5";
+    "grid grid-cols-[minmax(0,1fr)_minmax(6rem,9rem)] sm:grid-cols-[minmax(0,1fr)_5rem_5rem_minmax(7rem,10rem)] items-start gap-x-4 gap-y-0.5";
 
 /**
  * One figure with the label its column header carries at wider widths.
  *
  * `sm:sr-only`, never `sm:hidden`: above `sm` the header supplies the label visually, but this is a
  * plain grid and not a table, so nothing associates a header with a cell programmatically. A
- * `display: none` label is a label nothing can read, and a screen reader would get two bare
+ * `display: none` label is a label nothing can read, and a screen reader would get three bare
  * numbers per row. A blank figure gets no label: below `sm` it would sit on the Support amount and
  * name it.
  */
@@ -71,7 +70,7 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                         // narrow widths, and an atom id standing in for a missing label is a hex
                         // string nothing else explains.
                         title={row.name}
-                        className={`min-w-0 row-span-2 sm:row-span-1 block truncate leading-tight ${
+                        className={`min-w-0 row-span-3 sm:row-span-1 block truncate leading-tight ${
                             row.isUnnamed
                                 ? "font-mono text-[length:var(--text-body-sm)]"
                                 : "font-medium"
@@ -134,7 +133,8 @@ function Row({row, fact, stars}: {row: ToolRow; fact: SkillFact | null; stars: n
                         yet, a column of 715 zeros reads as data and is noise. An unknown stays
                         empty too, like the oppose cell below: a registered row's deposits are on
                         its edges, which is `listTools`'s read. */}
-                    <Figure value={countText(row.provenDeposits)} label="usage" />
+                    <Figure value={countText(row.sponsoredDeposits)} label="signals" />
+                    <Figure value={countText(row.wallets)} label="wallets" />
                     <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
                         {/* **Creation dust is not a stake.** Creating a term seeds its vault with
                             `minDeposit` (ADR `0042`), so every one of the 715 registered rows
@@ -172,13 +172,12 @@ function Headers({curveId}: {curveId: number}) {
             aria-hidden
             className={`${ROW_GRID} hidden sm:grid pb-2 border-b border-[color:var(--color-rule-strong)] font-mono uppercase tracking-wider text-[length:var(--text-label)] text-[color:var(--color-steel)]`}
         >
-            {/* **"Usage" only for what passed the proof gate.** The user rejected "Most used" for
-                unproven edges (2026-10-27): whether a use happened is unknowable from outside
-                (`docs/14`). A sponsored deposit carries a proof that it did — a payment another
-                party made, or a fetch through ARP (ADR `0094` §2) — so the word is true of that
-                column and of nothing else here. */}
+            {/* **"Signals", not "Usage".** The user rejected "used" on 2026-10-27: whether a use happened
+                is unknowable from outside (`docs/14`), and a sponsored line asks no proof (ADR
+                `0144`), so this column cannot claim one (ADR `0143`). */}
             <span>Tool</span>
-            <span className="text-right">Usage</span>
+            <span className="text-right">Signals</span>
+            <span className="text-right">Wallets</span>
             {/* The curve is part of a TRUST sum's population (`rules/claims.md` §2). It belongs on
                 the figure rather than in a footer line nobody needs twice. */}
             <span className="text-right" title={`Read on pricing ${curveId}`}>
