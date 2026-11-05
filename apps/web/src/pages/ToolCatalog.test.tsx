@@ -1,5 +1,5 @@
 import {fireEvent, screen} from "@testing-library/react";
-import {describe, expect, it, vi} from "vitest";
+import {beforeEach, describe, expect, it, vi} from "vitest";
 
 import type {ToolCatalogView, ToolRow} from "../services/tool-catalog";
 import {renderWithProviders} from "../test/render";
@@ -16,7 +16,6 @@ const row = (index: number, source: string | null): ToolRow => ({
     declarations: 0,
     declarers: [],
     provenDeposits: null,
-    declaredDeposits: null,
     supportTrust: "0.001",
     opposeTrust: null,
     stakers: 0,
@@ -34,8 +33,15 @@ const VIEW: ToolCatalogView = {
 // The "video" domain holds the first 30 skills.
 const VIDEO = new Set(VIEW.rows.slice(0, 30).map((entry) => entry.key.toLowerCase()));
 
+// Whether Usage can be read does not wait for the read: `loaded` false is the first render.
+const catalogState = {reads: true, loaded: true};
 vi.mock("../hooks/use-tool-catalog", () => ({
-    useToolCatalog: () => ({data: VIEW, error: null, refetch: async () => undefined}),
+    useReadsUsage: () => catalogState.reads,
+    useToolCatalog: () => ({
+        data: catalogState.loaded ? VIEW : undefined,
+        error: null,
+        refetch: async () => undefined,
+    }),
 }));
 vi.mock("../hooks/use-domain-tree", () => ({
     useDomainTree: () => ({tree: undefined, options: [{label: "video", depth: 0}], error: null}),
@@ -59,6 +65,11 @@ const range = () => screen.getByRole("navigation", {name: "Tool pages"}).querySe
 const next = () => fireEvent.click(screen.getByRole("button", {name: "Next →"}));
 
 describe("the tools page", () => {
+    beforeEach(() => {
+        catalogState.reads = true;
+        catalogState.loaded = true;
+    });
+
     it("shows 25 rows at a time and steps through them", () => {
         renderWithProviders(<ToolCatalog />);
         expect(range()).toHaveTextContent("1–25 of 60");
@@ -78,6 +89,46 @@ describe("the tools page", () => {
         expect(range()).toHaveTextContent("26–50 of 60");
         fireEvent.click(screen.getByRole("button", {name: "Most installs"}));
         expect(range()).toHaveTextContent("1–25 of 60");
+    });
+
+    it("keeps Most used pressed across an index switch, and on the first page", () => {
+        renderWithProviders(<ToolCatalog />);
+        next();
+        const used = screen.getByRole("button", {name: "Most used"});
+        fireEvent.click(used);
+        expect(used).toHaveAttribute("aria-pressed", "true");
+        expect(range()).toHaveTextContent("1–25 of 60");
+        fireEvent.click(screen.getByRole("button", {name: /Repositories/}));
+        expect(screen.getByRole("button", {name: "Most used"})).toHaveAttribute(
+            "aria-pressed",
+            "true",
+        );
+    });
+
+    it("leads on Most used before the read returns, so the control does not move", () => {
+        catalogState.loaded = false;
+        renderWithProviders(<ToolCatalog />);
+        expect(screen.getByRole("button", {name: "Most used"})).toHaveAttribute(
+            "aria-pressed",
+            "true",
+        );
+    });
+
+    it("offers no Most used where Usage cannot be read, and restores it on the way back", () => {
+        const {rerender} = renderWithProviders(<ToolCatalog />);
+        catalogState.reads = false;
+        rerender(<ToolCatalog />);
+        expect(screen.queryByRole("button", {name: "Most used"})).toBeNull();
+        expect(screen.getByRole("button", {name: "Most installs"})).toHaveAttribute(
+            "aria-pressed",
+            "true",
+        );
+        catalogState.reads = true;
+        rerender(<ToolCatalog />);
+        expect(screen.getByRole("button", {name: "Most used"})).toHaveAttribute(
+            "aria-pressed",
+            "true",
+        );
     });
 
     it("goes back to the first page when the index changes", () => {

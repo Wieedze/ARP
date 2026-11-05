@@ -38,11 +38,9 @@ import {DEFAULT_CURVE_ID} from "./sources/intuition/index.js";
  * **Proven and declared are read from events, not positions** (ADR `0094` §2, task 42). A deposit
  * made through ARP's sponsoring service and one made from Intuition's explorer land in the same
  * vault, and a position merges both: a withdrawal does not say which part it takes. The `Deposited`
- * event keeps its `sender`, so a deposit is counted proven when its sender is the sponsoring
- * address. That is not the same as passing the proof gate: the edge creations the service pays for
- * count too, and so does anything else the same key sent (on 13579 it is also ARP's deployer;
- * `scripts/measure/sponsor-deposit-provenance.ts`). The address is config: with none given, every
- * deposit is declared.
+ * event keeps its `sender` and its `receiver`, so a deposit the sponsoring address sent to another
+ * wallet went through the proof gate and every other one did not, the service's own creation deposit
+ * included (ADR `0143`). The address is config: without one, every deposit is declared.
  */
 
 
@@ -97,15 +95,14 @@ export type ToolListing = {
      */
     pricedEdges: number;
     /**
-     * Deposits on this tool's edges sent by the sponsoring address, whatever they were: a
-     * proof-gated deposit, an edge creation the service paid for, or another write from the same
-     * key (the module header). `0` when no sponsoring address is configured, which is true rather
-     * than unknown.
+     * Deposits on this tool's edges the sponsoring address sent to somebody else — each one passed
+     * ARP's proof gate. Its own creation deposit is not one (ADR `0143`). `0` when no sponsoring address is configured, which is true rather than unknown: nothing
+     * can have passed a gate that does not exist.
      */
     provenDeposits: number;
     /**
-     * Every other deposit on this tool's edges, the creation deposit of each edge included. An
-     * agent's own TRUST with no proof, or anybody else backing the claim.
+     * Every other deposit on this tool's edges, the creation deposit of each edge included, whoever
+     * created it. An agent's own TRUST with no proof, or anybody else backing the claim.
      */
     declaredDeposits: number;
     /** Summed across this tool's edges. Assets are additive; this is named as a sum for that reason. */
@@ -140,8 +137,8 @@ export type ToolListingConfig = {
     edgeLimit?: number;
     order?: ToolListingOrder;
     /**
-     * The address ARP's sponsoring service deposits from. Its deposits count as proven; omitted or
-     * `null`, every deposit counts as declared.
+     * The address ARP's sponsoring service deposits from. What it sends to another wallet counts as
+     * proven; omitted or `null`, every deposit counts as declared.
      */
     sponsor?: string | null;
 };

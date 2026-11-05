@@ -6,7 +6,7 @@ import {PageLoading} from "../components/brand/PageLoading";
 import {ToolCatalogList} from "../components/tool/ToolCatalogList";
 import {useAgentSearch} from "../hooks/use-agent-cohort";
 import {useSkillFacts} from "../hooks/use-skill-facts";
-import {useToolCatalog} from "../hooks/use-tool-catalog";
+import {useReadsUsage, useToolCatalog} from "../hooks/use-tool-catalog";
 import {linkClass} from "../lib/control-class";
 import {agentRefOf} from "../services/agent-lookup";
 import {livenessOf, rankTools, TOOL_CURVES, toolMatches} from "../services/tool-catalog";
@@ -116,6 +116,7 @@ function AgentResults({name}: {name: string}) {
 
 function ToolResults({query}: {query: string}) {
     const catalog = useToolCatalog("conviction", TOOL_CURVES[0]?.id ?? 1);
+    const axis = useReadsUsage() ? "usage" : "installs";
     const {factFor, repoFactFor} = useSkillFacts();
     const view = catalog.data;
     const matches =
@@ -125,13 +126,15 @@ function ToolResults({query}: {query: string}) {
                   view.rows.filter((row) =>
                       toolMatches(row, query, factFor(row.label)?.description ?? null),
                   ),
-                  "declared",
+                  axis,
                   (row) => ({
                       liveness: livenessOf(
                           repoFactFor(row.source === null ? row.label : `github.com/${row.source}`),
                       ),
                       installs: factFor(row.label)?.installs ?? null,
-                      stars: null,
+                      stars:
+                          repoFactFor(row.source === null ? row.label : `github.com/${row.source}`)
+                              ?.stars ?? null,
                   }),
               );
     return (

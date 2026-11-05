@@ -5,7 +5,7 @@ import {sponsorAddressFor} from "../sponsor";
 const SPONSOR = "0x906f3A52ec089f8D4E9127F91C6bE5Ae0d18f91f";
 
 describe("sponsorAddressFor", () => {
-    it("is null until one is configured, so every deposit reads as declared", () => {
+    it("is null until one is configured, so Usage has nothing to show", () => {
         expect(sponsorAddressFor(13579, undefined)).toBeNull();
         expect(sponsorAddressFor(13579, "")).toBeNull();
     });

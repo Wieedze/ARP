@@ -71,16 +71,14 @@ describe("buildToolCatalogView", () => {
         ).toBeNull();
     });
 
-    it("carries proven and declared deposits through as two figures, never one", () => {
-        // ADR 0094 §2: a deposit sent from the sponsoring address counts as proven, every other one
-        // as declared (`provenDeposits` holds what proven covers). Two figures side by side, and no
-        // sum or weighting of them (ADR 0046).
+    it("carries the proven deposits through, and no figure for the others", () => {
+        // ADR 0143: a deposit that did not come through the sponsor has no column.
         const view = buildToolCatalogView(
             page([tool({edgeCount: 3, provenDeposits: 2, declaredDeposits: 5})]),
         );
         expect(view.rows[0]?.declarations).toBe(3);
         expect(view.rows[0]?.provenDeposits).toBe(2);
-        expect(view.rows[0]?.declaredDeposits).toBe(5);
+        expect(view.rows[0]).not.toHaveProperty("declaredDeposits");
     });
 
     it("drops the paid-for figure, which equalled the claim count for every edge ARP writes", () => {
@@ -109,7 +107,6 @@ describe("buildToolCatalogView", () => {
             ],
         });
         expect(view.rows[0]?.provenDeposits).toBeNull();
-        expect(view.rows[0]?.declaredDeposits).toBeNull();
     });
 
     it("carries truncation through, so a prefix cannot read as the whole set", () => {
@@ -143,9 +140,9 @@ describe("buildToolCatalogView", () => {
         ]);
     });
 
-    it("never says a tool was used, only that somebody claimed it", () => {
-        // `docs/14`, first line: a runtime is unobservable from outside, so nothing this page reads
-        // can say a use happened. `declarations` counts sentences agents wrote. The label said
+    it("keeps the word used off the package's orders, which read unproven edges", () => {
+        // `docs/14`, first line: a runtime is unobservable from outside. `declarations` counts
+        // sentences agents wrote. Only Usage may carry the word, for its proof (ADR `0143`). The label said
         // "Most used" for one commit and the user caught it — "si on déclare qu'on l'utilise mais
         // on l'utilise pas ?". A tier-4 word on tier-1 data (`docs/09` §3).
         for (const label of TOOL_ORDERS.map((order) => order.label)) {
@@ -222,7 +219,6 @@ describe("a repository's skills (task 58)", () => {
                 declarations: 0,
                 declarers: [],
                 provenDeposits: 0,
-                declaredDeposits: 0,
             });
         expect(of("github.com/Anthropics/skills")).toBe("anthropics/skills");
         expect(of("https://github.com/anthropics/skills/")).toBe("anthropics/skills");
@@ -241,7 +237,6 @@ describe("a repository's skills (task 58)", () => {
             declarations: declarers.length,
             declarers,
             provenDeposits: 0,
-            declaredDeposits: 0,
         });
         const usage = skillUsageByRepo([
             skill("a", "Acme/skills", ["0xagent1", "0xagent2"]),

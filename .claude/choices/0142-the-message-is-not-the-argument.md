@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-11-05
+**Amended:** 2026-11-05, the user: « cétait beaucoup plus vendeur », then « ok vazy ». The signature is the title on the landing and the README, and the message the line beside it. The two texts are unchanged.
 **Triggered by:** the user, 2026-11-05: « on doit avoir un positionnement marketing différent » and « c'est plus notre argumentaire » (spelling corrected), then « ok go » on the plan. `docs/tasks/69`.
 
 **Amended 2026-11-05, same day, by the user:** « on ne doit pas tout changer ou effacer, on doit ajouter et affiner progressivement » (spelling corrected). The first pass replaced too much. The README's Find, Use and Vouch and `docs/01`'s one-liner came back, and only what is false was corrected. So the 40 of 42 figure stays in the README, beside the 26 of 42 that qualifies it, and the "Negative" below no longer holds on that point.

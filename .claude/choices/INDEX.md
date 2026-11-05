@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-141 decisions. Newest last. `choices/README.md` says when to write one.
+142 decisions. Newest last. `choices/README.md` says when to write one.
 
 ## Not accepted
 
@@ -174,4 +174,5 @@ Read these before relying on them.
 | [0141](0141-an-agent-line-carries-the-receipt-of-the-hire.md) | 2026-11-05 | Accepted | An agent's line carries the receipt of the hire, and is read from the index first |
 | [0142](0142-the-message-is-not-the-argument.md) | 2026-11-05 | Accepted | The public message is not the internal argument |
 | [0143](0143-the-ranking-moves-from-three-wallets.md) | 2026-11-05 | Accepted | The ranking moves from three wallets, and a line below that is only shown |
+| [0143](0143-tools-page-unknown-is-not-dead-and-most-used.md) | 2026-11-05 | Accepted | /tools counts only what the sponsor deposited for an agent |
 | [0144](0144-a-sponsored-line-asks-no-proof.md) | 2026-11-05 | Accepted | A sponsored line asks no proof of use, and its key stays out of the plugin's server |

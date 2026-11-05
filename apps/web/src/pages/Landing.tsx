@@ -141,11 +141,11 @@ function ScenePulse({read}: {read: Read<RecentDeclaration[]>}) {
             <div className="relative flex max-w-[min(40rem,44vw)] flex-col justify-end gap-6 max-[900px]:max-w-full max-[900px]:pt-[320px]">
                 <Reveal fade>
                     <p className="[text-wrap:balance] font-mono text-[length:var(--text-label)] uppercase tracking-[0.08em] text-[color:var(--color-steel)]">
-                        ARP · The public pulse for skills and autonomous agents
+                        ARP · Check before your agent installs or pays
                     </p>
                 </Reveal>
                 <h1 className="type-face text-[clamp(36px,4.4vw,60px)]">
-                    <Words text="Check before your agent installs or pays." />
+                    <Words text="The public pulse for skills and autonomous agents." />
                 </h1>
                 {/* The sentence under the title and the "or build against it" link were cut by
                     the user, 2026-10-29: the call to action follows the title directly. */}

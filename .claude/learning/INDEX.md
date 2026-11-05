@@ -2,7 +2,7 @@
 
 **Generated** 2026-11-05 by `scripts/build/build-claude-index.ts`. Do not edit by hand — rerun the script.
 
-67 entries, one per completed task. Written by `task-verifier` on a pass.
+68 entries, one per completed task. Written by `task-verifier` on a pass.
 
 | # | task | verdict | entry |
 | --- | --- | --- | --- |
@@ -71,5 +71,6 @@
 | [58](58-usage-columns.md) | `docs/tasks/58-usage-columns.md` | PASS (second round; round 1 FAIL | /tools' Usage column filled, and a repository's skills shown on its row |
 | [59](59-the-field-memory.md) | `docs/tasks/68-the-field-memory.md`, phases 1 to 4. Phases 5 and 6 are not started and are out of this close. | PASS on the fourth pass | The field memory: a failure the hook sees, read back at the next search |
 | [60](60-the-agent-pulse.md) | `docs/tasks/65-the-agent-pulse.md` | PASS (second pass; the first failed on seven items, all closed), and PASS again on §§8 and 9 and the two merges of `feat/pulse` | The agent pulse: the same walk for agents, with a second party |
+| [60](60-tools-page-sponsor-filter.md) | no task file; the spec is `.claude/choices/0143-tools-page-unknown-is-not-dead-and-most-used.md` | PASS, after earlier FAILs | /tools counts only what the sponsor deposited for an agent |
 | [61](61-a-false-line.md) | `docs/tasks/71-a-false-line.md`, and `docs/tasks/70-the-local-package.md` items 1 and 3 | PASS (second pass; the first failed on six blocking and five minor items, all closed), and PASS on §5 at its second reading (the first failed on four blocking and two minor items, all closed) | A false line, and a line the plugin can write |
 | [62](62-the-local-package.md) | `docs/tasks/70-the-local-package.md` | PASS, at the second reading | The whole package, working locally |

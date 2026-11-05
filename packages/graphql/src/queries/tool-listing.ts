@@ -1,8 +1,8 @@
 /**
  * The `uses` edges `/tools` is built on, with what stands behind each and who sent each deposit.
  *
- * **Two documents, one shape.** The sponsored one adds a `proven` count filtered on `sender_id`, and
- * the other leaves it out rather than passing a null sender: Intuition's indexer rejects a null
+ * **Two documents, one shape.** The sponsored one adds a `proven` count filtered on `sender_id` and
+ * `receiver_id`, and the other leaves it out rather than passing a null sender: Intuition's indexer rejects a null
  * `_eq` with `validation-failed` (probed on testnet 13579, 2026-10-30), and a filter that silently
  * matched everything would count every deposit as proven.
  *
@@ -10,6 +10,10 @@
  * case-sensitive: the same deposit counts 1 under `_ilike` and 0 under `_eq` with the address
  * lowercased (testnet 13579, 2026-10-30). The caller validates the address as 40 hex digits, so the
  * pattern carries no wildcard and matches exactly one string, whatever its case.
+ *
+ * **A deposit the sponsor made to itself is not proven.** Creating a term gives its creator the first
+ * position, so a triple the service creates carries one such deposit, with no proof behind it. The
+ * position that counts has the agent as receiver (ADR `0110`, ADR `0143`).
  *
  * **Deposits on the support term only, on every curve.** A deposit on the counter-triple is
  * opposition, not a use. The counts are of events, not amounts, so reading across curves adds no
@@ -21,7 +25,7 @@ function toolListingQuery(sponsored: boolean): string {
         : "$uses: String!, $sameAs: String!, $curveId: numeric!, $limit: Int!";
     const proven = sponsored
         ? `
-      proven: deposits_aggregate(where: {sender_id: {_ilike: $sponsor}}) { aggregate { count } }`
+      proven: deposits_aggregate(where: {sender_id: {_ilike: $sponsor}, receiver_id: {_nilike: $sponsor}}) { aggregate { count } }`
         : "";
     return `
 query ToolListing(${variables}) {
@@ -57,5 +61,5 @@ query ToolListing(${variables}) {
 /** The listing with no sponsoring address configured: every deposit is `declared`. */
 export const TOOL_LISTING_QUERY = toolListingQuery(false);
 
-/** The listing with a sponsoring address, passed as `$sponsor`: its deposits are `proven`. */
+/** The listing with a sponsoring address, passed as `$sponsor`: what it sends to another wallet is `proven`. */
 export const TOOL_LISTING_SPONSORED_QUERY = toolListingQuery(true);

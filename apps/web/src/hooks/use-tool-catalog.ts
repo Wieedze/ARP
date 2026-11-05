@@ -110,11 +110,21 @@ export function toolCatalogQueryOptions(
     };
 }
 
-export function useToolCatalog(order: ToolListingOrder, curveId: number) {
+function useSponsorAddress(): string | null {
     const chain = useChainChoice();
     // Vite types every `import.meta.env` key through an index signature, so the value arrives as
     // `any`; annotating it here keeps that from crossing into a typed parameter.
     const configured: string | undefined = import.meta.env.VITE_ARP_SPONSOR_ADDRESS;
-    const sponsor = sponsorAddressFor(chain.chainId, configured, deployments.arp.sponsor);
+    return sponsorAddressFor(chain.chainId, configured, deployments.arp.sponsor);
+}
+
+/** Whether Usage can be read on this chain. Known without a read, so a control is right while one runs. */
+export function useReadsUsage(): boolean {
+    return useSponsorAddress() !== null;
+}
+
+export function useToolCatalog(order: ToolListingOrder, curveId: number) {
+    const chain = useChainChoice();
+    const sponsor = useSponsorAddress();
     return useQuery(toolCatalogQueryOptions({...chain, sponsor}, order, curveId));
 }

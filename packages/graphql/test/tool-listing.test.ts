@@ -16,10 +16,10 @@ describe("the tool listing documents", () => {
         expect(TOOL_LISTING_QUERY).not.toContain("proven");
     });
 
-    it("filters the proven count on the sender, case-insensitively", () => {
+    it("counts as proven what the sponsor sent to somebody else, case-insensitively", () => {
         expect(TOOL_LISTING_SPONSORED_QUERY).toContain("$sponsor: String!");
         expect(TOOL_LISTING_SPONSORED_QUERY).toContain(
-            "proven: deposits_aggregate(where: {sender_id: {_ilike: $sponsor}})",
+            "proven: deposits_aggregate(where: {sender_id: {_ilike: $sponsor}, receiver_id: {_nilike: $sponsor}})",
         );
     });
 

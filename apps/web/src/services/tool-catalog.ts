@@ -19,12 +19,6 @@ import type {
  */
 
 /**
- * The two orders the page offers, and neither is a quality ranking.
- *
- * There is no order by score and will not be: ARP composes none (ADR `0046`), and one descending
- * score column would undo the argument the whole surface exists to make.
- */
-/**
  * The two bonding curves, named for what a position on each one *means* rather than by its id.
  *
  * Read off the curve registry on mainnet 1155, 2026-10-20: there are exactly two — curve 1 "Linear
@@ -158,30 +152,22 @@ export type ToolRow = {
     label: string | null;
     href: string;
     /**
-     * How many `uses` edges point at the tool. No column shows it, so it sorts `/tools` only as a
-     * tiebreak, after the Declared and Usage figures the reader can see.
+     * How many `uses` edges point at the tool. No column shows it and it orders nothing: anybody can
+     * write an edge (ADR `0143`).
      */
     declarations: number;
     /** The agents that declared the tool, by identity atom, each once. Empty when unknown here. */
     declarers: readonly string[];
     /**
-     * Deposits on the tool's edges sent from ARP's sponsoring address (ADR `0094` §2), the "Usage"
-     * column. Not every one passed the proof gate: on 13579, 2026-11-03, 6 of 13 did, 4 were edge
-     * creations the service paid for, and 3 the deployer wrote from the same key before the service
-     * existed (`scripts/measure/sponsor-deposit-provenance.ts`). `null` when this read cannot say.
+     * Deposits on the tool's edges that ARP's sponsoring service sent to an agent, so each one passed
+     * the proof gate (ADR `0094` §2). Its own creation deposit is not one (ADR `0143`). The "Usage"
+     * column, and the only figure on the page that word is true
+     * of. `null` when this read cannot say.
      *
      * Read from the deposit events, not from positions: a position merges a sponsored deposit with
      * the agent's own, and a withdrawal does not say which part it takes.
      */
     provenDeposits: number | null;
-    /**
-     * Every other deposit on the tool's edges, the creation deposit of each edge included. The
-     * "Declared" column. `null` when this read cannot say.
-     *
-     * It replaced "Paid for", which counted edges carrying a position and equalled the edge count
-     * for every edge ARP writes, because a term is born with its creator's position (ADR `0053`).
-     */
-    declaredDeposits: number | null;
     supportTrust: string;
     /**
      * TRUST deposited against the tool's declarations, or `null`.
@@ -315,7 +301,6 @@ function rowOf(tool: ToolListing): ToolRow {
         declarations: tool.edgeCount,
         declarers: tool.declarers,
         provenDeposits: tool.provenDeposits,
-        declaredDeposits: tool.declaredDeposits,
         supportTrust: formatTrust(tool.supportAssetsSum),
         // Not when it is below the smallest figure shown: that is the counter vault's creation
         // deposit, "<0.00000001 against" that nobody put there (task 48).
@@ -339,10 +324,9 @@ function registeredRowOf(tool: RegisteredTool): ToolRow {
         declarers: [],
         // `null`, not `0`: a registered row's deposits are on its edges, which is `listTools`'s
         // read, so they are **unknown** here. A tool whose edges that read did find appears as a
-        // declared row instead and carries both figures. A zero would read as "nobody deposited",
+        // declared row instead and carries the figure. A zero would read as "nobody deposited",
         // a claim this read cannot make — the oppose column stays empty for the same reason.
         provenDeposits: null,
-        declaredDeposits: null,
         supportTrust: formatTrust(tool.assets),
         opposeTrust: null,
         stakers: tool.positionCount,
@@ -414,33 +398,38 @@ export function livenessOf(fact: {archived: boolean; gone: boolean} | null): Liv
  * axis belongs to the reader, and every axis's figure sits on the row beside the others, so it is
  * visible which one is doing the work.
  */
-export type ToolSortAxis = "declared" | "installs" | "stars";
+export type ToolSortAxis = "usage" | "installs" | "stars";
 
 /**
- * Two axes per index, and only ones that mean something there (user, 2026-10-30).
+ * The axes per index, and only ones that mean something there (user, 2026-10-30).
  *
- * "Most staked" and "Most claims" were two orders of the same thing, and read as noise. **Declared**
- * is the one ARP measures: the Declared column, deposits on the tool's `uses` edges not sent from
- * the sponsoring address (task 42), so the order reads down the figure it is named for. Not "used":
- * the user asked for that word and, reminded of 2026-10-27, chose "declared" — a declaration is a
- * signed sentence, not an observed use (`docs/14`). Stake behind those edges
- * is the tiebreak and stays on the row, not a separate order. The second axis is somebody else's
- * figure: skills.sh's installs for a skill, GitHub's stars for a repository. A skill's stars would
- * be its repository's, tied across every skill in it, so skills do not get that axis.
+ * **Most used** is the one ARP measures: the Usage column, deposits the sponsoring service sent to an
+ * agent after checking a proof, so the order reads down the figure it is named for. That proof is
+ * what lets it carry the word the user refused on 2026-10-27 for unproven edges (`docs/14`). A deposit
+ * that did not come through the sponsor counts for nothing here: "Most declared" and its column are
+ * gone, the user's filter (ADR `0143`). It is offered only where Usage can be read, so mainnet starts
+ * from installs or stars until a sponsor exists there.
+ *
+ * The other axis is somebody else's figure: skills.sh's installs for a skill, GitHub's stars for a
+ * repository. A skill's stars would be its repository's, tied across every skill in it, so skills do
+ * not get that axis.
  */
-export function toolSortAxesFor(index: ToolIndex): readonly {id: ToolSortAxis; label: string}[] {
+export function toolSortAxesFor(
+    index: ToolIndex,
+    readsUsage: boolean,
+): readonly {id: ToolSortAxis; label: string}[] {
+    const usage = readsUsage ? [{id: "usage" as const, label: "Most used"}] : [];
     return index === "skills"
-        ? [
-              {id: "declared", label: "Most declared"},
-              {id: "installs", label: "Most installs"},
-          ]
-        : [
-              {id: "declared", label: "Most declared"},
-              {id: "stars", label: "Most stars"},
-          ];
+        ? [...usage, {id: "installs", label: "Most installs"}]
+        : [...usage, {id: "stars", label: "Most stars"}];
 }
 
-const LIVENESS_RANK: Record<Liveness, number> = {alive: 0, unknown: 1, dead: 2};
+/**
+ * Only the owner's own word sinks a tool. `unknown` sits with `alive`: the readings are a list frozen
+ * at build time, so ranking it lower buried every repository absent from it, whatever it had received
+ * (ADR `0143`).
+ */
+const LIVENESS_RANK: Record<Liveness, number> = {alive: 0, unknown: 0, dead: 1};
 
 /**
  * Whether a tool answers a search (task 48): its name, its label (the URL it was registered by),
@@ -500,7 +489,7 @@ export function pageOfTools(
 }
 
 /**
- * Gate, then sort. A tool that does not answer sorts below one that does, whatever either staked.
+ * Gate, then sort. A tool that is archived or gone sorts below the others, whatever either staked.
  *
  * `installs` lives beside the chain rather than on it (a skill atom carries its URL and nothing
  * else, ADR `0054`), so the sort happens here rather than in the query — which the page can afford
@@ -520,24 +509,14 @@ export function rankTools(
         if (axis === "installs" && a.installs !== b.installs)
             return (b.installs ?? -1) - (a.installs ?? -1);
         if (axis === "stars" && a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
-        // **The order reads down the column it is named for.** "Most declared" sorts on the
-        // Declared figure, deposits not sent from the sponsoring address, and not on the edge
-        // count: two edges with three deposits each print 6 and rank above three edges with one
-        // each, which print 3. It sorted on `declarations` until review found the Declared column not
-        // reading down in order under its own sort. `null` (unknown) ranks below a known zero.
-        const leftDeclared = left.declaredDeposits ?? -1;
-        const rightDeclared = right.declaredDeposits ?? -1;
-        if (leftDeclared !== rightDeclared) return rightDeclared - leftDeclared;
+        // `null` (unknown) ranks below a known zero, on every axis: the figure is the column's.
         const leftProven = left.provenDeposits ?? -1;
         const rightProven = right.provenDeposits ?? -1;
         if (leftProven !== rightProven) return rightProven - leftProven;
-        if (right.declarations !== left.declarations) return right.declarations - left.declarations;
-        // Then the stake, as the tiebreak: the position COUNT before the amount, because creating a
-        // term seeds its vault, so an amount alone ranks a tool nobody staked on above nothing at
-        // all (ADR `0042`).
-        const leftStakers = left.stakers ?? 0;
-        const rightStakers = right.stakers ?? 0;
-        if (leftStakers !== rightStakers) return rightStakers - leftStakers;
-        return right.supportTrust.localeCompare(left.supportTrust, "en", {numeric: true});
+        // Ties go to figures no deposit can move: a stake or an edge count here would let a deposit
+        // outside the sponsor change the order, which is the filter (ADR `0143`).
+        if (a.installs !== b.installs) return (b.installs ?? -1) - (a.installs ?? -1);
+        if (a.stars !== b.stars) return (b.stars ?? -1) - (a.stars ?? -1);
+        return left.name.localeCompare(right.name, "en");
     });
 }

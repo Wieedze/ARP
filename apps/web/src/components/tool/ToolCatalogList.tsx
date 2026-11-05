@@ -10,45 +10,46 @@ import {shortTrust} from "../../services/trust-format";
  * Tools as a list, not as N boxes.
  *
  * One grid, one hairline under each row, every figure in mono and right-aligned so the columns read
- * down. Four columns and no more: the name, the deposits ARP's sponsoring address sent ("Usage"),
- * every other deposit ("Declared"), and the TRUST summed across the edges. Proven first, by the
- * user's decision (ADR `0094` §2), and never weighted against each other. Nothing restates a column
- * in prose.
+ * down. Three columns and no more: the name, the deposits that passed ARP's proof gate ("Usage"),
+ * and the TRUST summed across the edges. Nothing else counts here: a deposit that did not come
+ * through the sponsor has no column, the user's filter (ADR `0143`). Nothing restates a column in
+ * prose.
  *
  * **A row says which population it came from**, under the name and in small type rather than as a
- * fifth column. The figure means something different in each: a `declared` row's TRUST is summed
+ * further column. The figure means something different in each: a `declared` row's TRUST is summed
  * across the edges agents wrote, a `registered` row's is what sits on the tool's own atom. Same
  * column, two questions — so the row has to say which. The tool's own page carries the per-edge
  * markets and **not** the atom's vault, so it does not yet spell the distinction out; until it does,
  * this sub-label is the only place it is said.
  *
- * Below `sm` the four columns collapse to two and the name spans **three** rows, because there are
- * three numeric cells: with `row-span-2` the third one overflows column 2 and wraps to the next
- * row's first column, landing out of line with the two above it. `CohortList` spans two because it
- * has two.
+ * Below `sm` the three columns collapse to two and the name spans two rows, one per numeric cell, as
+ * `CohortList` does.
  *
  * `Headers` is built from `ROW_GRID` rather than a hand-written copy — the string already carries
  * its own `sm:` variants, so there is nothing to prefix and no second grid to keep in step.
  */
 
 const ROW_GRID =
-    "grid grid-cols-[minmax(0,1fr)_minmax(6rem,9rem)] sm:grid-cols-[minmax(0,1fr)_5rem_5rem_minmax(7rem,10rem)] items-start gap-x-4 gap-y-0.5";
+    "grid grid-cols-[minmax(0,1fr)_minmax(6rem,9rem)] sm:grid-cols-[minmax(0,1fr)_5rem_minmax(7rem,10rem)] items-start gap-x-4 gap-y-0.5";
 
 /**
  * One figure with the label its column header carries at wider widths.
  *
  * `sm:sr-only`, never `sm:hidden`: above `sm` the header supplies the label visually, but this is a
  * plain grid and not a table, so nothing associates a header with a cell programmatically. A
- * `display: none` label is a label nothing can read, and a screen reader would get three bare
- * numbers per row.
+ * `display: none` label is a label nothing can read, and a screen reader would get two bare
+ * numbers per row. A blank figure gets no label: below `sm` it would sit on the Support amount and
+ * name it.
  */
 function Figure({value, label}: {value: string; label: string}) {
     return (
         <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
             {value}
-            <span className="sm:sr-only block text-[length:var(--text-label)] text-[color:var(--color-steel)] font-sans">
-                {label}
-            </span>
+            {value === "" ? null : (
+                <span className="sm:sr-only block text-[length:var(--text-label)] text-[color:var(--color-steel)] font-sans">
+                    {label}
+                </span>
+            )}
         </span>
     );
 }
@@ -81,7 +82,7 @@ function Row({
                         // narrow widths, and an atom id standing in for a missing label is a hex
                         // string nothing else explains.
                         title={row.name}
-                        className={`min-w-0 row-span-3 sm:row-span-1 block truncate leading-tight ${
+                        className={`min-w-0 row-span-2 sm:row-span-1 block truncate leading-tight ${
                             row.isUnnamed
                                 ? "font-mono text-[length:var(--text-body-sm)]"
                                 : "font-medium"
@@ -89,16 +90,14 @@ function Row({
                     >
                         {row.name}
                         {/* Under the name, not a column: it qualifies the row rather than measuring
-                            it, and a fifth column would be a fifth column on a list that reads
+                            it, and a further column would be one more on a list that reads
                             down. The repository comes first because it is the part a reader scans
                             for; what kind of row it is follows. */}
                         {/* **Only what differs between rows.** "REGISTERED · 1 ON THE TOOL" used
                             to sit here and was identical on all 715: a line that cannot vary is
                             not information, it is the width it occupies. `named by agents` is
                             kept because it is rare and it changes what the figures mean. It said
-                            "declared by agents" until the Declared column arrived (task 42), and
-                            one row then carried "declared" for two different things: where the
-                            row came from, and a count of deposits. */}
+                            "declared by agents" until task 42. */}
                         <span className="block font-mono text-[length:var(--text-label)] font-normal text-[color:var(--color-steel)]">
                             {row.source}
                             {fact?.installs === null || fact === null ? null : (
@@ -167,9 +166,8 @@ function Row({
                     {/* A zero is blanked, not printed. On a page where nothing has been declared
                         yet, a column of 715 zeros reads as data and is noise. An unknown stays
                         empty too, like the oppose cell below: a registered row's deposits are on
-                        its edges, which is the declared read. */}
+                        its edges, which is `listTools`'s read. */}
                     <Figure value={countText(row.provenDeposits)} label="usage" />
-                    <Figure value={countText(row.declaredDeposits)} label="declared" />
                     <span className="font-mono text-[length:var(--text-body-sm)] tabular-nums text-right leading-tight">
                         {/* **Creation dust is not a stake.** Creating a term seeds its vault with
                             `minDeposit` (ADR `0042`), so every one of the 715 registered rows
@@ -216,7 +214,6 @@ function Headers({curveId}: {curveId: number}) {
                 (`scripts/measure/sponsor-deposit-provenance.ts`). */}
             <span>Tool</span>
             <span className="text-right">Usage</span>
-            <span className="text-right">Declared</span>
             {/* The curve is part of a TRUST sum's population (`rules/claims.md` §2). It belongs on
                 the figure rather than in a footer line nobody needs twice. */}
             <span className="text-right" title={`Read on pricing ${curveId}`}>
