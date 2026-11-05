@@ -104,7 +104,19 @@ export function commandsFor(env: InstallEnv, cliPath: string, capture = false, s
   const fromNpx = /[\\/]_npx[\\/]/.test(cliPath);
   const mcp: McpServer = {
     ...(fromNpx
-      ? { command: 'npx', args: ['--prefix', '/', '-y', `@arp-protocol/cli@${env.version}`, 'mcp'] }
+      ? {
+          command: 'npx',
+          // `--prefer-offline`: the version is pinned, so the cache cannot serve another one, and
+          // without it a dead registry holds the start for 70 s and more where a runtime gives up.
+          args: [
+            '--prefix',
+            '/',
+            '-y',
+            '--prefer-offline',
+            `@arp-protocol/cli@${env.version}`,
+            'mcp',
+          ],
+        }
       : { command: env.node, args: [cliPath, 'mcp'] }),
     env: sponsored ? SPONSORED_ENV : SERVER_ENV,
   };

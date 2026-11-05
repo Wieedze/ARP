@@ -60,10 +60,11 @@ function mcpServer(source: Source) {
       ? { command: 'node', args: [join(source.dist, 'cli.js'), 'mcp'] }
       : source.kind === 'npm'
         ? // `--prefix /`: from the project, a planted package or `.npmrc` would run instead (tried, ADR `0145`).
-          { command: 'npx', args: ['--prefix', '/', '-y', `${pkg.name}@${pkg.version}`, 'mcp'] }
+          // `--prefer-offline`: pinned, so the cache cannot serve another version, and a dead registry cannot hold the start.
+          { command: 'npx', args: ['--prefix', '/', '-y', '--prefer-offline', `${pkg.name}@${pkg.version}`, 'mcp'] }
         : // `npx -y <file>.tgz` tries to execute the archive itself ("Permission denied", tried
           // 2026-11-02); naming it as the package and `arp` as the command is what runs.
-          { command: 'npx', args: ['--prefix', '/', '-y', '--package', source.url, 'arp', 'mcp'] };
+          { command: 'npx', args: ['--prefix', '/', '-y', '--prefer-offline', '--package', source.url, 'arp', 'mcp'] };
   return { ...run, env: PLUGIN_ENV };
 }
 

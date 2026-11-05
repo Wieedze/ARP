@@ -286,7 +286,7 @@ describe('init', () => {
     );
     expect(at(json(join(home, '.gemini', 'settings.json')), 'mcpServers', 'arp')).toEqual({
       command: 'npx',
-      args: ['--prefix', '/', '-y', '@arp-protocol/cli@0.0.1', 'mcp'],
+      args: ['--prefix', '/', '-y', '--prefer-offline', '@arp-protocol/cli@0.0.1', 'mcp'],
       env: { ARP_TARGET: 'testnet' },
     });
   });

@@ -9,6 +9,7 @@
         "--prefix",
         "/",
         "-y",
+        "--prefer-offline",
         "@arp-protocol/cli@0.0.1",
         "mcp"
       ],
