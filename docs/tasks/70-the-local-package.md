@@ -83,9 +83,20 @@ The first two tries were refused in clear words, `"software" is not a category u
 
 **A trap:** the listing takes GitHub's own spelling, so `Wieedze/ARP` was listed as `intuition-box/ARP`, and a search under the old name does not reach the line. `writeLine` returns the URL it wrote under, as `toolUrl`.
 
-## Item 2, what shows it so far
+## Item 2, what shows it
 
-**Not ticked: no line has been written.** The user accepted the domain rule and starting the sponsor on 2026-11-05, adding « il y a toujours un contexte ». The chain write belongs to the walk.
+**Done, 2026-11-05.** The user accepted the domain rule and starting the sponsor, adding « il y a toujours un contexte ». Written in the walk by `arp-f3`, through the local sponsor and the real plugin, after a real failure of `web2md`:
+
+    $ arp share send
+    sent 1, failed 0
+    $ arp share send
+    sent 0, failed 0
+
+Read back from 13579 with no local memory, through `arp_pulse` in a separate `ARP_HOME`, `domain: document`:
+
+    "by_domain": {"document": 1}, "by_outcome": {"failed": 1}, "by_reason": {"missing-program": 1}
+
+The hook records a search from either server, as it matches `__arp_pulse` at the end of the tool's name. A person with ARP installed globally as well as the plugin has two servers of that name, which is `arp-f3`'s finding in the walk.
 
 Sharing off, shown by `apps/cli/test/share.test.ts`: the writer is never called, and `arp share send` stops before loading it.
 
