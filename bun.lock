@@ -26,9 +26,6 @@
       "bin": {
         "arp": "dist/cli.js",
       },
-      "dependencies": {
-        "viem": "2.52.0",
-      },
       "devDependencies": {
         "@arp-protocol/core": "workspace:*",
         "@arp/hook": "workspace:*",
@@ -36,6 +33,7 @@
         "@arp/node": "workspace:*",
         "@types/bun": "^1.4.4",
         "typescript": "~6.0.2",
+        "viem": "2.52.0",
       },
     },
     "apps/hook": {

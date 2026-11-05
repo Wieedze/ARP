@@ -4,8 +4,8 @@
 #
 #   NODE_BIN=/path/to/node22/bin bun run check:node
 #
-# NODE_BIN defaults to the directory of whatever `node` is on PATH. Needs network for `npm install`
-# to fetch viem.
+# NODE_BIN defaults to the directory of whatever `node` is on PATH. The package has no dependency
+# (ADR `0145`), and the check below that it stays so needs no network.
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")/.." && pwd)"
@@ -30,6 +30,8 @@ clean npm install --silent --no-audit --no-fund --prefix "$work/install" "$work/
 arp="$work/install/node_modules/.bin/arp"
 [[ -x "$arp" ]] || fail "no arp binary after install"
 pass "installed"
+[[ "$(ls "$work/install/node_modules" | wc -l)" -le 2 ]] || fail "the package pulled dependencies: $(ls "$work/install/node_modules" | tr "\n" " ")"
+pass "no dependency installed (ADR 0145)"
 
 clean "$arp" --help | grep -q '^usage' || fail "--help"
 pass "arp --help"
@@ -49,11 +51,6 @@ response="$(cd "$work/project" && printf '%s\n%s\n' \
 grep -q '"name":"ARP"' <<<"$response" || fail "arp mcp did not answer initialize"
 grep -q '"tools":\[' <<<"$response" || fail "arp mcp did not answer tools/list"
 pass "arp mcp answers initialize and tools/list over stdio"
-
-# An RPC is set so the check reaches the key; nothing is ever sent to it.
-set +e; out="$(clean env INTUITION_RPC_URL=http://127.0.0.1:9 "$arp" node 2>&1)"; code=$?; set -e
-[[ $code -ne 0 ]] && grep -q 'AGENT_PRIVATE_KEY' <<<"$out" || fail "arp node without a key: exit $code, $out"
-pass "arp node refuses to start without AGENT_PRIVATE_KEY"
 
 # The node over a real socket, against a local stub RPC that answers eth_chainId and nothing else.
 # The key is a throwaway constant, never funded; the node signs receipts and sends nothing.
