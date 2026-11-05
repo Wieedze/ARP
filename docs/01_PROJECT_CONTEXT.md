@@ -7,8 +7,8 @@ actually use.**
 
 > Stars show who looked. ARP shows who used it.
 
-**In public, since 2026-11-05:** "Check before your agent installs or pays", signed "The public pulse
-for skills and autonomous agents". `docs/30` holds what may be claimed today (ADR `0142`): the line
+**In public, since 2026-11-05:** "The public pulse for skills and autonomous agents", with "Check
+before your agent installs or pays" beside it. `docs/30` holds what may be claimed today (ADR `0142`): the line
 above describes where the product is going, and no third party has reported a result on a skill yet.
 
 The one-liner read "ARP makes money flow to the tools agents actually use" until 2026-11-03, when

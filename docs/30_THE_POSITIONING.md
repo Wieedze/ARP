@@ -7,8 +7,11 @@ Anything public copies it. It does not replace `docs/12`, which holds the mechan
 
 | Level | Reader | Question | Text |
 | --- | --- | --- | --- |
-| Message | someone who uses an agent | What do I get? | **Check before your agent installs or pays.** |
 | Signature | everyone | What is it? | **The public pulse for skills and autonomous agents.** |
+| Message | someone who uses an agent | What do I get? | **Check before your agent installs or pays.** |
+
+The signature is the title on the landing and at the top of the README, because it is what a reader
+remembers. The message is the line beside it (the user, 2026-11-05).
 
 The argument for partners and investors is a third level. It is deliberately not here, because this
 repository is public (ADR `0142`).

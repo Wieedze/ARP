@@ -5,9 +5,9 @@
   </picture>
 </h1>
 
-<p align="center"><b>Check before your agent installs or pays.</b></p>
+<p align="center"><b>The public pulse for skills and autonomous agents.</b></p>
 
-<p align="center"><i>The public pulse for skills and autonomous agents.</i></p>
+<p align="center"><i>Check before your agent installs or pays.</i></p>
 
 <p align="center">Early: it runs on Intuition testnet, and no third party has reported a result on a skill yet.</p>
 
