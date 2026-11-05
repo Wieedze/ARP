@@ -21,7 +21,6 @@ import {
   parseLocalFailures,
   parseSkillsFind,
   readDomainTree,
-  readPulse,
   readThingUrl,
   SCORE_VERSION,
   scoreSkill,
@@ -39,6 +38,8 @@ import {
 import { arpHome } from '@arp-protocol/core/node';
 import { stringToHex } from 'viem';
 
+import { diskListingCache } from '../pulse-cache.js';
+import { readWindow } from '../pulse-window.js';
 import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, READ_ONLY, reads } from '../config.js';
 import { agentsForDomain, offersForNeed } from './agents.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
@@ -137,6 +138,13 @@ function readConstraints(raw: unknown): Constraints {
  * shell variable named `end`.
  */
 export function setAsideBecause(pulse: SkillPulse, constraints: Constraints): string[] {
+  if (pulse.status === 'read_file_only') {
+    const reasons: string[] = [];
+    if (constraints.noKeys && pulse.keys.length > 0) reasons.push(`mentions ${pulse.keys.join(', ')}`);
+    const missing = pulse.requires.cli.filter((name) => !constraints.haveCommands?.has(name));
+    if (constraints.haveCommands !== null && missing.length > 0) reasons.push(`declares ${missing.join(', ')}`);
+    return reasons;
+  }
   if (pulse.status !== 'read') return [];
   const reasons: string[] = [];
   if (constraints.noKeys && pulse.keys.length > 0) reasons.push(`mentions ${pulse.keys.join(', ')}`);
@@ -158,6 +166,9 @@ export function setAsideBecause(pulse: SkillPulse, constraints: Constraints): st
 
 /** Word matches, which can be wrong either way. They do not set a skill aside: the reader checks them. */
 export function toCheck(pulse: SkillPulse, constraints: Constraints): string[] {
+  if (pulse.status === 'read_file_only') {
+    return constraints.noScripts ? ['whether it ships scripts is unknown: only its file was read'] : [];
+  }
   if (pulse.status !== 'read') return [];
   const lines: string[] = [];
   if (constraints.noLogin && pulse.requires.login !== null) {
@@ -176,15 +187,6 @@ export function toolUriOf(source: string, skill: string): string | null {
   if (!/^[\w.-]+\/[\w.-]+$/.test(source)) return null;
   const url = `https://github.com/${source}?skill=${encodeURIComponent(skill)}`;
   return skillRefFromUrl(url) === null ? null : toolAtomUri(url);
-}
-
-/** A few at a time, because each atom id is one read of a public RPC. */
-async function inBatches<T, R>(items: readonly T[], read: (item: T) => Promise<R>): Promise<R[]> {
-  const out: R[] = [];
-  for (let at = 0; at < items.length; at += 4) {
-    out.push(...(await Promise.all(items.slice(at, at + 4).map(read))));
-  }
-  return out;
 }
 
 export function usageLine(usage: PulseUsage | undefined, domain: string | null) {
@@ -237,6 +239,22 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
     installs_on_skills_sh: pulse.installsText,
     status: pulse.status,
   };
+  if (pulse.status === 'read_file_only') {
+    return {
+      ...base,
+      path: pulse.path,
+      only_its_file_was_read:
+        "GitHub's limit stopped the repository's list, so its scripts, its size and whether an install takes this copy are unknown.",
+      its_file_mentions: {
+        ...(pulse.keys.length === 0 ? {} : { keys: pulse.keys }),
+        ...(pulse.requires.login === null ? {} : { login: pulse.requires.login }),
+        ...(pulse.paidWords.length === 0 ? {} : { paid_words: pulse.paidWords }),
+        ...(pulse.hosts.length === 0 ? {} : { hosts: pulse.hosts }),
+      },
+      declares_cli: pulse.requires.cli,
+      runs: pulse.requires.runs,
+    };
+  }
   if (pulse.status !== 'read') {
     return { ...base, ...(pulse.status === 'ambiguous' ? { paths: pulse.paths } : {}), read: 'not read, so what it needs is unknown' };
   }
@@ -245,6 +263,7 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
     ...base,
     content_id: pulse.contentId,
     path: pulse.path,
+    ...(pulse.listingReadAt === undefined ? {} : { file_list_read_at: pulse.listingReadAt }),
     size: { files: pulse.files, bytes: pulse.bytes, scripts: pulse.scripts },
     its_file_mentions: {
       ...(pulse.keys.length === 0 ? {} : { keys: pulse.keys }),
@@ -424,14 +443,16 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     .map(({ result }) => result);
 
   const token = process.env['GITHUB_TOKEN'];
-  const source = githubPulseSource(token === undefined ? {} : { token });
-  // Read more than asked, because the constraints and the copies can remove most of a short list.
-  const window = ordered.slice(0, Math.min(limit * 3, 30));
-  const pulses = await inBatches(window, (result) =>
-    readPulse(result, source).catch(
-      (): SkillPulse => ({ ...result, status: 'repository_unreachable' }),
-    ),
-  );
+  const source = githubPulseSource({
+    ...(token === undefined ? { withRepository: false } : { token }),
+    cache: diskListingCache(join(arpHome(process.env, homedir()), 'pulse-listings')),
+  });
+  const pulses = await readWindow(ordered, source, {
+    limit,
+    hasToken: token !== undefined,
+    setAside: (row) => setAsideBecause(row, constraints).length > 0,
+  });
+  const quota = source.quota?.();
 
   const copies = new Map<string, SkillPulse[]>();
   for (const group of groupByContent(pulses)) copies.set(group.contentId, group.members);
@@ -460,6 +481,18 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     ...(phrases.length > 1 ? { phrases } : {}),
     results_found: results.length,
     results_read: pulses.length,
+    ...(quota?.limited === true
+      ? {
+          github_limit_reached: {
+            resets_at: quota.resetsAt,
+            read_fully: pulses.filter((row) => row.status === 'read').length,
+            file_only: pulses.filter((row) => row.status === 'read_file_only').length,
+            not_read: pulses.filter((row) => row.status === 'rate_limited').length,
+            say_this:
+              "GitHub's hourly limit for this address was reached. What is below was read before it or from the file alone, so check the rest yourself or try after the reset. A GITHUB_TOKEN raises the limit.",
+          },
+        }
+      : {}),
     order: scored
       ? `score ${SCORE_VERSION}: (prior from the search's rank + worked) / (1 + worked + failed), each a sum over distinct wallets, weighed by domain and reason, and 0 below ${WALLETS_TO_MOVE} wallets saying the same thing, which are only shown; deposits do not count`
       : domain === null

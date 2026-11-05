@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest";
 
 import {
+    githubPulseSource,
     frontmatterName,
     fuseSearches,
     groupByContent,
@@ -273,3 +274,90 @@ describe("groupByContent", () => {
         expect(groups[0]?.members.map((member) => member.source)).toEqual(["a/b", "c/d"]);
     });
 });
+
+describe("spending GitHub's hourly limit", () => {
+    const skill = "---\nname: wanted\n---\nNeeds ELEVENLABS_API_KEY.";
+    const limited = () =>
+        new Response("", {
+            status: 403,
+            headers: {"x-ratelimit-remaining": "0", "x-ratelimit-reset": "1793915410"},
+        });
+    const row = (source: string) => result(source, "wanted");
+
+    it("asks nothing more of the API once the limit is reached, and says when it resets", async () => {
+        const urls: string[] = [];
+        const source = githubPulseSource({
+            fetch: (async (input: string) => {
+                urls.push(input);
+                return input.startsWith("https://api.github.com") ? limited() : new Response("", {status: 404});
+            }) as unknown as typeof fetch, // the reader passes a string URL
+        });
+        await readPulse(row("a/one"), source);
+        await readPulse(row("b/two"), source);
+        expect(urls.filter((url) => url.startsWith("https://api.github.com"))).toHaveLength(1);
+        expect(source.quota?.()).toEqual({apiRequests: 1, limited: true, resetsAt: "2026-11-05T21:50:10.000Z"});
+    });
+
+    it("does not read a 403 without the limit's headers as the limit", async () => {
+        const source = githubPulseSource({
+            fetch: (async () => new Response("", {status: 403})) as unknown as typeof fetch, // as above
+        });
+        expect((await readPulse(row("a/blocked"), source)).status).toBe("repository_unreachable");
+        expect(source.quota?.().limited).toBe(false);
+    });
+
+    it("keeps what the file says when the list cannot be had, and claims nothing about scripts", async () => {
+        const source = githubPulseSource({
+            fetch: (async (input: string) => {
+                if (input.startsWith("https://api.github.com")) return limited();
+                return input.endsWith("/skills/wanted/SKILL.md") ? new Response(skill) : new Response("", {status: 404});
+            }) as unknown as typeof fetch, // as above
+        });
+        const pulse = await readPulse(row("a/one"), source);
+        expect(pulse).toMatchObject({status: "read_file_only", path: "skills/wanted/SKILL.md", keys: ["ELEVENLABS_API_KEY"]});
+        expect(pulse).not.toHaveProperty("scripts");
+    });
+
+    it("does not take a file at a usual path that names another skill", async () => {
+        const source = githubPulseSource({
+            fetch: (async (input: string) =>
+                input.startsWith("https://api.github.com")
+                    ? limited()
+                    : new Response("---\nname: another\n---\nbody")) as unknown as typeof fetch, // as above
+        });
+        expect((await readPulse(row("a/one"), source)).status).toBe("rate_limited");
+    });
+
+    it("leaves out the repository's figures when asked, which saves a request", async () => {
+        const urls: string[] = [];
+        const source = githubPulseSource({
+            withRepository: false,
+            fetch: (async (input: string) => {
+                urls.push(input);
+                if (input.includes("/git/trees/")) {
+                    return Response.json({sha: "r", tree: [{path: "skills/wanted/SKILL.md", type: "blob", sha: "f", size: 1}]});
+                }
+                return new Response(skill);
+            }) as unknown as typeof fetch, // as above
+        });
+        const pulse = await readPulse(row("a/one"), source);
+        expect(pulse).toMatchObject({status: "read", repository: null});
+        expect(urls.filter((url) => url.startsWith("https://api.github.com"))).toHaveLength(1);
+    });
+
+    it("serves a list from a cache and asks GitHub nothing, saying when it was read", async () => {
+        const listing = {rootTreeId: "r", files: [{path: "skills/wanted/SKILL.md", sha: "f", size: 1}], trees: new Map(), truncated: false, readAt: "2026-11-05T20:00:00.000Z"};
+        const urls: string[] = [];
+        const source = githubPulseSource({
+            withRepository: false,
+            cache: {get: async () => listing, set: async () => undefined},
+            fetch: (async (input: string) => {
+                urls.push(input);
+                return new Response(skill);
+            }) as unknown as typeof fetch, // as above
+        });
+        expect(await readPulse(row("a/one"), source)).toMatchObject({status: "read", listingReadAt: "2026-11-05T20:00:00.000Z"});
+        expect(urls.some((url) => url.startsWith("https://api.github.com"))).toBe(false);
+    });
+});
+

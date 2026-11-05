@@ -1,0 +1,88 @@
+{
+ "summary": {
+  "at": "2026-11-05T21:40:29.543Z",
+  "searchesReplayed": 13,
+  "limit": 5,
+  "hourlyQuotaWithNoToken": 60,
+  "apiRequestsPerSearch": {
+   "before": 25.23076923076923,
+   "after": 4.3076923076923075,
+   "afterSameSearchAgain": 0
+  },
+  "worst": {
+   "before": 30,
+   "after": 5
+  },
+  "searchesPerHour": {
+   "before": 2,
+   "after": 13
+  }
+ },
+ "measured": [
+  {
+   "before": 28,
+   "after": 5,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 28,
+   "after": 5,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 22,
+   "after": 4,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 14,
+   "after": 2,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 20,
+   "after": 2,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 24,
+   "after": 5,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 28,
+   "after": 5,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 28,
+   "after": 5,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 30,
+   "after": 5,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 28,
+   "after": 4,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 28,
+   "after": 5,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 28,
+   "after": 5,
+   "afterSameSearchAgain": 0
+  },
+  {
+   "before": 22,
+   "after": 4,
+   "afterSameSearchAgain": 0
+  }
+ ]
+}

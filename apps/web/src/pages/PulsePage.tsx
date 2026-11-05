@@ -62,6 +62,7 @@ const NOT_READ: Record<Exclude<SkillPulse["status"], "read">, string> = {
     ambiguous: "Several files carry this name and differ.",
     incomplete: "Its repository is too large to read here.",
     rate_limited: "GitHub's hourly limit was reached. Try again later.",
+    read_file_only: "GitHub's hourly limit was reached, so only its file was read.",
 };
 
 function FileFacts({pulse}: {pulse: SkillPulse}) {
