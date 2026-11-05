@@ -204,7 +204,7 @@ Enter moves to the next step, and Ctrl-C cleans up too. `--no-pause` runs it str
 | --- | --- | --- | --- |
 | 1 | A real search, and what each skill's files name | Public read | "Before the agent installs anything, it sees what the file names: commands, keys, a login, hosts. Those are matches, not requirements." |
 | 2 | `web2md` really fails, and the real hook writes one line | Local test | "The hook notes that this skill failed for want of a program, and keeps neither the command nor its output." |
-| 3 | The same search, with `failed on this machine` | Local test | "The next search on this machine knows, and nobody else can see it." |
+| 3 | The same search, with `failed on this machine` | Public search, local note | "The next search on this machine knows, and nobody else can see it." |
 | 4 | `arp share`, then what would be public | Local test | "Sharing is off until the person turns it on, and this is every word that would leave." The demo stops there and sends nothing |
 | 5 | A real line, its transaction, the explorer link | On chain, testnet | "Here is one written the same way, and it is one of ours: a test, not a report from somebody else." |
 | 6 | The figures, computed now | Read | "These are computed while you watch, and the script says who wrote them. So far that is us." |

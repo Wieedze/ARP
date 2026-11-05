@@ -65,7 +65,8 @@ async function step(at: number, title: string, kind: string): Promise<void> {
     }
     say(`\n${"=".repeat(WIDTH)}\n${at}. ${title}\n   ${kind}\n${"=".repeat(WIDTH)}`);
 }
-const LOCAL = "LOCAL TEST: on this machine, in a throwaway folder. Nothing leaves.";
+const LOCAL = "LOCAL TEST: on this machine, in a throwaway folder. Nothing about it leaves.";
+const LOCAL_NOTE = "LOCAL NOTE, on a public search: the note is read from this machine only.";
 const READ = "PUBLIC READ: asks public services. Nothing is written anywhere.";
 const CHAIN = "ON CHAIN: read back from Intuition testnet 13579. Test money, not mainnet.";
 const FIGURES = "READ: testnet 13579, its explorer and this repository. Nothing is written.";
@@ -276,7 +277,7 @@ async function stepFailure(): Promise<void> {
 }
 
 async function stepNextSearch(): Promise<void> {
-    await step(3, "The next search reports it", LOCAL);
+    await step(3, "The next search reports it", LOCAL_NOTE);
     if (server === null) throw new Error("the server did not start in step 1");
     wrapped("The same search again, on the same machine. This line comes from the local file, and nobody else can see it.");
     const {answer} = await server.pulse(SEARCH);
