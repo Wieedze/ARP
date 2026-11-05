@@ -20,7 +20,7 @@
 | 2 | `packages/protocol/src/local-failures.ts`: reads the file for one skill | built, with tests |
 | 3 | `arp_pulse` shows `failed_on_this_machine` on a skill | built, walked |
 | 4 | `arp backfill`: the same rule over old Claude Code transcripts (`apps/hook/src/backfill.ts`). Read once on the user's transcripts, into a throwaway home; Codex left out, no session to test it on | built, with tests |
-| 5 | A shorter `arp_pulse` answer by default | not started, out of this task's close |
+| 5 | A shorter `arp_pulse` answer by default | deferred by the user, 2026-11-05: « d'abord tout formaliser, puis améliorer ». After task 67, whose results show which fields matter |
 | 6 | Send chosen lines to testnet | not started, out of this task's close |
 
 ## 3. Decisions
