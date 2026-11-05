@@ -43,6 +43,7 @@ const read = (uses: unknown[], qualifiers: unknown[], limit?: number) =>
         inContextOf: CONTEXT,
         hasOutcome: OUTCOME,
         because: BECAUSE,
+        payers: [],
         transport: transport(uses, qualifiers),
         ...(limit === undefined ? {} : {limit}),
     });
@@ -241,9 +242,10 @@ describe("the wallet that pays for a line", () => {
         expect(usage?.declarations.find((row) => row.writer === "0xTreasury")?.lines).toEqual([]);
     });
 
-    it("keeps its row, since it did write the edge", async () => {
+    it("keeps its row, since it did write the edge, and is not counted as a wallet", async () => {
         const usage = (await paid([])).get(TOOL);
         expect(usage?.declarations.map((row) => row.writer)).toEqual(["0xTreasury"]);
+        expect(usage?.wallets).toBe(0);
     });
 });
 

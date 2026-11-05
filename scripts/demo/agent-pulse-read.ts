@@ -199,6 +199,7 @@ const usage = (
     inContextOf,
     hasOutcome,
     because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+    payers: [deployment.arp.deployer],
   })
 ).get(hiredAtom.toLowerCase());
 note('proof 3: the lines', {

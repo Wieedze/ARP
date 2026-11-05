@@ -1,7 +1,7 @@
 /**
  * The loop an outside user walks in Claude Desktop, with nothing to sign and nothing to pay
- * (`docs/tasks/50`), and in Claude Code (`docs/tasks/55`). Only `ARP_TOOLS=desktop` or `sponsored`
- * loads this file.
+ * (`docs/tasks/50`), and in Claude Code (`docs/tasks/55`). `ARP_TOOLS=desktop` or `sponsored` loads this
+ * file, and so does `arp line` (ADR `0144`).
  *
  *   arp_get_skill     the skill's files through ARP's content server, with a receipt naming this
  *                     agent as the caller
@@ -357,7 +357,10 @@ export async function writeLine(config: LoopConfig, agent: AgentSender, input: L
         };
       }
       const error = String(answer.body['error'] ?? '');
-      if (answer.status === 403 && /no identity atom on the graph/.test(error) && Date.now() < deadline) {
+      const notIndexedYet =
+        (answer.status === 403 && /no identity atom on the graph/.test(error)) ||
+        (answer.status === 422 && /the index has not seen it yet/.test(error));
+      if (notIndexedYet && Date.now() < deadline) {
         await wait(5_000);
         continue;
       }

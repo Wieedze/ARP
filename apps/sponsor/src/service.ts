@@ -244,7 +244,7 @@ export function createSponsor(options: SponsorOptions): {
       return json(
         {
           error:
-            'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category',
+            'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
         },
         404,
       );
@@ -262,7 +262,7 @@ export function createSponsor(options: SponsorOptions): {
       return json(
         {
           error:
-            'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category',
+            'GET /, or POST /gas, /mint-gas, /identity, /deposit, /publish, /list-tool, /propose-category, /line',
         },
         404,
       );

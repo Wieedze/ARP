@@ -14,7 +14,7 @@ The plugin has to write a line through the local sponsor with the person signing
 1. **`POST /line`, testnet 13579 only, no proof of use.** A line is the agent's word. It is bounded by `linesPerAgentPerDay` (default 5), `linesPerDay` (default 30) and the shared daily budget. The agent signs a request (`sponsor/line.ts`), which names the tool, domain, outcome and reason in closed words, and the service spends its nonce once.
 2. **The service creates the terms and deposits in the agent's name on each level**, so the agent's wallet stands behind the line. It checks the approval by simulation before it spends anything.
 3. **The key stays out of the plugin's server.** `arp line` is a separate process that loads `~/.arp/agent-key` for one call. `arp share` uses the same function.
-4. **The service's wallet says nothing by paying.** `getPulseUsage` takes `payers`, who stand behind no qualifier. Their row stays, since they did write the edge. The same wallet is the agent 13579/2 of the walk of task 63, so that agent's `worked` no longer counts and that skill goes from 2 wallets to 1, by the user's decision.
+4. **The service's wallet says nothing by paying.** `getPulseUsage` takes `payers`, who stand behind no qualifier. Their row stays, since they did write the edge. The same wallet is the agent 13579/2 of the walk of task 63, so that agent's `worked` no longer counts and that skill goes from 2 wallets to 1, by the user's decision. `usage.wallets` leaves payers out, so a use only the service wrote can read as one agent and no wallet. `payers` is a required setting, so no reader can leave it out.
 
 ## Alternatives considered
 
@@ -28,7 +28,9 @@ The plugin has to write a line through the local sponsor with the person signing
 
 **Negative:**
 - **ARP's treasury now pays for words nothing proves**, up to the caps. A fresh key is free to make, so `linesPerDay` and the budget are the real bound, and false lines on testnet are paid by ARP. A mainnet port needs a new ADR.
-- A line costs the service one fee per new term plus a deposit per level.
+- A line with all terms new costs the service 0.012 tTRUST on 13579: per level, the fee, its own birth deposit and a deposit for the agent. A fresh key's first day, with mint gas, approval gas, identity and 5 lines, is about 0.07 tTRUST, and the agent can redeem about 98% of its shares, so the treasury's money moves to a fresh key. `linesPerDay` and the budget are the bound.
+- A line about a non-tool is refused, which closes lifting an agent in `arp_find_agents` through this route. Writing directly is not closed: that list orders on `worked` with no threshold.
+- A line that reverts halfway stays counted with its nonce spent, so the caps see it. A line cut before T4 reads as a `failed` with no reason until it is retried.
 - A line with no domain counts only in a search that names no domain.
 
 ## References

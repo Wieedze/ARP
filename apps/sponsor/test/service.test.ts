@@ -2190,6 +2190,57 @@ describe('POST /line', () => {
     expect(w.sent).toHaveLength(0);
   });
 
+  test('refuses a term that is not a tool, such as an agent', async () => {
+    const w = seeded();
+    const answer = await call(
+      lineService(w, {
+        categories: {
+          isCategory: async () => true,
+          isKnown: async () => true,
+          isTool: async () => false,
+          invalidate: () => undefined,
+          compounds: new Map(),
+          attestors: [],
+          log: () => undefined,
+        },
+      }),
+      '/line',
+      { request: await request() },
+    );
+    expect(answer.status).toBe(422);
+    expect(w.sent).toHaveLength(0);
+  });
+
+  test('keeps a line that reverted halfway counted, with its nonce spent', async () => {
+    const w = seeded();
+    const inner = chainLike(w);
+    let sends = 0;
+    const halfway: SponsorWallet = {
+      ...inner,
+      send: async (c) => {
+        sends += 1;
+        const sent = await inner.send(c);
+        return sends === 2 ? { ...sent, status: 'reverted' } : sent;
+      },
+    };
+    const ledger = new SponsorLedger(null);
+    const service = lineService(w, { wallet: halfway, ledger });
+    const signed = await request();
+    expect((await call(service, '/line', { request: signed })).status).toBe(502);
+    expect((await call(service, '/line', { request: signed })).status).toBe(409);
+    expect(ledger.relevant(NOW).filter((r) => r.kind === 'line')).toHaveLength(1);
+  });
+
+  test('frees the nonce when the first call reverted, since nothing landed', async () => {
+    const w = seeded();
+    const inner = chainLike(w);
+    const first: SponsorWallet = { ...inner, send: async (c) => ({ ...(await inner.send(c)), status: 'reverted' }) };
+    const ledger = new SponsorLedger(null);
+    const service = lineService(w, { wallet: first, ledger });
+    expect((await call(service, '/line', { request: await request() })).status).toBe(502);
+    expect(ledger.relevant(NOW).filter((r) => r.kind === 'line')).toHaveLength(0);
+  });
+
   test('writes an outcome with no domain on the edge itself', async () => {
     const w = seeded();
     const answer = await post(lineService(w), { request: await request({ domain: '', outcome: 'worked', reason: '' }) });

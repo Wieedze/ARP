@@ -26,7 +26,7 @@ import {
 } from '@arp-protocol/core';
 import { createPublicClient, getAddress, http, parseAbi, stringToHex } from 'viem';
 
-import { chainId, GRAPHQL, IN_CONTEXT_OF, RPC, directory, domainWalk, reads, record } from '../config.js';
+import { chainId, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, RPC, directory, domainWalk, reads, record } from '../config.js';
 import { hostGuard, type HostGuard } from '../host-guard.js';
 import { readRegistrationDocument, type RegistrationDocument } from '../registration-document.js';
 import { type JsonRpcId, fail, text, isAddress } from '../rpc.js';
@@ -312,6 +312,7 @@ async function agentPulse(agentChainId: number, tokenId: string, registry: `0x${
         inContextOf: IN_CONTEXT_OF,
         hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
         because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+        payers: LINE_PAYERS,
       })
     ).get(agentAtom.toLowerCase());
     const declarations = [...(usage?.declarations ?? [])]
@@ -625,6 +626,7 @@ export async function agentsForDomain(domain: string): Promise<Record<string, un
       inContextOf: IN_CONTEXT_OF,
       hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
       because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
+      payers: LINE_PAYERS,
     },
   );
   // Only a line written by the agent it names counts: a triple's subject carries no authorisation, so anyone

@@ -91,7 +91,7 @@ export type PulseUsageConfig = {
      * sponsored line, so as a creator it would read as saying every one of them (ADR `0144`). Their row
      * stays, since they did write the edge, and they stand behind no qualifier.
      */
-    payers?: readonly string[];
+    payers: readonly string[];
     limit?: number;
     fetch?: FetchLike;
     timeoutMs?: number;
@@ -283,7 +283,7 @@ export async function getPulseUsage(
         edges.set(key(tripleId), {tool: key(tool), declarers});
     }
 
-    const payers = new Set((config.payers ?? []).map(key));
+    const payers = new Set(config.payers.map(key));
     const writers = [...new Set([...edges.values()].flatMap((edge) => [...edge.declarers.values()].map((row) => row.writer)))];
     const qualifiers = async (subjects: string[], predicates: string[]) =>
         subjects.length === 0
@@ -422,7 +422,8 @@ export async function getPulseUsage(
     for (const usage of out.values()) {
         usage.truncated = truncated;
         usage.agents = new Set(usage.declarations.map((declaration) => key(declaration.agent.atomId))).size;
-        usage.wallets = new Set(usage.declarations.map((declaration) => key(declaration.writer))).size;
+        // A payer's row says it wrote the edge, and it did not declare a use (ADR `0144`).
+        usage.wallets = new Set(usage.declarations.map((declaration) => key(declaration.writer)).filter((wallet) => !payers.has(wallet))).size;
         for (const declaration of usage.declarations) {
             for (const domain of declaration.domains) usage.byDomain[domain] = (usage.byDomain[domain] ?? 0) + 1;
             for (const outcome of declaration.outcomes) usage.byOutcome[outcome] = (usage.byOutcome[outcome] ?? 0) + 1;

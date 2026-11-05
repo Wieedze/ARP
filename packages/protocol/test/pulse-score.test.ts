@@ -61,6 +61,12 @@ describe("scoreSkill", () => {
         }
     });
 
+    it("never puts a skill the search did not return above the search's last result", () => {
+        for (let total = 2; total <= 100; total += 1) {
+            expect(priorFromRank(total - 1, total)).toBeGreaterThanOrEqual(priorFromRank(null, total));
+        }
+    });
+
     it("handles a search of one result", () => {
         expect(priorFromRank(0, 1)).toBeCloseTo(0.8);
     });

@@ -25,6 +25,7 @@ import {
   scoreSkill,
   type SignalContext,
   signalOf,
+  WALLETS_TO_MOVE,
   skillRefFromUrl,
   toolAtomUri,
   type PulseUsage,
@@ -442,7 +443,7 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     results_found: results.length,
     results_read: pulses.length,
     order: scored
-      ? `score ${SCORE_VERSION}: (prior from the search's rank + worked) / (1 + worked + failed), each a sum over distinct wallets, weighed by domain and reason; deposits do not count`
+      ? `score ${SCORE_VERSION}: (prior from the search's rank + worked) / (1 + worked + failed), each a sum over distinct wallets, weighed by domain and reason, and 0 below ${WALLETS_TO_MOVE} wallets saying the same thing, which are only shown; deposits do not count`
       : domain === null
         ? "the search's own"
         : `wallets that said it worked in "${domain}", then the search's own`,

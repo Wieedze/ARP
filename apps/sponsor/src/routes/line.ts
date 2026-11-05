@@ -74,6 +74,10 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
       if (!(await reads.termExists(request.tool))) {
         return json({ error: 'the tool has no atom: list it first (POST /list-tool)', rule: 'tool' }, 422);
       }
+      // Only a tool: a line about an agent's atom would lift that agent in a list ordered on `worked`.
+      if (!(await categories.isTool(request.tool))) {
+        return json({ error: 'this term is not a listed tool, or the index has not seen it yet', rule: 'tool' }, 422);
+      }
       usesId = await reads.tripleId(subject, options.usesPredicate, request.tool);
       edgeExists = await reads.termExists(usesId);
       const [tripleCost, minDeposit] = await Promise.all([reads.tripleCost(), reads.minDeposit()]);
@@ -145,8 +149,11 @@ export async function line(ctx: SponsorContext, body: Body): Promise<Response> {
 
     ledger.reserve({ kind: 'line', subject: agent, value, at: now(), key, termId: usesId });
     const transactions: Hex[] = [];
+    // A revert frees the reservation only when nothing landed. Terms already paid for stay counted, and
+    // the nonce stays spent, or a replay could lose more without any cap seeing it (ADR `0144`).
     const fail = (hash: Hex) => {
-      ledger.settle('line', key, { status: 'reverted', hash });
+      const last = transactions.at(-1);
+      ledger.settle('line', key, last === undefined ? { status: 'reverted', hash } : { status: 'success', hash: last });
       return json({ error: `transaction ${hash} reverted`, transactions }, 502);
     };
     for (const call of calls) {

@@ -38,7 +38,9 @@ export type PulseScore = {
 export function priorFromRank(rank: number | null, total: number): number {
     if (rank === null) return PRIOR_BOTTOM;
     if (total <= 1) return PRIOR_TOP;
-    return PRIOR_TOP - ((PRIOR_TOP - PRIOR_BOTTOM) * rank) / (total - 1);
+    // Held at the floor: 0.8 - 0.6 lands just under 0.2 in floating point, which put a skill the search
+    // did not return above the search's last result.
+    return Math.max(PRIOR_BOTTOM, PRIOR_TOP - ((PRIOR_TOP - PRIOR_BOTTOM) * rank) / (total - 1));
 }
 
 /** What a person can supply, so a failure for lack of it does not concern them. */

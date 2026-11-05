@@ -1,11 +1,11 @@
 /**
  * The agent key of the sponsored loop (ADR `0110`), in the Claude Desktop extension and in Claude
- * Code. Only `ARP_TOOLS=desktop` or `sponsored` loads this file; the protocol package still holds
- * no signer (ADR `0038`).
+ * Code. `ARP_TOOLS=desktop` or `sponsored` loads this file, and so does `arp line` for one call
+ * (ADR `0144`); the plugin's read-only server does not. The protocol package still holds no signer (ADR `0038`).
  *
  * The key is created on first use in `~/.arp/agent-key`, mode 0600, and never printed, logged or
  * returned. It signs two zero-value transactions on testnet 13579, `register()` and the MultiVault
- * approval, and two off-chain requests. Anything else is refused here, before a signature exists.
+ * approval, and off-chain requests. Anything else is refused here, before a signature exists.
  */
 import { homedir } from 'node:os';
 import { join } from 'node:path';
