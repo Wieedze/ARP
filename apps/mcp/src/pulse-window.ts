@@ -29,11 +29,13 @@ export async function readWindow(
     limit: number;
     hasToken: boolean;
     setAside: (pulse: SkillPulse) => boolean;
+    /** Past this no further result is read, so a caller's time limit holds however many are left. */
+    signal?: AbortSignal;
   },
 ): Promise<SkillPulse[]> {
   const window = results.slice(0, Math.min(options.limit * 3, 30));
   const pulses: SkillPulse[] = [];
-  for (let at = 0; at < window.length; ) {
+  for (let at = 0; at < window.length && options.signal?.aborted !== true; ) {
     const size = options.hasToken ? BATCH : Math.max(1, Math.min(BATCH, options.limit - usable(pulses, options.setAside)));
     const batch = window.slice(at, at + size);
     pulses.push(

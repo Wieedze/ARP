@@ -131,7 +131,7 @@ would stop accepting your receipts.
 
 ## Every outbound connection
 
-Six fixed hosts, the first two configurable, and agents' own signed addresses. The sponsored mode also reaches two more, both
+Seven fixed hosts, the first two configurable, and agents' own signed addresses. The sponsored mode also reaches two more, both
 configurable: ARP's content server (`ARP_CONTENT`) and ARP's sponsoring service (`ARP_SPONSOR`),
 both local by default. `arp line` and `arp share send` reach the sponsoring service too. `arp_pulse` reaches up to ten agents' signed addresses on a search with words: `GET /`, with none of your words, though each node sees your IP and the time.
 
@@ -145,19 +145,23 @@ raw.githubusercontent.com   the skill's own bytes, passed through, never cached
 gateway.pinata.cloud   a pinned document: an agent's registration file when it published an
                        `ipfs://` one, a proof the index does not hold, or a skill atom's document
 ipfs.io                the same, when Pinata does not serve it
+skills.sh              one `GET /api/search?q=skill` when a search on `arp_pulse` comes back empty, with none
+                       of your words, to tell "nothing exists" from "the service is down"
 the signed addresses   `arp_agent_endpoints` asks `/` of an agent's three newest signed addresses, and
                        `arp_pulse` the newest of up to ten agents on every search with words:
                        somebody else's servers, through the same guard as any probe. Your words stay here
 ```
 
 **`arp_pulse` runs somebody else's package, and you should decide about that.** Called with a `query`,
-it runs `npx --yes skills@1.7.6 find <query>`: the pinned npm package executes on your machine, as your
+it runs `npx --yes --prefer-offline skills@1.7.6 find <query>`: the pinned npm package executes on your machine, as your
 OS user, so it can read what that user can read. It gets four environment variables (`PATH`, `HOME` set to
 the private directory `skills-cli` in `ARP_HOME`, and two that turn off telemetry and colour), none of your secrets, and the query as
-one argument with no shell. **Your search words reach skills.sh**, and `npx` reaches the npm registry.
+one argument with no shell. **Your search words reach skills.sh**, and `npx` reaches the npm registry when the package is not in its cache.
 `ARP_PULSE_SEARCH=off` stops it, and it never runs in `desktop` or `sponsored`, which keep an agent key on
 the machine. An agent can always pass the command's text as `search_output`, which runs nothing. Either way
 the tool asks `api.github.com` for each repository's listing and, with `GITHUB_TOKEN`, also its figures.
+
+One search answers within 50 s, whatever does not answer, because an MCP client gives up at 60 (`PULSE_BUDGET`, `handlers/pulse.ts`). The package gets 25 s, each GitHub read 10 s. What did not answer is named in the reply: `search: "unavailable"` with its `detail`, `phrases_failed`, `files_not_all_read`, `public_record`. Only `nothing_found` says that nothing exists. The package runs in its own process group, killed when its time is up, when the call is cancelled, when your client closes the server's stdin, and on SIGTERM, SIGINT or SIGHUP. A server killed with SIGKILL runs no code, so a search open at that moment is left running.
 
 **And two that are not fixed, which you should know about before you install this.** Both exist for
 the same reason and ADR `0045` is explicit about it: ARP can **verify** another agent's endpoint and
@@ -257,9 +261,9 @@ twice above as a configurable fixed host and it will not appear in the script's 
 bun run scripts/measure/node-outbound.ts
 ```
 
-It reads the modules a running server actually loads, named in a list, and prints every host literal with its line, every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is ours. On 2026-11-05, `data/measurements/node-outbound-2026-11-05.json`: **18 modules, 9 host literals, 16 call sites of which 9 are labelled outbound, 0 of the hosts ours.** It exits non-zero if that last number is ever not zero. (It counts `guardedFetchText` since that date, so the earlier runs of 2026-10-29 and 2026-10-30, with 6 outbound over fewer modules, are not comparable.)
+It reads the modules a running server actually loads, named in a list, and prints every host literal with its line, every `fetch` call site **labelled `outbound`, `inbound` or `definition`**, and whether any host is ours. On 2026-11-05, `data/measurements/node-outbound-2026-11-05T2329.json`: **19 modules, 10 host literals, 16 call sites of which 9 are labelled outbound, 0 of the hosts ours.** It exits non-zero if that last number is ever not zero. (It counts `guardedFetchText` since that date, so the earlier runs of 2026-10-29 and 2026-10-30, with 6 outbound over fewer modules, are not comparable.)
 
-Seven of the nine leave the machine: a signed address (`handlers/agents.ts`), a registration document (`registration-document.ts`), a repository listing and a skill's bytes (`content.ts`), the probe (`probe.ts:514`), a pinned document (`readIpfsJson`, `probe.ts:882`), and the shared transport every graph read funnels through (`http.ts`). The other two are the classifier's over-count: `serveFetch` starts this server's listener, and the line in `agent-pulse.ts` passes a fetch to the transport. The script also omits what is not called `fetch`: `arp_pulse`'s package, described above, and viem's RPC transport.
+Seven of the nine leave the machine: a signed address (`handlers/agents.ts`), a registration document (`registration-document.ts`), a repository listing and a skill's bytes (`content.ts`), the probe (`probe.ts:514`), a pinned document (`readIpfsJson`, `probe.ts:882`), and the shared transport every graph read funnels through (`http.ts`). The other two are the classifier's over-count: `serveFetch` starts this server's listener, and the line in `agent-pulse.ts` passes a fetch to the transport. The script also omits what is not called `fetch`: `arp_pulse`'s package, described above, its reads through a fetch passed in (GitHub, and the check on skills.sh), and viem's RPC transport.
 
 This is a script rather than a sentence because the sentence was **wrong twice**. One draft said
 four hosts and "the only literals in the code"; the next said six literals and offered a grep over
@@ -270,10 +274,10 @@ cannot check for itself, and it says so.
 
 Three things it shows that a count alone would hide:
 
-- Two of the nine literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody,
+- Two of the ten literals (`localhost:`, `stdio`) are in **log lines** and fetched by nobody,
   `github.com` is in the probe's **user-agent**, which identifies the server and sends nothing, and in the URI `arp_pulse` builds for a skill's atom, which it fetches nowhere, and two
-  (`127.0.0.1:3002`, `127.0.0.1:3200`) are local defaults of the sponsored mode. Four are destinations:
-  `api.github.com`, `raw.githubusercontent.com`, `gateway.pinata.cloud` and `ipfs.io`.
+  (`127.0.0.1:3002`, `127.0.0.1:3200`) are local defaults of the sponsored mode. Five are destinations:
+  `api.github.com`, `raw.githubusercontent.com`, `gateway.pinata.cloud`, `ipfs.io` and `skills.sh`.
 - The Intuition graph and RPC are **absent from the literals and present in the server** — they come
   from `data/deployments/<chainId>.json` at startup. Absence from a literal list is not absence from the
   server, which is the trap a literal count sets.

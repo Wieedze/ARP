@@ -79,13 +79,19 @@ type Pending = { resolve: (value: unknown) => void; reject: (error: Error) => vo
  * what changed is that reading goes on while one is open, so a tool call that waits on the person
  * receives the client's answer, which arrives on the same input. Installs itself as the requester
  * `askPerson` uses, and removes itself on `close`.
+ *
+ * Two messages do not wait in that line, because what they are about is the call holding it: `ping`
+ * while a tool call is open, or a client watching the server thinks it dead, and the cancellation of
+ * that call, which `onCancel` receives.
  */
 export function stdioRouter(
   handle: (line: string) => Promise<void>,
   send: (line: string) => Promise<void>,
+  onCancel: () => void = () => undefined,
 ) {
   const waiting = new Map<string, Pending>();
   let sent = 0;
+  let openCall: { id: unknown } | null = null;
   let queue = Promise.resolve();
   setRequester(
     (method, params) =>
@@ -99,7 +105,20 @@ export function stdioRouter(
     receive(line: string): void {
       const reply = replyTo(line, waiting);
       if (reply === null) {
-        queue = queue.then(() => handle(line));
+        const message = requestIn(line);
+        if (openCall !== null && message?.method === 'ping' && message.id !== undefined) {
+          void send(JSON.stringify({ jsonrpc: '2.0', id: message.id, result: {} }));
+          return;
+        }
+        if (message?.method === 'notifications/cancelled') {
+          if (openCall !== null && message.params?.requestId === openCall.id) onCancel();
+          return;
+        }
+        queue = queue.then(async () => {
+          openCall = message?.method === 'tools/call' ? { id: message.id } : null;
+          await handle(line);
+          openCall = null;
+        });
         return;
       }
       waiting.delete(reply.id);
@@ -114,6 +133,20 @@ export function stdioRouter(
       setRequester(null);
     },
   };
+}
+
+function requestIn(
+  line: string,
+): { method?: unknown; id?: unknown; params?: { requestId?: unknown } } | null {
+  try {
+    const parsed: unknown = JSON.parse(line);
+    // `as`: an object, checked here; each field is compared, never trusted.
+    return typeof parsed === 'object' && parsed !== null
+      ? (parsed as { method?: unknown; id?: unknown; params?: { requestId?: unknown } })
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 /** A line that answers a request this server sent, or null for anything else. */

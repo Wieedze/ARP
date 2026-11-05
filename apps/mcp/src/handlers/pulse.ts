@@ -1,8 +1,6 @@
-import { execFile } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
 
 import {
   findDeclaredTools,
@@ -40,11 +38,11 @@ import { stringToHex } from 'viem';
 
 import { diskListingCache } from '../pulse-cache.js';
 import { readWindow } from '../pulse-window.js';
+import { openCall, runSearch, withoutPaths } from '../search-run.js';
 import { DESKTOP, DOMAIN_ROOT, domainWalk, GRAPHQL, IN_CONTEXT_OF, LINE_PAYERS, READ_ONLY, reads } from '../config.js';
 import { agentsForDomain, offersForNeed } from './agents.js';
 import { type JsonRpcId, fail, text } from '../rpc.js';
 
-const run = promisify(execFile);
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 20;
 /** A ceiling on what one call asks of a service that is not ours. */
@@ -55,6 +53,67 @@ const MAX_PHRASES = 4;
  * a bump changes what an agent can find, and is a change to review.
  */
 export const SKILLS_CLI = 'skills@1.7.6';
+
+/**
+ * The MCP SDK gives up on a request after 60 s (`DEFAULT_REQUEST_TIMEOUT_MSEC`, SDK 1.32.2), so one search
+ * answers before that with whatever it has. A first search, the package's download included, took 8.6 s.
+ */
+export const PULSE_BUDGET = {
+  totalMs: 50_000,
+  searchMs: 25_000,
+  /** Kept back for the agents, read last. */
+  agentsMs: 8_000,
+  /** Kept back for the files, read after the public record. */
+  filesMs: 10_000,
+};
+export type PulseBudget = typeof PULSE_BUDGET;
+
+/** `work`, or a rejection once `ms` have passed or `stop` fired. `work` itself goes on, so it may write only to what the caller discards. */
+function within<T>(work: Promise<T>, ms: number, stop: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const quit = () => reject(new Error('no answer in time'));
+    const timer = setTimeout(quit, Math.max(0, ms));
+    if (stop.aborted) quit();
+    else stop.addEventListener('abort', quit, { once: true });
+    const done = () => {
+      clearTimeout(timer);
+      stop.removeEventListener('abort', quit);
+    };
+    work.then(
+      (value) => {
+        done();
+        resolve(value);
+      },
+      (error: unknown) => {
+        done();
+        reject(error instanceof Error ? error : new Error(String(error)));
+      },
+    );
+  });
+}
+
+/**
+ * `skills find` swallows every failure of its service and prints `No skills found`, exit 0 (`skills` 1.7.6,
+ * `searchSkillsAPI`: a thrown fetch, a non-2xx and an unreadable body all give `[]`). So the same request is
+ * made once more, with a fixed word and none of the person's. Returns what is wrong, or null when it answers.
+ */
+export async function searchServiceTrouble(get: typeof fetch, timeoutMs: number): Promise<string | null> {
+  try {
+    const response = await get('https://skills.sh/api/search?q=skill', { signal: AbortSignal.timeout(timeoutMs) });
+    if (!response.ok) return `skills.sh answered ${response.status}`;
+    const body = (await response.json()) as { skills?: unknown }; // only this field is read
+    return Array.isArray(body?.skills) ? null : 'skills.sh answered in a form this version does not read';
+  } catch (error) {
+    return `skills.sh did not answer (${error instanceof Error ? error.name : 'error'})`;
+  }
+}
+
+const PROBE_MS = 3_000;
+
+/** The CLI's own sentence for an empty list. Text with neither this nor a result is a format we do not read. */
+export function saysNothingFound(output: string): boolean {
+  return /No skills found/i.test(output);
+}
 
 /**
  * How the search runs, as data so a test can hold it to this: a pinned package, the query as one
@@ -71,7 +130,8 @@ export function searchInvocation(query: string, path: string | undefined, home: 
     // Run away from the project, and with a prefix of our own: from the project, a planted
     // `node_modules/.bin/skills` or `.npmrc` would run instead of the package named here.
     cwd: home,
-    args: ['--prefix', home, '--yes', SKILLS_CLI, 'find', query],
+    // `--prefer-offline`: pinned, so the cache cannot serve another version, and a dead registry cannot use up the limit.
+    args: ['--prefix', home, '--yes', '--prefer-offline', SKILLS_CLI, 'find', query],
     env: {
       ...(path === undefined ? {} : { PATH: path }),
       HOME: home,
@@ -87,7 +147,7 @@ export function canSearch(env: { holdsAgentKey: boolean; setting: string | undef
 }
 
 /** A failure is a value, because a host without `npx` can still pass `search_output` itself. */
-async function search(query: string): Promise<{ output: string } | { error: string }> {
+async function search(query: string, timeoutMs: number, stop: AbortSignal): Promise<{ output: string } | { error: string }> {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env['ARP_PULSE_SEARCH'] })) {
     return { error: 'this server does not run the search package' };
   }
@@ -95,11 +155,9 @@ async function search(query: string): Promise<{ output: string } | { error: stri
     const home = join(arpHome(process.env, homedir()), 'skills-cli');
     mkdirSync(home, { recursive: true, mode: 0o700 });
     chmodSync(home, 0o700); // `mode` above does not tighten a directory that already exists
-    const { file, args, env, cwd } = searchInvocation(query, process.env['PATH'], home);
-    const { stdout } = await run(file, args, { cwd, env, timeout: 90_000, maxBuffer: 4_000_000 });
-    return { output: stdout };
+    return { output: await runSearch(searchInvocation(query, process.env['PATH'], home), { timeoutMs, stop }) };
   } catch (error) {
-    return { error: error instanceof Error ? error.message.split('\n')[0] ?? 'failed' : String(error) };
+    return { error: withoutPaths(error instanceof Error ? (error.message.split('\n')[0] ?? 'failed') : String(error)) };
   }
 }
 
@@ -319,7 +377,19 @@ async function agentsPart(domain: string | null, phrases: readonly string[]): Pr
   return { agents: { ...declared, ...offers } };
 }
 
-export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
+export async function pulse(id: JsonRpcId, args: Record<string, unknown>, budget: PulseBudget = PULSE_BUDGET) {
+  const call = openCall();
+  try {
+    return await answer(id, args, budget, call.signal);
+  } finally {
+    call.end();
+  }
+}
+
+async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: PulseBudget, cancelled: AbortSignal) {
+  const started = Date.now();
+  const left = () => budget.totalMs - (Date.now() - started);
+  const stop = AbortSignal.any([cancelled, AbortSignal.timeout(budget.totalMs)]);
   const query = args['query'];
   const given = args['search_output'];
   const phrasesRaw = args['queries'];
@@ -336,43 +406,75 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   const askedDomain = typeof domainRaw === 'string' && domainRaw.trim() !== '' ? domainRaw.trim().toLowerCase() : null;
   const constraints = readConstraints(args['constraints']);
 
-  let lists: SkillSearchResult[][];
+  const agentsWithin = (domain: string | null) =>
+    within(agentsPart(domain, phrases), Math.min(budget.agentsMs, left()), stop).catch(() => ({
+      agents: null,
+      agents_note: 'the agents could not be read in time',
+    }));
+  // In the plugin this is the only search there is, so nothing here may point at another tool.
+  const next = READ_ONLY
+    ? 'run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory'
+    : 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`';
+
+  const lists: SkillSearchResult[][] = [];
+  const phrasesFailed: { phrase: string; detail: string }[] = [];
+  /** What stops the search from speaking for what exists. Null when its answer can be taken at its word. */
+  let trouble: string | null = null;
   if (typeof given === 'string') {
-    lists = [parseSkillsFind(given)];
+    lists.push(parseSkillsFind(given));
   } else {
-    const found = await Promise.all(phrases.map(search));
-    const answered = found.flatMap((entry) => ('output' in entry ? [entry.output] : []));
-    if (answered.length === 0) {
-      const first = found[0];
+    const found = await Promise.all(phrases.map((phrase) => search(phrase, budget.searchMs, stop)));
+    found.forEach((entry, at) => {
+      const phrase = phrases[at] ?? '';
+      if ('error' in entry) {
+        phrasesFailed.push({ phrase, detail: entry.error });
+        return;
+      }
+      const parsed = parseSkillsFind(entry.output);
+      if (parsed.length === 0 && !saysNothingFound(entry.output)) {
+        phrasesFailed.push({ phrase, detail: 'the text `skills find` printed could not be read, so its format may have changed' });
+        return;
+      }
+      lists.push(parsed);
+    });
+    if (lists.length === 0) {
       return text(id, {
         search: 'unavailable',
-        detail: first !== undefined && 'error' in first ? first.error : 'no search ran',
-        // In the plugin this is the only search there is, so nothing here may point at another tool.
-        next: READ_ONLY
-          ? 'run `npx skills find` yourself and pass its text as `search_output`. No other search is served here, so say that the search did not run, rather than choosing from memory'
-          : 'run `npx skills find` yourself and pass its text as `search_output`, or use `arp_find_tools`',
-        ...(await agentsPart(askedDomain, phrases)),
+        detail: phrasesFailed[0]?.detail ?? 'no search ran',
+        ...(phrasesFailed.length > 1 ? { phrases_failed: phrasesFailed } : {}),
+        next,
+        ...(await agentsWithin(askedDomain)),
       });
     }
-    lists = answered.map(parseSkillsFind);
   }
+  const failedPart = phrasesFailed.length === 0 ? {} : { phrases_failed: phrasesFailed };
 
   const searched: SkillSearchResult[] = fuseSearches(lists);
+  if (typeof given !== 'string' && searched.length === 0) {
+    trouble = await searchServiceTrouble(fetch, PROBE_MS);
+  }
+  const unavailablePart = trouble === null ? {} : { search: 'unavailable', detail: trouble, next };
 
   // Everything about the public record degrades to "unknown", and the file facts still come: the first
   // comparison lost 4 of 9 runs to one failed read.
   const scored = process.env['ARP_PULSE_SCORE'] !== 'off';
-  let domain = askedDomain;
-  let scope: Set<string> | null = domain === null ? null : new Set([domain]);
-  const near = new Set<string>();
-  let results = searched;
-  let atomByUri = new Map<string, string>();
-  let usage = new Map<string, PulseUsage>();
-  let usageRead = true;
-  try {
+  // A draft, because a read that runs out of time goes on behind the answer: what it finds later must not
+  // reach what is being written out.
+  const draft = {
+    domain: askedDomain,
+    near: new Set<string>(),
+    results: searched,
+    atomByUri: new Map<string, string>(),
+    usage: new Map<string, PulseUsage>(),
+  };
+  const readRecord = async () => {
+    let { domain } = draft;
+    let scope: Set<string> | null = domain === null ? null : new Set([domain]);
+    const { near } = draft;
     if (scored) {
       const tree = await readDomainTree(domainWalk());
       if (domain === null && phrases.length > 0) domain = inferDomain(phrases.join(' '), tree.subtree(DOMAIN_ROOT));
+      draft.domain = domain;
       if (domain !== null) {
         scope = new Set(tree.subtree(domain).concat(domain));
         for (const label of tree.subtree(domain)) near.add(label);
@@ -392,23 +494,30 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
         if (ref === null || seen.has(`${ref.repo}?skill=${ref.skill}`.toLowerCase())) continue;
         added.push({ source: ref.repo, skill: ref.skill, installs: null, installsText: null, url: null });
       }
-      results = [...searched, ...added];
+      draft.results = [...searched, ...added];
     }
-    atomByUri = await findToolAtoms(
-      results.map((row) => toolUriOf(row.source, row.skill)).filter((uri): uri is string => uri !== null),
+    draft.atomByUri = await findToolAtoms(
+      draft.results.map((row) => toolUriOf(row.source, row.skill)).filter((uri): uri is string => uri !== null),
       { graphqlUrl: GRAPHQL },
     );
-    usage = await getPulseUsage([...atomByUri.values()], {
+    draft.usage = await getPulseUsage([...draft.atomByUri.values()], {
       graphqlUrl: GRAPHQL,
       inContextOf: IN_CONTEXT_OF,
       hasOutcome: await reads.atomId(stringToHex(HAS_OUTCOME_LABEL)),
       because: await reads.atomId(stringToHex(BECAUSE_LABEL)),
       payers: LINE_PAYERS,
     });
+  };
+  let usageRead = true;
+  try {
+    await within(readRecord(), left() - budget.agentsMs - budget.filesMs, stop);
   } catch (error) {
     usageRead = false;
     console.error(`arp_pulse: usage not read: ${error instanceof Error ? error.message : String(error)}`);
   }
+  const { domain, atomByUri, usage } = draft;
+  const near = new Set(draft.near);
+  let { results } = draft;
 
   const atomOf = (result: SkillSearchResult) => {
     const uri = toolUriOf(result.source, result.skill);
@@ -430,7 +539,23 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
   };
   // A skill the search did not return enters only from the threshold, so one line cannot add one (ADR `0143`).
   results = results.filter((result) => rankOf.has(`${result.source}@${result.skill}`) || entersList(usageOf(result), signal));
-  if (results.length === 0) return text(id, { search: 'npx skills find', results: [], ...(await agentsPart(domain, phrases)) });
+  if (results.length === 0) {
+    return text(id, {
+      search: typeof given === 'string' ? 'search_output' : 'npx skills find',
+      results: [],
+      ...unavailablePart,
+      ...failedPart,
+      // Only these two say that nothing exists: a service that answered, and every phrase asked.
+      ...(trouble === null && phrasesFailed.length === 0 && typeof given !== 'string'
+        ? { nothing_found: 'skills.sh answered and lists nothing for these words' }
+        : {}),
+      ...(typeof given === 'string' && !saysNothingFound(given)
+        ? { detail: 'no line of `search_output` reads as a result of `npx skills find`' }
+        : {}),
+      ...(usageRead ? {} : { public_record: 'did not answer' }),
+      ...(await agentsWithin(domain)),
+    });
+  }
   const workedHere = (result: SkillSearchResult) =>
     domain === null ? 0 : workedInDomain(usageOf(result), domain);
 
@@ -449,14 +574,17 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
     .map(({ result }) => result);
 
   const token = process.env['GITHUB_TOKEN'];
+  const filesStop = AbortSignal.any([stop, AbortSignal.timeout(Math.max(0, left() - budget.agentsMs))]);
   const source = githubPulseSource({
     ...(token === undefined ? { withRepository: false } : { token }),
+    signal: filesStop,
     cache: diskListingCache(join(arpHome(process.env, homedir()), 'pulse-listings')),
   });
   const pulses = await readWindow(ordered, source, {
     limit,
     hasToken: token !== undefined,
     setAside: (row) => setAsideBecause(row, constraints).length > 0,
+    signal: filesStop,
   });
   const quota = source.quota?.();
 
@@ -484,9 +612,12 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
 
   return text(id, {
     search: typeof given === 'string' ? 'search_output' : 'npx skills find',
+    ...unavailablePart,
     ...(phrases.length > 1 ? { phrases } : {}),
+    ...failedPart,
     results_found: results.length,
     results_read: pulses.length,
+    ...(filesStop.aborted ? { files_not_all_read: 'time ran out, so a result here may say its repository was unreachable, and others were not read' } : {}),
     ...(quota?.limited === true
       ? {
           github_limit_reached: {
@@ -521,6 +652,6 @@ export async function pulse(id: JsonRpcId, args: Record<string, unknown>) {
       .filter((entry) => entry.reasons.length > 0)
       .slice(0, 10)
       .map((entry) => ({ name: entry.row.skill, source: entry.row.source, because: entry.reasons })),
-    ...(await agentsPart(domain, phrases)),
+    ...(await agentsWithin(domain)),
   });
 }

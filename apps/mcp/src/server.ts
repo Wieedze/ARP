@@ -61,6 +61,7 @@ import { agentEndpoints, identity, findAgents } from './handlers/agents.js';
 import { probe, recordReachable } from './handlers/reachability.js';
 import { findTools } from './handlers/find-tools.js';
 import { pulse } from './handlers/pulse.js';
+import { stopOpenSearches } from './search-run.js';
 
 const PROTOCOL_VERSION = '2025-06-18';
 
@@ -378,8 +379,10 @@ async function serveStdio(input: AsyncIterable<unknown>): Promise<void> {
     await send(await response.text());
   };
 
-  const router = stdioRouter(handle, send);
+  const router = stdioRouter(handle, send, stopOpenSearches);
   for await (const line of linesOf(input)) router.receive(line);
+  // A closed stdin is how MCP ends a stdio session, so nobody is left to read what a search finds.
+  stopOpenSearches();
   await router.close();
 }
 

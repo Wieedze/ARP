@@ -77,6 +77,7 @@ const MODULES = [
   'apps/mcp/src/handlers/reputation.ts',
   'apps/mcp/src/content.ts',
   'apps/mcp/src/registration-document.ts',
+  'apps/mcp/src/search-run.ts',
   'apps/mcp/src/tools.ts',
   'packages/protocol/src/agent-pulse.ts',
   'packages/protocol/src/content-path.ts',

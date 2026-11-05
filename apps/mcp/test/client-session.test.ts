@@ -138,7 +138,7 @@ describe('stdioRouter', () => {
       },
     );
     router.receive(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call' }));
-    router.receive(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'ping' }));
+    router.receive(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }));
     await vi.waitFor(() => expect(out).toHaveLength(1));
     const asked = JSON.parse(out[0] ?? '') as { id: string };
     router.receive(
@@ -146,6 +146,42 @@ describe('stdioRouter', () => {
     );
     await router.close();
     expect(order).toEqual(['start 1', 'unavailable', 'end 1', 'start 2', 'end 2']);
+  });
+
+  it('answers ping and takes a cancellation while a tool call holds the line', async () => {
+    const s = await session();
+    let release = () => {};
+    const handled: number[] = [];
+    let cancelled = 0;
+    const router = s.stdioRouter(
+      async (line) => {
+        handled.push((JSON.parse(line) as { id: number }).id);
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+      },
+      async (line) => {
+        out.push(line);
+      },
+      () => {
+        cancelled += 1;
+      },
+    );
+    router.receive(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call' }));
+    await vi.waitFor(() => expect(handled).toEqual([1]));
+
+    router.receive(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'ping' }));
+    expect(JSON.parse(out[0] ?? '')).toEqual({ jsonrpc: '2.0', id: 2, result: {} });
+
+    // A cancellation of some other request is not about this call.
+    router.receive(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: 9 } }));
+    expect(cancelled).toBe(0);
+    router.receive(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: 1 } }));
+    expect(cancelled).toBe(1);
+
+    release();
+    await router.close();
+    expect(handled).toEqual([1]);
   });
 
   it('answers an open question with unavailable when the client closes', async () => {

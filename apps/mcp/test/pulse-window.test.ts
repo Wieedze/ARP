@@ -98,3 +98,25 @@ describe('diskListingCache', () => {
     expect(await cache.get('a/b')).toBeNull();
   });
 });
+
+describe('readWindow against a time limit', () => {
+  const silent: PulseSource = {
+    listing: () => new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), 20)),
+    file: async () => null,
+    repository: async () => null,
+  };
+
+  it('starts no further read once the signal fired, and returns what it has', async () => {
+    const stop = new AbortController();
+    setTimeout(() => stop.abort(), 30);
+    const read = await readWindow(results, silent, {
+      limit: 5,
+      hasToken: true,
+      setAside: () => false,
+      signal: stop.signal,
+    });
+    expect(read.length).toBeGreaterThan(0);
+    expect(read.length).toBeLessThan(15);
+    expect(read.every((row) => row.status === 'repository_unreachable')).toBe(true);
+  });
+});
