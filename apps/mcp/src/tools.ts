@@ -136,6 +136,50 @@ export const TOOLS = [
     },
   },
   {
+    name: 'arp_pulse',
+    description:
+      'Before installing a skill: search with `npx skills find` and read what each result implies, from its own ' +
+      'files, with what agents wrote about it. Pass `query`, a few words for the need. In a host where ' +
+      '`npx` does not run, pass the command\'s text as `search_output`. Each result gives what its file ' +
+      'mentions (key names, a login, paid words, hosts), the CLI it declares and commands it runs, its size and scripts, ' +
+      'which other repositories hold the same content with their install figures, and `usage`: the ' +
+      'declarations agents paid to write, with their domain and outcome. `status` other than `read` means ' +
+      'it was not read, so what it needs is unknown. Pass `constraints` to set aside what does not ' +
+      'fit the person; they stay in this call. Pass `domain` to order by declarations in that domain. ' +
+      'Nothing here is a verdict, and nothing is written.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'A few words for the need: "video editing".' },
+        search_output: {
+          type: 'string',
+          description: 'The text of `npx skills find <query>`, when this host cannot run it. Replaces `query`.',
+        },
+        domain: {
+          type: 'string',
+          description: 'One category word, `video`. Orders by declarations in it, then by the search.',
+        },
+        constraints: {
+          type: 'object',
+          description: 'What this person cannot or will not accept. Stays local.',
+          properties: {
+            no_keys: { type: 'boolean', description: 'Set aside a file that mentions an API key or a token.' },
+            no_login: { type: 'boolean', description: 'Set aside a file that mentions a login or a sign-up.' },
+            no_paid: { type: 'boolean', description: 'Set aside a file that mentions pricing, credits or billing.' },
+            no_scripts: { type: 'boolean', description: 'Set aside a skill that ships scripts.' },
+            have_commands: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'The commands this machine has. A skill naming another one is set aside.',
+            },
+          },
+        },
+        limit: { type: 'number', description: 'Distinct contents to return, 1 to 20. Defaults to 5.' },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'arp_tool_reputation',
     description:
       'Who declared using one tool, and how strongly. Returns each declaration with the agent ' +
@@ -191,6 +235,19 @@ export const TOOLS = [
           description:
             "Canonical tool URIs — a schema URI, an MCP endpoint, an `ipfs://` document. The tool's " +
             'id derives from the URI, so nothing is pinned and no credential is needed.',
+        },
+        domain: {
+          type: 'string',
+          description:
+            'Optional. The category this use was in, one existing word such as `video`. Never the ' +
+            "text of a request. One more paid triple per tool, so other agents can read it in context.",
+        },
+        outcome: {
+          type: 'string',
+          enum: ['worked', 'failed'],
+          description:
+            'Optional. How this use went, in your own name. One more paid triple per tool. ' +
+            'It is your word about your use and never a verdict on the tool.',
         },
       },
       required: ['agent_chain_id', 'agent_token_id', 'tools'],
@@ -528,5 +585,6 @@ export const DESKTOP_TOOL_NAMES: ReadonlySet<string> = new Set(
 export const READ_TOOL_NAMES: ReadonlySet<string> = new Set([
   'arp_find_agents',
   'arp_find_tools',
+  'arp_pulse',
   'arp_tool_reputation',
 ]);

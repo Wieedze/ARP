@@ -5,8 +5,10 @@ import {
   intuitionToolAtomLookup,
   multiVaultReads,
   ARP_DOMAIN_ATTESTORS,
+  INTUITION_HAS_TAG_MAINNET,
+  INTUITION_IS_A_SUB_DOMAIN_OF,
 } from '@arp-protocol/core';
-import { getAddress, type Address } from 'viem';
+import { getAddress, type Address, type Hex } from 'viem';
 import { catalogueFor, receiptSigner } from './content.js';
 import { DEPLOYMENTS } from './data.js';
 
@@ -269,3 +271,24 @@ export const DOMAIN_ATTESTORS = configuredAttestors();
 export const directory = createErc8004Client({
   sources: [intuitionSource({ graphqlUrl: GRAPHQL })],
 });
+
+/**
+ * The predicate nested claims use on this chain, from its deployment record (ADR `0135`). The zero
+ * id where the record has none, which no triple carries, so a qualifier read finds nothing.
+ */
+export const IN_CONTEXT_OF: Hex = (() => {
+  const arp = (record as { arp?: { endpointBinding?: { inContextOf?: string } } }).arp; // a JSON record, read optionally
+  const id = arp?.endpointBinding?.inContextOf;
+  return (typeof id === 'string' && id.startsWith('0x') ? id : `0x${'0'.repeat(64)}`) as Hex; // 0x-prefixed by the check
+})();
+
+/** The domain tree a declaration's domain has to be in: ARP's reading, as a search uses it. */
+export function domainWalk() {
+  return {
+    graphqlUrl: GRAPHQL,
+    hierarchyPredicate: INTUITION_IS_A_SUB_DOMAIN_OF,
+    tagPredicate: INTUITION_HAS_TAG_MAINNET,
+    root: DOMAIN_ROOT,
+    attestor: DOMAIN_ATTESTORS,
+  };
+}

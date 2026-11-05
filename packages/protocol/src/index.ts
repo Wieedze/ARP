@@ -566,6 +566,23 @@ export {
 } from "./pulse.js";
 export {readRequires, type SkillRequires} from "./skill-requires.js";
 
+/** What agents wrote about a tool: declarations, their domain and their outcome (ADR `0135`). */
+export {
+    getPulseUsage,
+    type PulseDeclaration,
+    type PulseUsage,
+    type PulseUsageConfig,
+} from "./pulse-usage.js";
+export {
+    HAS_OUTCOME_LABEL,
+    isUsageOutcome,
+    prepareUsageContext,
+    USAGE_OUTCOMES,
+    type UsageContextPlan,
+    type UsageContextRefusal,
+    type UsageOutcome,
+} from "./declare/usage-context.js";
+
 /**
  * Serving a tool's content and signing for having served it. Every piece of IO is injected, so this
  * holds no key and touches no network; `apps/mcp/src/content.ts` is the transport.

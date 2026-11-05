@@ -1,10 +1,14 @@
 import { readFileSync } from 'node:fs';
 import {
   corroborationOf,
+  isUsageOutcome,
   parseSessionLog,
   prepareDeclareUsed,
+  prepareUsageContext,
+  readDomainTree,
   resolveDeclarationSubject,
   resolveInvocations,
+  type PreparedCall,
   type SignedContentReceipt,
   verifyContentReceipt,
 } from '@arp-protocol/core';
@@ -15,7 +19,9 @@ import {
   chainId,
   sessionCatalogue,
   acceptedSigners,
+  domainWalk,
   GRAPHQL,
+  IN_CONTEXT_OF,
   reads,
   toolAtoms,
 } from '../config.js';
@@ -86,13 +92,49 @@ export async function declareUsed(id: JsonRpcId, args: Record<string, unknown>) 
     agent: agentRefOf(agentChainId, agentTokenId, registryRaw),
     graphqlUrl: GRAPHQL,
   });
+  const domainRaw = args['domain'];
+  if (domainRaw !== undefined && typeof domainRaw !== 'string') {
+    return fail(id, -32602, 'domain, when given, must be one category word');
+  }
+  const outcome = args['outcome'];
+  if (outcome !== undefined && !isUsageOutcome(outcome)) {
+    return fail(id, -32602, 'outcome, when given, must be worked or failed');
+  }
   const plan = await prepareDeclareUsed({
     subject,
     tools: tools as string[],
     reads,
     lookup: toolAtoms,
   });
-  return text(id, serialiseDeclarePlan(plan));
+  if (domainRaw === undefined && outcome === undefined) return text(id, serialiseDeclarePlan(plan));
+
+  // ADR `0135`: a qualifier is a triple about the edge, so it is planned after the edge's own call.
+  const tree = domainRaw === undefined ? null : await readDomainTree(domainWalk());
+  const qualifiers: PreparedCall[] = [];
+  for (const tool of plan.tools) {
+    const planned = await prepareUsageContext({
+      usesTripleId: tool.tripleId,
+      edgePlanned: !tool.tripleExists,
+      ...(domainRaw === undefined ? {} : { domain: domainRaw }),
+      ...(outcome === undefined ? {} : { outcome }),
+      inContextOf: IN_CONTEXT_OF,
+      isCategory: async (label) => tree?.pathToRoot(label).found ?? false,
+      reads,
+    });
+    if (planned.status === 'refused') return fail(id, -32602, planned.detail);
+    for (const call of planned.calls) {
+      if (!qualifiers.some((seen) => seen.data === call.data)) qualifiers.push(call);
+    }
+  }
+  const calls = [...plan.calls, ...qualifiers];
+  return text(
+    id,
+    serialiseDeclarePlan({
+      ...plan,
+      calls,
+      totalValue: calls.reduce((sum, call) => sum + call.value, 0n),
+    }),
+  );
 }
 
 /**

@@ -129,3 +129,13 @@ export {
     prepareEndpointBinding,
     type EndpointBindingPlan,
 } from "./endpoint-binding-plan.js";
+
+export {
+    HAS_OUTCOME_LABEL,
+    isUsageOutcome,
+    prepareUsageContext,
+    USAGE_OUTCOMES,
+    type UsageContextPlan,
+    type UsageContextRefusal,
+    type UsageOutcome,
+} from "./usage-context.js";

@@ -1,0 +1,79 @@
+import {PULSE_QUALIFIERS_QUERY, PULSE_USES_QUERY, type GraphqlTransport} from "@arp-protocol/graphql";
+import {describe, expect, it} from "vitest";
+
+import {getPulseUsage} from "../src/pulse-usage.js";
+
+const TOOL = "0xaaa";
+const CONTEXT = "0xc0";
+const OUTCOME = "0xd0";
+const writer = "0xWriter";
+
+const use = (id: string, subject: string, by = writer) => ({
+    term_id: id,
+    object_id: TOOL,
+    creator_id: by,
+    created_at: "2026-11-05T10:00:00Z",
+    subject: {term_id: subject, label: `agent ${subject}`},
+});
+const qualifier = (edge: string, predicate: string, value: string, by = writer) => ({
+    term_id: `${edge}-${value}`,
+    subject_id: edge,
+    predicate_id: predicate,
+    creator_id: by,
+    object: {label: value},
+});
+
+function transport(uses: unknown[], qualifiers: unknown[]): GraphqlTransport {
+    return {
+        request: async (query: string) => {
+            if (query === PULSE_USES_QUERY) return {triples: uses};
+            if (query === PULSE_QUALIFIERS_QUERY) return {triples: qualifiers};
+            throw new Error("unexpected query");
+        },
+    };
+}
+
+const read = (uses: unknown[], qualifiers: unknown[], limit?: number) =>
+    getPulseUsage([TOOL], {
+        graphqlUrl: "unused",
+        inContextOf: CONTEXT,
+        hasOutcome: OUTCOME,
+        transport: transport(uses, qualifiers),
+        ...(limit === undefined ? {} : {limit}),
+    });
+
+describe("getPulseUsage", () => {
+    it("returns an empty line for a tool nobody declared, and does not ask for qualifiers", async () => {
+        const usage = (await read([], [])).get(TOOL);
+        expect(usage).toMatchObject({declarations: [], agents: 0, byDomain: {}, byOutcome: {}});
+    });
+
+    it("counts domains and outcomes the declarer wrote", async () => {
+        const usage = (
+            await read(
+                [use("0x1", "a"), use("0x2", "b")],
+                [qualifier("0x1", CONTEXT, "video"), qualifier("0x1", OUTCOME, "failed"), qualifier("0x2", CONTEXT, "video")],
+            )
+        ).get(TOOL);
+        expect(usage?.agents).toBe(2);
+        expect(usage?.byDomain).toEqual({video: 2});
+        expect(usage?.byOutcome).toEqual({failed: 1});
+    });
+
+    it("keeps somebody else's outcome on an edge apart, so a competitor cannot write my failure", async () => {
+        const usage = (await read([use("0x1", "a")], [qualifier("0x1", OUTCOME, "failed", "0xCompetitor")])).get(TOOL);
+        expect(usage?.byOutcome).toEqual({});
+        expect(usage?.declarations[0]?.outcomes).toEqual([]);
+        expect(usage?.byOthers).toMatchObject([{writer: "0xCompetitor", predicate: "outcome", value: "failed"}]);
+    });
+
+    it("compares writers across case, because the index checksums an address", async () => {
+        const usage = (await read([use("0x1", "a", "0xABC")], [qualifier("0x1", OUTCOME, "worked", "0xabc")])).get(TOOL);
+        expect(usage?.byOutcome).toEqual({worked: 1});
+    });
+
+    it("says when the read stopped at its limit", async () => {
+        const usage = (await read([use("0x1", "a")], [], 1)).get(TOOL);
+        expect(usage?.truncated).toBe(true);
+    });
+});

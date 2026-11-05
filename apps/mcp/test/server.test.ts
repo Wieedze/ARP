@@ -377,6 +377,7 @@ describe("the handshake", () => {
             "arp_identity",
             "arp_find_agents",
             "arp_find_tools",
+            "arp_pulse",
             "arp_tool_reputation",
             "arp_declare_used",
             // Beside `arp_declare_used` rather than replacing it, because the two take their list
@@ -874,7 +875,7 @@ describe("read-only mode", () => {
     it("lists the three registry reads and nothing else", async () => {
         const body = await call("tools/list");
         const names = (body["result"] as {tools: {name: string}[]}).tools.map((t) => t.name);
-        expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_tool_reputation"]);
+        expect(names).toEqual(["arp_find_agents", "arp_find_tools", "arp_pulse", "arp_tool_reputation"]);
     });
 
     it("refuses a planner called by name", async () => {

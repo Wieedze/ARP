@@ -59,6 +59,7 @@ import { stakeOnUsed, takePosition, exitPosition } from './handlers/positions.js
 import { agentEndpoints, identity, findAgents } from './handlers/agents.js';
 import { probe, recordReachable } from './handlers/reachability.js';
 import { findTools } from './handlers/find-tools.js';
+import { pulse } from './handlers/pulse.js';
 
 const PROTOCOL_VERSION = '2025-06-18';
 
@@ -192,6 +193,8 @@ async function callTool(id: JsonRpcId, params: Record<string, unknown> | undefin
         return await recordReachable(id, args);
       case 'arp_find_tools':
         return await findTools(id, args);
+      case 'arp_pulse':
+        return await pulse(id, args);
       case 'arp_declare_session':
         return await declareSession(id, args);
       default:
