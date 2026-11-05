@@ -312,4 +312,22 @@ group('the loop a new agent walks', () => {
     };
     await expect(getSkill(config, agent, ATOM)).rejects.toThrow(/another caller/);
   });
+
+  it('names the service and its setting when the content server is down', async () => {
+    const agent = fakeAgent([]);
+    const config: LoopConfig = {
+      contentUrl: 'http://content.test',
+      sponsorUrl: 'http://sponsor.test',
+      registry: REGISTRY,
+      multiVault: MULTI_VAULT,
+      stateDir: join(dir, '.arp'),
+      // A fetch that always throws: nothing of the real one is reached.
+      fetch: (async () => {
+        throw new TypeError('fetch failed');
+      }) as unknown as typeof fetch,
+    };
+    await expect(getSkill(config, agent, ATOM)).rejects.toThrow(
+      "ARP's content server did not answer at http://content.test. Is it running? Its address is set by ARP_CONTENT.",
+    );
+  });
 });

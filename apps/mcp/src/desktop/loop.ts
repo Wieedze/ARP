@@ -106,8 +106,36 @@ async function json(response: Response): Promise<Record<string, unknown>> {
  */
 const SERVICE_TIMEOUT_MS = 150_000;
 
+type Service = { name: string; url: string; setting: string };
+const sponsoring = (config: LoopConfig): Service => ({
+  name: "ARP's sponsoring service",
+  url: config.sponsorUrl,
+  setting: 'ARP_SPONSOR',
+});
+const content = (config: LoopConfig): Service => ({
+  name: "ARP's content server",
+  url: config.contentUrl,
+  setting: 'ARP_CONTENT',
+});
+
+/** A service that is down names itself and its setting, because the error reaches a person through an agent. */
+async function reach(config: LoopConfig, service: Service, url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await (config.fetch ?? fetch)(url, init);
+  } catch (error) {
+    const unreachable =
+      error instanceof TypeError ||
+      (error instanceof Error && /fetch failed|ECONNREFUSED|Unable to connect|TimeoutError/.test(`${error.name} ${error.message}`));
+    if (!unreachable) throw error;
+    throw new Error(
+      `${service.name} did not answer at ${service.url}. Is it running? Its address is set by ${service.setting}. (${error.message})`,
+      { cause: error },
+    );
+  }
+}
+
 async function post(config: LoopConfig, path: string, body: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
-  const response = await (config.fetch ?? fetch)(`${config.sponsorUrl}${path}`, {
+  const response = await reach(config, sponsoring(config), `${config.sponsorUrl}${path}`, {
     method: 'POST',
     signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS),
     headers: { 'content-type': 'application/json' },
@@ -143,7 +171,9 @@ export async function getSkill(config: LoopConfig, agent: AgentSender, atom: Hex
   // Where the skill is installed, the runtime can run its scripts, so it gets the whole directory
   // (task 57). Claude Desktop's Chat runs nothing, and gets SKILL.md alone.
   const bundle = config.skillsDir !== undefined;
-  const response = await (config.fetch ?? fetch)(
+  const response = await reach(
+    config,
+    content(config),
     `${config.contentUrl}/content/${atom}?nonce=${nonce}&by=${agent.address}&sig=${signature}${bundle ? '&bundle=1' : ''}`,
     { signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) },
   );
@@ -251,7 +281,9 @@ async function ensureIdentity(config: LoopConfig, state: AgentState): Promise<He
 
 /** The one approval this key signs, built here: the sponsor's answer to /gas does not choose it. */
 async function sponsorApproval(config: LoopConfig) {
-  const info = await json(await (config.fetch ?? fetch)(config.sponsorUrl, { signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) }));
+  const info = await json(
+    await reach(config, sponsoring(config), config.sponsorUrl, { signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) }),
+  );
   // The record's address, not the sponsor's: a wrong sponsor endpoint must not redirect the approval.
   const multiVault = getAddress(config.multiVault);
   if (String(info['multiVault']).toLowerCase() !== multiVault.toLowerCase()) {
