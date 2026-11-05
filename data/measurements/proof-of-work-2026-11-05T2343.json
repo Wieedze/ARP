@@ -1,0 +1,150 @@
+{
+ "at": "2026-11-05T23:43:20.974Z",
+ "chain": 13579,
+ "ourWallets": [
+  "0x906f3a52ec089f8d4e9127f91c6be5ae0d18f91f",
+  "0xe596096f4176b682e300d73963e7b04b383c1aa1"
+ ],
+ "lines": {
+  "results": {
+   "total": 9,
+   "ours": 9,
+   "others": 0,
+   "otherWallets": 0,
+   "holdersOutsideOurs": 2
+  },
+  "aboutASkill": 6,
+  "aboutSomethingElse": 3,
+  "withADomain": 5,
+  "withAReason": 4,
+  "holders": {
+   "paidByUs": [
+    "0x56BC52C2A0B863C39dBcBE9aC853f301D79bec42",
+    "0xd092f619687e774150b195f70EC54864C6053Db0"
+   ],
+   "independent": []
+  },
+  "first": {
+   "term": "0xb18171111fc67205a67d344823b8b208a5407abf8830d7e35c3dc0b73ff2ae2e",
+   "transaction": "0x19080d0873cf876b068c6cb3ac210c2214dfe9ecbb2878b34d8b3922d002b122",
+   "explorer": "https://testnet.explorer.intuition.systems/tx/0x19080d0873cf876b068c6cb3ac210c2214dfe9ecbb2878b34d8b3922d002b122",
+   "at": "2026-11-05T10:06:49+00:00",
+   "tool": "github.com/nateherkai/herk-edit-kit?skill=cut-silences",
+   "domain": null,
+   "outcome": "failed",
+   "reason": null
+  },
+  "latest": {
+   "term": "0x9bc685e5f9baf1647818cc20edd604845bde42a11de9db66c0e22879d2c2c9eb",
+   "transaction": "0x5aee4d1a668082b311fb1ad16d3c56adc188fceaaa8fabccc8566bbf3b4f636b",
+   "explorer": "https://testnet.explorer.intuition.systems/tx/0x5aee4d1a668082b311fb1ad16d3c56adc188fceaaa8fabccc8566bbf3b4f636b",
+   "at": "2026-11-05T18:57:10+00:00",
+   "tool": "github.com/softaworks/agent-toolkit?skill=web-to-markdown",
+   "domain": "document",
+   "outcome": "failed",
+   "reason": "missing-program"
+  },
+  "uses": {
+   "total": 187,
+   "ours": 41,
+   "others": 146,
+   "otherWallets": 113,
+   "holdersOutsideOurs": 96
+  }
+ },
+ "skills": {
+  "total": 676,
+  "listedByUs": 676
+ },
+ "agentsWithASignedAddress": {
+  "total": 1,
+  "ownedByUs": 1,
+  "agents": [
+   {
+    "agent": "Agent 13579:2",
+    "owner": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+    "ownerIsOurs": true
+   }
+  ]
+ },
+ "sponsor": {
+  "address": "0xE596096F4176b682E300d73963e7B04B383C1AA1",
+  "balanceNow": "4.315005932429",
+  "transactions": "636",
+  "deposits": 466,
+  "depositedAfterFees": "2.31879",
+  "note": "This address is also ARP's deployer, so the figures cover its whole life, not the service alone. The service's own ledger stays on the machine that runs it."
+ },
+ "repository": {
+  "branch": "feat/agent-pulse",
+  "head": "586ca49",
+  "commits": 1076,
+  "firstCommit": "2026-04-24",
+  "testFiles": 205
+ },
+ "measurements": {
+  "files": 74,
+  "kinds": 50,
+  "oldest": "2026-10-27",
+  "newest": "2026-11-05",
+  "gitTagsOnAMeasurement": 0
+ },
+ "tests": {
+  "suites": [
+   {
+    "dir": "packages/protocol",
+    "passed": 1155,
+    "failed": 0
+   },
+   {
+    "dir": "packages/graphql",
+    "passed": 21,
+    "failed": 0
+   },
+   {
+    "dir": "apps/mcp",
+    "passed": 212,
+    "failed": 0
+   },
+   {
+    "dir": "apps/web",
+    "passed": 773,
+    "failed": 0
+   },
+   {
+    "dir": "apps/cli",
+    "passed": 55,
+    "failed": 0
+   },
+   {
+    "dir": "apps/hook",
+    "passed": 66,
+    "failed": 0
+   },
+   {
+    "dir": "apps/node",
+    "passed": 60,
+    "failed": 0
+   },
+   {
+    "dir": "apps/sponsor",
+    "passed": 124,
+    "failed": 0
+   },
+   {
+    "dir": "apps/probe",
+    "passed": 14,
+    "failed": 0
+   },
+   {
+    "dir": "apps/api",
+    "passed": 16,
+    "failed": 0
+   }
+  ],
+  "passed": 2496,
+  "failed": 0,
+  "scope": "TypeScript suites only, on this working tree. Contracts are not run here."
+ },
+ "verdict": "All 9 result lines so far are ours: our wallets wrote them, and any other holder is a test agent our treasury paid for. No third party has reported a result on a skill yet. The 146 `uses` edges by other wallets each say a use, and none of those wallets wrote a result."
+}
