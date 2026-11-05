@@ -64,7 +64,8 @@ export type PulseUsageConfig = {
     transport?: GraphqlTransport;
 };
 
-const DEFAULT_LIMIT = 500;
+/** The testnet index returned 250 rows when asked for 500, so a larger limit could never say it was cut. */
+const DEFAULT_LIMIT = 250;
 
 const rowsOf = (data: Record<string, unknown>): Record<string, unknown>[] =>
     Array.isArray(data["triples"]) ? data["triples"].filter(isRecord) : [];
