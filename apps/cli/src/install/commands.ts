@@ -51,6 +51,8 @@ export type Flags = {
   print: boolean;
   capture: boolean;
   sponsored: boolean;
+  /** `init` replaces an MCP server named `arp` that ARP did not write. */
+  force: boolean;
   runtimes: RuntimeId[] | null;
 };
 
@@ -63,6 +65,7 @@ export function parseFlags(args: readonly string[]): Flags | Error {
     print: false,
     capture: false,
     sponsored: false,
+    force: false,
     runtimes: null,
   };
   for (let i = 0; i < args.length; i += 1) {
@@ -74,6 +77,7 @@ export function parseFlags(args: readonly string[]): Flags | Error {
     else if (arg === '--print') flags.print = true;
     else if (arg === '--capture') flags.capture = true;
     else if (arg === '--sponsored') flags.sponsored = true;
+    else if (arg === '--force') flags.force = true;
     else if (arg === '--runtime') {
       const list = (args[i + 1] ?? '').split(',').filter((name) => name.length > 0);
       i += 1;
@@ -233,7 +237,7 @@ async function change(
 }
 
 export async function init(env: InstallEnv, flags: Flags, cliPath: string): Promise<number> {
-  const commands = commandsFor(env, cliPath, flags.capture, flags.sponsored);
+  const commands = commandsFor(env, cliPath, flags.capture, flags.sponsored, flags.force);
   if (flags.print) {
     env.out(JSON.stringify({ mcpServers: { arp: commands.mcp } }, null, 2));
     return EXIT.ok;

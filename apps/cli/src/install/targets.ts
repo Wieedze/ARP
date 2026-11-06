@@ -69,20 +69,26 @@ export type Commands = {
    * in the runtimes whose payload it cannot read yet, so that it can learn to.
    */
   capture: boolean;
+  /** `arp init --force`: replace an MCP server named `arp` that ARP did not write. */
+  force: boolean;
 };
 
 const SERVER_NAME = 'arp';
 
 /**
- * Whether what a config holds under `arp` is what `init` writes: the package through `npx`, or a built
- * `cli.js` of it. A person's own server may carry the name, and `uninstall` is not there to take it.
+ * Whether what a config holds under `arp` is what `init` writes: the package through `npx`, a built
+ * `cli.js` of it, from this checkout or from a folder since moved (`dist/cli.js` with the `ARP_TARGET`
+ * `init` sets), or the plugin's `bin/arp.js` if `init` was run from there. A person's own server may
+ * carry the name, and neither `init` nor `uninstall` is there to take it.
  * Takes text so that an entry and the output of `claude mcp get` are read the same way.
  */
 function namesOurServer(text: string, cliPath: string): boolean {
   return (
     text.includes('@arp-protocol/cli') ||
     text.includes(cliPath) ||
-    /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text)
+    /apps[\\/]cli[\\/]dist[\\/]cli\.js/.test(text) ||
+    (/[\\/]dist[\\/]cli\.js/.test(text) && text.includes('ARP_TARGET')) ||
+    /(?:packaging[\\/]claude[\\/]arp|plugins[\\/]cache[\\/]arp[\\/]arp[\\/][^\\/]+)[\\/]bin[\\/]arp\.js/.test(text)
   );
 }
 
@@ -90,6 +96,15 @@ function foreignServerStep(where: string): Step {
   return {
     kind: 'skip',
     summary: `MCP server "arp" in ${where} is not one ARP wrote; left as it is`,
+  };
+}
+
+/** `init` found someone else's server under our name. It says so, and the run does not exit 0. */
+function foreignRefusal(where: string): Step {
+  return {
+    kind: 'skip',
+    failed: true,
+    summary: `MCP server "arp" in ${where} is not one ARP wrote; left as it is. Rename it, or run arp init --force to replace it`,
   };
 }
 
@@ -138,6 +153,7 @@ export function commandsFor(
   cliPath: string,
   capture = false,
   sponsored = false,
+  force = false,
 ): Commands {
   const hookFile = join(env.home, '.arp', 'bin', 'hook.js');
   // Run from `npx`'s cache, a path written into a config would vanish with the cache. The MCP
@@ -153,7 +169,7 @@ export function commandsFor(
     env: sponsored ? SPONSORED_ENV : SERVER_ENV,
   };
   const hook = `"${env.node}" "${hookFile}"${capture ? ' --capture' : ''}`;
-  return { mcp, hook, hookFile, cliPath, capture };
+  return { mcp, hook, hookFile, cliPath, capture, force };
 }
 
 /** `- ` lines for what was there, `+ ` lines for what will be. Nothing for an absent side. */
@@ -279,9 +295,15 @@ function claudeMcpSteps(
           summary: 'MCP server "arp" already declared with this command (claude mcp get arp)',
         },
       ];
+    if (present && !commands.force && !namesOurServer(got.stdout, commands.cliPath)) {
+      return [foreignRefusal('claude mcp get arp')];
+    }
     return present ? [removeStep, addStep] : [addStep];
   }
   if (remove && hasForeignServer(files.mcp, commands)) return [foreignServerStep(files.mcp)];
+  if (!remove && !commands.force && hasForeignServer(files.mcp, commands)) {
+    return [foreignRefusal(files.mcp)];
+  }
   return [
     jsonStep(
       files.mcp,
@@ -470,7 +492,13 @@ function jsonMcpRuntime(options: {
     withMcpServer(config, SERVER_NAME, commands === null ? null : mcpEntry(commands.mcp, typed));
   const steps = (env: InstallEnv, commands: Commands, project: boolean, remove: boolean) => {
     const withHook = remove || commands.capture;
-    const foreign = remove && hasForeignServer(path(env, project), commands);
+    const foreignHere = hasForeignServer(path(env, project), commands);
+    if (!remove && !commands.force && foreignHere) {
+      const refusal = foreignRefusal(path(env, project));
+      if (hook.file === file || !withHook) return [refusal];
+      return [refusal, hookStep(hookPath(env, project), hook.spec, commands, false)];
+    }
+    const foreign = remove && foreignHere;
     const serverEdit = foreign
       ? (config: Record<string, unknown>) => config
       : mcpEdit(remove ? null : commands);

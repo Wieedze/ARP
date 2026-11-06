@@ -60,6 +60,7 @@ usage
                          accept the question it shows
     --capture            (init) hook every runtime and keep each payload, redacted, in
                          ~/.arp/captures/ — to teach the hook a new runtime
+    --force              (init) replace an MCP server named "arp" that ARP did not write
   arp --version
   arp --help
 

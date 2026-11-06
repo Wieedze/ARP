@@ -413,6 +413,66 @@ describe('uninstall and doctor', () => {
     expect(ran.some((argv) => argv.includes('remove'))).toBe(false);
   });
 
+  test('init refuses to replace a foreign arp, says how, does not exit 0, and --force replaces it', async () => {
+    mkdirSync(join(home, '.claude'));
+    mkdirSync(join(home, '.cursor'));
+    const own = { command: 'python', args: ['/home/me/my-arp.py'], env: {} };
+    writeFileSync(join(home, '.claude.json'), JSON.stringify({ mcpServers: { arp: own } }));
+    writeFileSync(join(home, '.cursor', 'mcp.json'), JSON.stringify({ mcpServers: { arp: own } }));
+
+    expect(await init(env(), flags(['--yes']), CLI)).toBe(EXIT.partly);
+    expect(at(json(join(home, '.claude.json')), 'mcpServers', 'arp')).toEqual(own);
+    expect(at(json(join(home, '.cursor', 'mcp.json')), 'mcpServers', 'arp')).toEqual(own);
+    const said = lines.join('\n');
+    expect(said).toContain('Not done in 2 place(s):');
+    expect(said).toContain('is not one ARP wrote; left as it is');
+    expect(said).toContain('arp init --force');
+
+    expect(await init(env(), flags(['--yes', '--force']), CLI)).toBe(EXIT.ok);
+    expect(JSON.stringify(json(join(home, '.claude.json')))).toContain(CLI);
+    expect(JSON.stringify(json(join(home, '.cursor', 'mcp.json')))).toContain(CLI);
+  });
+
+  test('init refuses a foreign arp in Gemini, whose one file also holds the hooks', async () => {
+    mkdirSync(join(home, '.gemini'));
+    const own = { command: 'python', args: ['/home/me/my-arp.py'] };
+    const path = join(home, '.gemini', 'settings.json');
+    writeFileSync(path, JSON.stringify({ mcpServers: { arp: own } }));
+    expect(await init(env(), flags(['--yes', '--capture']), CLI)).toBe(EXIT.partly);
+    expect(at(json(path), 'mcpServers', 'arp')).toEqual(own);
+  });
+
+  test('init refuses a foreign arp behind the claude command, and removes it only with --force', async () => {
+    mkdirSync(join(home, '.claude'));
+    const claude = env({
+      which: (name) => (name === 'claude' ? '/usr/bin/claude' : null),
+      run: (argv): RunResult => {
+        ran.push([...argv]);
+        return argv[1] === 'mcp' && argv[2] === 'get'
+          ? { code: 0, stdout: 'arp:\n  Command: python\n  Args: /home/me/my-arp.py\n', stderr: '' }
+          : { code: 0, stdout: 'claude 2.1.318', stderr: '' };
+      },
+    });
+    const wrote = () => ran.filter((argv) => argv.includes('remove') || argv.includes('add-json'));
+    expect(await init(claude, flags(['--yes', '--runtime', 'claude']), CLI)).toBe(EXIT.partly);
+    expect(wrote()).toEqual([]);
+    expect(await init(claude, flags(['--yes', '--runtime', 'claude', '--force']), CLI)).toBe(EXIT.ok);
+    expect(wrote().map((argv) => argv[2])).toEqual(['remove', 'add-json']);
+  });
+
+  test('init replaces its own entries with no --force: an older package, and the plugin file', async () => {
+    mkdirSync(join(home, '.cursor'));
+    const path = join(home, '.cursor', 'mcp.json');
+    for (const old of [
+      { command: 'npx', args: ['-y', '@arp-protocol/cli@0.0.0', 'mcp'] },
+      { command: 'node', args: [join(home, '.claude/plugins/cache/arp/arp/0.0.1/bin/arp.js'), 'mcp'] },
+    ]) {
+      writeFileSync(path, JSON.stringify({ mcpServers: { arp: old } }));
+      expect(await init(env(), flags(['--yes']), CLI)).toBe(EXIT.ok);
+      expect(JSON.stringify(json(path))).toContain(CLI);
+    }
+  });
+
   test('uninstall still takes an entry an older package wrote', async () => {
     mkdirSync(join(home, '.cursor'));
     const old = { command: 'npx', args: ['-y', '@arp-protocol/cli@0.0.0', 'mcp'] };
