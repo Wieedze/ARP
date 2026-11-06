@@ -102,6 +102,20 @@ function read(path: string): string | null {
 }
 
 /**
+ * How a runtime starts the server through `npx`, from outside the project. Started inside it, npm puts the
+ * project's `node_modules/.bin` on `PATH`, so a repository's planted `node` or `npx` runs, tried in a clean
+ * container (ADR `0145`). The two logs still land in the project, as the server reads them relative to where it
+ * runs. A short fetch limit lets a dead registry fall back to the cache and still sees a new pinned version.
+ */
+export function npxLaunch(pkg: string): { command: string; args: string[] } {
+  const logs = 'ARP_SESSION_LOG="${ARP_SESSION_LOG:-$PWD/.arp/session.jsonl}" ARP_RECEIPTS="${ARP_RECEIPTS:-$PWD/.arp/receipts.jsonl}"';
+  return {
+    command: 'sh',
+    args: ['-c', `export ${logs}; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 ${pkg} mcp`],
+  };
+}
+
+/**
  * Everything runs on testnet 13579 for now, declarations included (the user's decision,
  * 2026-11-02, task 38): the server's own default stays mainnet, so the install says so.
  */
@@ -133,17 +147,7 @@ export function commandsFor(
   const mcp: McpServer = {
     ...(fromNpx
       ? {
-          command: 'npx',
-          // `--prefer-offline`: the version is pinned, so the cache cannot serve another one, and
-          // without it a dead registry holds the start for 70 s and more where a runtime gives up.
-          args: [
-            '--prefix',
-            '/',
-            '-y',
-            '--prefer-offline',
-            `@arp-protocol/cli@${env.version}`,
-            'mcp',
-          ],
+          ...npxLaunch(`@arp-protocol/cli@${env.version}`),
         }
       : { command: env.node, args: [cliPath, 'mcp'] }),
     env: sponsored ? SPONSORED_ENV : SERVER_ENV,

@@ -14,7 +14,7 @@ function appendOwn(path, text) {
 }
 
 // ../hook/src/hook.ts
-import { existsSync as existsSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
+import { existsSync as existsSync2, lstatSync as lstatSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync3, writeFileSync as writeFileSync2 } from "node:fs";
 import { homedir as homedir3 } from "node:os";
 import { dirname as dirname3, join as join4 } from "node:path";
 // ../../packages/protocol/dist/declare/tool-thing.js
@@ -1016,6 +1016,8 @@ var line = {
 };
 try {
   mkdirSync3(dirname3(path), { recursive: true });
+  if (dirname3(path) === own && lstatSync2(own).isSymbolicLink())
+    throw new Error(`${own} is a symbolic link`);
   const ignore = join4(own, ".gitignore");
   if (dirname3(path) === own && !existsSync2(ignore))
     writeFileSync2(ignore, `*

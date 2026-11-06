@@ -6,8 +6,8 @@
  *      bun run scripts/demo/terminal-demo.ts --no-pause
  *
  *  Reads only. No key, no sponsor, no transaction, nothing written on any chain: `arp share send` runs only while
- *  sharing is off, where it stops before loading a writer, and each program gets an environment of six variables, with
- *  a throwaway folder as its home. A step that cannot run says so and the next one runs. The folder is removed at the end.
+ *  sharing is off, where it stops before loading a writer, and the programs of steps 1 to 5 get an environment of six variables, with
+ *  a throwaway folder as their home. Step 6 only reads, with two variables and the real home. A step that cannot run says so and the next one runs. The folder is removed at the end.
  */
 import {spawn, spawnSync, type ChildProcessWithoutNullStreams} from "node:child_process";
 import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from "node:fs";
@@ -67,7 +67,7 @@ async function step(at: number, title: string, kind: string): Promise<void> {
 }
 const LOCAL = "LOCAL TEST: on this machine, in a throwaway folder. Nothing about it leaves.";
 const LOCAL_NOTE = "LOCAL NOTE, on a public search: the note is read from this machine only.";
-const READ = "PUBLIC READ: asks public services. Nothing is written anywhere.";
+const READ = "PUBLIC READ: asks public services. Nothing is written on a chain. Its cache stays in the throwaway folder.";
 const CHAIN = "ON CHAIN: read back from Intuition testnet 13579. Test money, not mainnet.";
 const FIGURES = "READ: testnet 13579, its explorer and this repository. Nothing is written.";
 

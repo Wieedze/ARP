@@ -5,7 +5,7 @@
 #
 # In a throwaway container, against the registry given. For each moment: an empty npx cache, one run killed at
 # that moment, then one more run. Prints one line per moment, and the time of a clean install. A moment later
-# than the clean install tests nothing, as the install has already finished, so it says so.
+# than the clean install tests nothing, as the install has already finished: read only the earlier ones.
 set -euo pipefail
 registry="${1:?registry}"; network="${2:?network}"; pkg="${3:?package}"; shift 3
 moments="${*:-0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.8 1 1.5 2 3 4 5 6 7 8}"

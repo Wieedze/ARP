@@ -68,7 +68,7 @@
  * line, appended, never rewritten — a log a later step reads is a log nothing may edit.
  */
 import { appendOwn } from './append.ts';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -301,6 +301,8 @@ try {
   // `.arp/` lands in the operator's project, whose `.gitignore` may not know it. The log holds
   // no content, but it is a record of what an agent did and is not the operator's to publish by
   // accident. Only our own directory: a path chosen through ARP_SESSION_LOG is left alone.
+  // A linked `.arp` would put that `.gitignore` in somebody else's folder, and hide its new files from git.
+  if (dirname(path) === own && lstatSync(own).isSymbolicLink()) throw new Error(`${own} is a symbolic link`);
   const ignore = join(own, '.gitignore');
   // `wx` will not follow a link planted there.
   if (dirname(path) === own && !existsSync(ignore)) writeFileSync(ignore, '*\n', { flag: 'wx' });

@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { doctor, EXIT, init, parseFlags, uninstall, type Flags } from '../src/install/commands.ts';
 import { CLAUDE_HOOKS, withCodexServer, withHooks, withMcpServer } from '../src/install/edits.ts';
 import type { InstallEnv, RunResult } from '../src/install/env.ts';
+import { npxLaunch } from '../src/install/targets.ts';
 
 let home: string;
 let dist: string;
@@ -285,8 +286,7 @@ describe('init', () => {
       '/root/.npm/_npx/abc/node_modules/@arp-protocol/cli/dist/cli.js',
     );
     expect(at(json(join(home, '.gemini', 'settings.json')), 'mcpServers', 'arp')).toEqual({
-      command: 'npx',
-      args: ['--prefix', '/', '-y', '--prefer-offline', '@arp-protocol/cli@0.0.1', 'mcp'],
+      ...npxLaunch('@arp-protocol/cli@0.0.1'),
       env: { ARP_TARGET: 'testnet' },
     });
   });

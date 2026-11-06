@@ -247,3 +247,18 @@ test('a link planted in a project is not written through', () => {
   expect(() => appendOwn(link, 'x\n')).toThrow();
   expect(readFileSync(target, 'utf8')).toBe('mine\n');
 });
+
+test("a linked .arp gets no .gitignore written into it", () => {
+  const target = join(dir, 'theirs');
+  mkdirSync(target);
+  const project = join(dir, 'project');
+  mkdirSync(project);
+  symlinkSync(target, join(project, '.arp'));
+  const { ARP_SESSION_LOG: _unused, ...env } = process.env;
+  Bun.spawnSync(['bun', HOOK], {
+    stdin: new TextEncoder().encode(JSON.stringify({ session_id: 's1', cwd: project, tool_name: 'mcp__x__y', tool_use_id: 't', tool_response: 'ok' })),
+    cwd: project,
+    env: { ...env, HOME: dir, ARP_HOME: join(dir, 'home') },
+  });
+  expect(existsSync(join(target, '.gitignore'))).toBe(false);
+});

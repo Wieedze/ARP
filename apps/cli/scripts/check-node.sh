@@ -52,6 +52,16 @@ grep -q '"name":"ARP"' <<<"$response" || fail "arp mcp did not answer initialize
 grep -q '"tools":\[' <<<"$response" || fail "arp mcp did not answer tools/list"
 pass "arp mcp answers initialize and tools/list over stdio"
 
+# A project's planted programs must not run through the launch line (ADR `0145`). `npx` is the one thing to
+# fetch here, so it runs from the tarball, with npm's own `--package`.
+planted="$work/planted"; mkdir -p "$planted/node_modules/.bin"
+for name in node npx arp skills; do
+  printf '#!/bin/sh\ntouch "%s/PWNED"\n' "$work" > "$planted/node_modules/.bin/$name"; chmod +x "$planted/node_modules/.bin/$name"
+done
+(cd "$planted" && clean sh -c "cd / && exec npx --prefix / -y --package '$work/$tarball' arp --version") >/dev/null 2>&1 || fail "the launch from outside the project did not start"
+[[ ! -e "$work/PWNED" ]] || fail "a planted program ran through the launch line"
+pass "a project's planted node, npx and arp do not run"
+
 # The node over a real socket, against a local stub RPC that answers eth_chainId and nothing else.
 # The key is a throwaway constant, never funded; the node signs receipts and sends nothing.
 clean node -e '

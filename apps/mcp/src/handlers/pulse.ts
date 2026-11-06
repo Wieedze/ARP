@@ -1,6 +1,6 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, delimiter } from 'node:path';
 
 import {
   findDeclaredTools,
@@ -130,10 +130,11 @@ export function searchInvocation(query: string, path: string | undefined, home: 
     // Run away from the project, and with a prefix of our own: from the project, a planted
     // `node_modules/.bin/skills` or `.npmrc` would run instead of the package named here.
     cwd: home,
-    // `--prefer-offline`: pinned, so the cache cannot serve another version, and a dead registry cannot use up the limit.
-    args: ['--prefix', home, '--yes', '--prefer-offline', SKILLS_CLI, 'find', query],
+    // A short fetch limit: a dead registry falls back to the cache, and a new pinned version is still seen.
+    args: ['--prefix', home, '--yes', '--fetch-retries=0', '--fetch-timeout=5000', SKILLS_CLI, 'find', query],
     env: {
-      ...(path === undefined ? {} : { PATH: path }),
+      // npm put the project's `node_modules/.bin` here when it started the server. A planted `npx` would run.
+      ...(path === undefined ? {} : { PATH: path.split(delimiter).filter((dir) => !/node_modules[\\/]\.bin[\\/]?$/.test(dir)).join(delimiter) }),
       HOME: home,
       DISABLE_TELEMETRY: '1',
       NO_COLOR: '1',
@@ -310,7 +311,7 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
       only_its_file_was_read:
         "GitHub's limit stopped the repository's list, so its scripts, its size and whether an install takes this copy are unknown.",
       its_file_mentions: {
-        ...(pulse.keys.length === 0 ? {} : { keys: pulse.keys }),
+        ...(pulse.keys.length === 0 ? {} : { keys: bounded(pulse.keys) }),
         ...(pulse.requires.login === null ? {} : { login: pulse.requires.login }),
         ...(pulse.paidWords.length === 0 ? {} : { paid_words: pulse.paidWords }),
         ...(pulse.hosts.length === 0 ? {} : { hosts: bounded(pulse.hosts) }),
@@ -330,15 +331,15 @@ function factsOf(pulse: SkillPulse, copies: Map<string, SkillPulse[]>) {
     ...(pulse.listingReadAt === undefined ? {} : { file_list_read_at: pulse.listingReadAt }),
     size: { files: pulse.files, bytes: pulse.bytes, scripts: pulse.scripts },
     its_file_mentions: {
-      ...(pulse.keys.length === 0 ? {} : { keys: pulse.keys }),
-      ...(pulse.keysInScriptsItRuns.length === 0 ? {} : { keys_in_scripts_it_runs: pulse.keysInScriptsItRuns }),
+      ...(pulse.keys.length === 0 ? {} : { keys: bounded(pulse.keys) }),
+      ...(pulse.keysInScriptsItRuns.length === 0 ? {} : { keys_in_scripts_it_runs: pulse.keysInScriptsItRuns.slice(0, 30).map((row) => ({ ...row, file: row.file.slice(0, 80), keys: bounded(row.keys) })) }),
       ...(pulse.requires.login === null ? {} : { login: pulse.requires.login }),
       ...(pulse.paidWords.length === 0 ? {} : { paid_words: pulse.paidWords }),
       ...(pulse.hosts.length === 0 ? {} : { hosts: bounded(pulse.hosts) }),
     },
     declares_cli: bounded(pulse.requires.cli),
     runs: bounded(pulse.requires.runs),
-    ...(pulse.runsAbsentFiles.length === 0 ? {} : { runs_files_not_in_its_repository: pulse.runsAbsentFiles }),
+    ...(pulse.runsAbsentFiles.length === 0 ? {} : { runs_files_not_in_its_repository: bounded(pulse.runsAbsentFiles) }),
     ...(pulse.repository === null ? {} : { repository: pulse.repository }),
     ...(same.length === 0
       ? {}

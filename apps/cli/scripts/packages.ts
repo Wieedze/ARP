@@ -29,7 +29,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { CLAUDE_HOOKS } from '../src/install/edits.ts';
-import { SERVER_ENV } from '../src/install/targets.ts';
+import { npxLaunch, SERVER_ENV } from '../src/install/targets.ts';
 
 const CLI = resolve(import.meta.dir, '..');
 const ROOT = resolve(CLI, '..', '..');
@@ -59,12 +59,10 @@ function mcpServer(source: Source) {
     source.kind === 'local'
       ? { command: 'node', args: [join(source.dist, 'cli.js'), 'mcp'] }
       : source.kind === 'npm'
-        ? // `--prefix /`: from the project, a planted package or `.npmrc` would run instead (tried, ADR `0145`).
-          // `--prefer-offline`: pinned, so the cache cannot serve another version, and a dead registry cannot hold the start.
-          { command: 'npx', args: ['--prefix', '/', '-y', '--prefer-offline', `${pkg.name}@${pkg.version}`, 'mcp'] }
+        ? npxLaunch(`${pkg.name}@${pkg.version}`)
         : // `npx -y <file>.tgz` tries to execute the archive itself ("Permission denied", tried
           // 2026-11-02); naming it as the package and `arp` as the command is what runs.
-          { command: 'npx', args: ['--prefix', '/', '-y', '--prefer-offline', '--package', source.url, 'arp', 'mcp'] };
+          npxLaunch(`--package ${source.url} arp`);
   return { ...run, env: PLUGIN_ENV };
 }
 
