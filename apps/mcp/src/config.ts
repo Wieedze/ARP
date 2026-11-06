@@ -8,6 +8,8 @@ import {
   INTUITION_HAS_TAG_MAINNET,
   INTUITION_IS_A_SUB_DOMAIN_OF,
 } from '@arp-protocol/core';
+import { resolve } from 'node:path';
+
 import { getAddress, type Address, type Hex } from 'viem';
 import { catalogueFor, receiptSigner } from './content.js';
 import { DEPLOYMENTS } from './data.js';
@@ -47,18 +49,24 @@ export const RECEIPT_SIGNER = (() => {
 export const DESKTOP =
   process.env['ARP_TOOLS'] === 'desktop' || process.env['ARP_TOOLS'] === 'sponsored';
 /**
- * Where `arp_get_skill` installs a fetched skill, relative to the working directory: set by
+ * What a server writes in a project lands there even when it was started elsewhere: the launch through `npx` runs
+ * from `/` and says where the project is (ADR `0145`).
+ *
+ * Where `arp_get_skill` installs a fetched skill, relative to the project: set by
  * `arp init --sponsored` for Claude Code (task 55), unset in the Desktop extension, whose working
  * directory is not the user's.
  */
-export const SKILLS_DIR = process.env['ARP_SKILLS_DIR'];
+export function inProject(path: string, projectDir: string | undefined = process.env['ARP_PROJECT_DIR']): string {
+  return resolve(projectDir ?? '.', path);
+}
+export const SKILLS_DIR = process.env['ARP_SKILLS_DIR'] === undefined ? undefined : inProject(process.env['ARP_SKILLS_DIR']);
 export const READ_ONLY = process.env['ARP_TOOLS'] === 'read' || DESKTOP;
 export const CONTENT_URL = process.env['ARP_CONTENT'] ?? 'http://127.0.0.1:3002';
 export const SPONSOR_URL = process.env['ARP_SPONSOR'] ?? 'http://127.0.0.1:3200';
 
 /** Where the hook writes, and where the fetch records what it fetched. Both overridable. */
-export const SESSION_LOG = process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl';
-export const RECEIPTS_LOG = process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl';
+export const SESSION_LOG = inProject(process.env['ARP_SESSION_LOG'] ?? '.arp/session.jsonl');
+export const RECEIPTS_LOG = inProject(process.env['ARP_RECEIPTS'] ?? '.arp/receipts.jsonl');
 
 /**
  * Which chain this server plans against — config with a default, never a module constant.

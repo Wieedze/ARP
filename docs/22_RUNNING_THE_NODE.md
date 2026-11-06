@@ -308,6 +308,7 @@ ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a f
 ARP_NO_RECEIPTS        set to 1 to run with no key at all
 ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's reader accepts
 ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
+ARP_PROJECT_DIR        set by the launch through npx, which starts from /: the project that relative paths below mean
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only

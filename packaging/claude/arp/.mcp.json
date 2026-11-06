@@ -4,7 +4,7 @@
       "command": "sh",
       "args": [
         "-c",
-        "export ARP_SESSION_LOG=\"${ARP_SESSION_LOG:-$PWD/.arp/session.jsonl}\" ARP_RECEIPTS=\"${ARP_RECEIPTS:-$PWD/.arp/receipts.jsonl}\"; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 @arp-protocol/cli@0.0.1 mcp"
+        "export ARP_PROJECT_DIR=\"$PWD\"; cd / && exec npx --prefix / -y --fetch-retries=0 --fetch-timeout=5000 @arp-protocol/cli@0.0.1 mcp"
       ],
       "env": {
         "ARP_TARGET": "testnet",
