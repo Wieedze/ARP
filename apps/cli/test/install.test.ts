@@ -458,6 +458,8 @@ describe('uninstall and doctor', () => {
     expect(wrote()).toEqual([]);
     expect(await init(claude, flags(['--yes', '--runtime', 'claude', '--force']), CLI)).toBe(EXIT.ok);
     expect(wrote().map((argv) => argv[2])).toEqual(['remove', 'add-json']);
+    // `claude` keeps no copy, so what goes is printed before it goes.
+    expect(lines.join('\n')).toContain('/home/me/my-arp.py');
   });
 
   test('init replaces its own entries with no --force: an older package, and the plugin file', async () => {

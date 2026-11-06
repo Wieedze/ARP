@@ -38004,7 +38004,8 @@ function claudeMcpSteps(env, commands, project, remove, allowCli) {
       kind: "command",
       argv: ["claude", "mcp", "remove", SERVER_NAME, "--scope", "user"],
       summary: "claude mcp remove arp --scope user",
-      diff: []
+      diff: present ? got.stdout.trim().split(`
+`).map((line) => `- ${line}`) : []
     };
     const entry = mcpEntry(commands.mcp, true);
     const addStep = {
@@ -38444,7 +38445,7 @@ Nothing to change.`);
     return finish();
   }
   env.out(`
-Each file is backed up as <file>.arp-backup-<date> before it is written.`);
+Each file is backed up as <file>.arp-backup-<date> before it is written. A change through the \`claude\` command has no backup: what it removes is printed above.`);
   if (!await consent(env, flags, `${verb} ${pending.length} change(s)?`))
     return EXIT.refused;
   const failures = pending.map((step2) => apply(env, step2)).filter((f) => f !== null);

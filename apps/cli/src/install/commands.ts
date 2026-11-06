@@ -224,7 +224,7 @@ async function change(
     env.out(`\n--dry-run: ${pending.length} change(s) shown, nothing written.`);
     return finish();
   }
-  env.out(`\nEach file is backed up as <file>.arp-backup-<date> before it is written.`);
+  env.out(`\nEach file is backed up as <file>.arp-backup-<date> before it is written. A change through the \`claude\` command has no backup: what it removes is printed above.`);
   if (!(await consent(env, flags, `${verb} ${pending.length} change(s)?`))) return EXIT.refused;
 
   const failures = pending.map((step) => apply(env, step)).filter((f): f is string => f !== null);

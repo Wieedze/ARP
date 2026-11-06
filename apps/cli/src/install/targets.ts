@@ -272,7 +272,8 @@ function claudeMcpSteps(
       kind: 'command',
       argv: ['claude', 'mcp', 'remove', SERVER_NAME, '--scope', 'user'],
       summary: 'claude mcp remove arp --scope user',
-      diff: [],
+      // `claude` keeps no copy, unlike a file this tool edits, so what goes is printed before it goes.
+      diff: present ? got.stdout.trim().split('\n').map((line) => `- ${line}`) : [],
     };
     const entry = mcpEntry(commands.mcp, true);
     const addStep: Step = {

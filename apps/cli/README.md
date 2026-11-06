@@ -55,7 +55,7 @@ server to each one, and the hook to Claude Code (Grok Build reads Claude Code's 
 other MCP client, `arp init --print` prints the entry to paste. `--yes` and `--no-input` are for
 scripts, `--runtime claude,cursor` narrows the run, and `--project` writes the project's files.
 
-`init` does not replace an MCP server named `arp` that it did not write. It leaves it, says so, does the rest and exits 6. Rename yours, or pass `--force` to replace it; the file is backed up first.
+`init` does not replace an MCP server named `arp` that it did not write. It leaves it, says so, does the rest and exits 6. Rename yours, or pass `--force` to replace it; a file is backed up first. Through the `claude` command there is no backup, so the old entry is printed before it is removed.
 
 ## Uninstall
 
