@@ -12,6 +12,8 @@ file and a line.
 terminal (ADR `0120`); this document predates it and does not cover it. And `@arp-protocol/cli` is
 **not on npm yet**, so every `npx @arp-protocol/cli` line below is the target, not today's path.
 
+**A third, 2026-11-06:** the Claude Code plugin carries the CLI as `bin/arp.js` and runs it with `node`, so it needs no npm release and is no longer a thin manifest (ADR `0145`, amendment, with the measurements). §5's "thin manifest" still describes the others.
+
 ---
 
 ## 1. Where each program lives
@@ -111,7 +113,7 @@ The plan that builds it is `docs/tasks/33-one-installer.md`. Its summary:
 ```
 arp-<version>.mcpb                        Claude Desktop: one file, Settings → Extensions (ADR 0110)
 npx @arp-protocol/cli init                any runtime: detects them, writes the MCP entry and the hook
-claude plugin install arp@arp             Claude Code: hook + MCP server + skill
+claude plugin install arp@arp             Claude Code: hook + MCP server + skill + commands, carried in the plugin
 grok plugin install arp --trust           Grok Build: the same Claude Code plugin, unchanged
 codex plugin marketplace add <repo>       Codex: its own plugin format; the CLI's hook via `arp init`
 gemini extensions install <repo url>      Gemini CLI: an extension
@@ -121,7 +123,7 @@ npx @arp-protocol/cli init --node         the node, opt-in. It is a server, so i
                                           or an image, not a hook
 ```
 
-One npm package holds the code. Each native package is a thin manifest that pins its exact version,
+One npm package holds the code. Each native package but Claude Code's is a thin manifest that pins its exact version,
 generated at release so the two never disagree.
 
 ### Runtimes, and how sure we are of each

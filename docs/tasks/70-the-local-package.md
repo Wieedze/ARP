@@ -1,6 +1,6 @@
 # Task 70 — The whole package, working locally
 
-**Status:** items 2, 4, 5, 6 and 7 done 2026-11-05 on `feat/agent-pulse`, nothing published or hosted. Item 1 works from the CLI and `--plugin-dir`; `claude plugin install` remains for the user's review. Item 3 holds for the score; what a displayed line does to a choice stays open (`docs/tasks/71`), and the user chose not to measure more.
+**Status:** items 2, 4, 5, 6 and 7 done 2026-11-05 on `feat/agent-pulse`, nothing published or hosted. Item 1 works from the CLI and `--plugin-dir`; `claude plugin install` remains for the user's review. Item 3 holds for the score; what a displayed line does to a choice stays open (`docs/tasks/71`), and the user chose not to measure more. On 2026-11-06 the plugin began carrying the CLI: the walk below ran the earlier launch through `npx`.
 **Decision:** the user, 2026-11-05: « on finit tout le package en local, et quand toute la checklist est vérifiée, que tous les services sont confirmés, on avance » (spelling corrected).
 **Rules:** `code.md`, `portability.md`, `security.md`, `claims.md`, `workflow.md`.
 **Reviewers:** `intuition-integrator` where an item touches a graph read; `task-verifier` once, at the end of the checklist.
@@ -55,6 +55,43 @@ Testnet 13579, `claude -p`, `sonnet`, from a tarball of the CLI installed in a t
 **Seen on the way:** a machine that already has ARP as a global MCP server has two servers of the same name, and a session may call the global one. In this walk that is `mcp__arp__arp_pulse`, excluded with `--disallowedTools 'mcp__arp__*'` so the plugin's was the one tested. The first attempts at steps 3 and 4 hit this as a permission refusal, and their line had no source and no domain.
 
 **Item 6:** with both services stopped, `arp line` and `arp_get_skill` each name the service, its address and, for the content server, `ARP_CONTENT` (`1772253`). `arp line`'s own message was written by item 1.
+
+### The plugin carries the CLI, 2026-11-06
+
+Done on the user's request after a real test of the launch through `npx` (17 failures of 80 with four sessions together on an empty cache, a very slow first download failing, a launch that needs `sh`, and testers who would need npm). The reasons and the decision are ADR `0145`'s amendment. Commits `cd15081`, `562b98f`. Nothing was written on chain, and no key was used but a throwaway one the CLI generated.
+
+Measured by `bash scripts/measure/plugin-start.sh HEAD~40 20`, raw output `data/measurements/plugin-start-2026-11-06.jsonl`, with no network and an empty `HOME`, at `562b98f`:
+
+| | |
+| --- | --- |
+| Start, alone, 20 runs | 123 to 136 ms, median 127 |
+| 4 sessions at once, 20 rounds | 0 failures of 80 (Wilson 95%: 0% to 5%) |
+| `bin/arp.js` | 2,023,282 bytes, 470,967 gzipped |
+| A later version in the repository | 21 KiB once packed, 573 KB until `git gc`, for each commit that changes the bundled code |
+
+From a fresh `git clone` with no `node_modules` and no build, in a throwaway `CLAUDE_CONFIG_DIR`:
+
+    claude plugin marketplace add <clone>
+    claude plugin install arp@arp
+    claude mcp list
+    plugin:arp:arp: node <clone>/packaging/claude/arp/bin/arp.js mcp - ✔ Connected
+
+So `.mcp.json` does expand `${CLAUDE_PLUGIN_ROOT}`. A real session then ran through `--plugin-dir`, since a throwaway config has no login: `haiku`, $0.004, in a project with `node_modules/.bin/{node,npx,arp,skills}` planted, the global `arp` server excluded. It called `mcp__plugin_arp_arp__arp_pulse`, the real search found 222 results, none of the planted programs ran, and the hook wrote in the project's `.arp/`. `check-node.sh` holds the same proof without a session, with a stub standing for `npx`, which shows the search did run.
+
+The commands, in real sessions with a throwaway `ARP_HOME`, a stopped sponsor and no line written:
+
+| Typed | What came back |
+| --- | --- |
+| `/arp:share`, `/arp:share-send`, sharing off | "sharing is off", nothing sent |
+| `/arp:share-on`, `/arp:share-off` | `sharing.json` changes, nothing sent |
+| `/arp:line`, no arguments | the usage line |
+| `/arp:line --tool ... --outcome failed --domain document`, sponsor stopped | names the service and `ARP_SPONSOR` |
+| `/arp:line ...; touch X` and `$(touch X)` | refused by Claude Code's permission check, no file made |
+| The model, told to invoke `arp:share-send` | the Skill tool refuses it, `disable-model-invocation` |
+
+`claude plugin validate packaging/claude/arp` passes, with one warning about a missing icon, which only the plugin directory asks for. `packages --check` exits 1 after a change in the CLI's source, and after a change to the file itself. `arp init` over a foreign `arp`: exit 6, the entry left as it was, `--force` replaces it (`apps/cli/test/install.test.ts`).
+
+**Open:** Windows, and Grok Build with this `.mcp.json`, have not been run. `marketplace add` and `install` were run with a throwaway config and no session, so a logged-in clean `HOME` remains as step 1 of the walk. `/arp:share-send` and `/arp:line` have not written a real line through the plugin's commands. A model can still try `node .../arp.js share send` through `Bash`, and only the session's permissions stop that.
 
 ## After the checklist, not before
 

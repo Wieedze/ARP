@@ -39,6 +39,8 @@ apps/mcp/dist/arp-server.js --stdio       # the same, as one file: cd apps/mcp &
 arp mcp                                   # the same under Node 22: @arp-protocol/cli (apps/cli)
 ```
 
+**In the Claude Code plugin** it is one file you can read, `bin/arp.js`, started as `node ${CLAUDE_PLUGIN_ROOT}/bin/arp.js mcp` from your project, with `ARP_TARGET=testnet` and `ARP_TOOLS=read`. Starting it downloads nothing, and it adds nothing of your project's to `PATH`. Only its search runs `npx`, described below. Its commands, such as `/arp:share`, run the same file when you type them.
+
 `@arp-protocol/cli` holds the three programs behind one `arp` binary and runs on Node 22 without
 Bun (ADR `0089`). It is built and checked (`cd apps/cli && bun run check:node`) but **not yet
 published**, so `arp` means `node apps/cli/dist/cli.js` until it is.
@@ -308,7 +310,7 @@ ARP_RECEIPT_KEY        a key you manage, instead of the generated one. Never a f
 ARP_NO_RECEIPTS        set to 1 to run with no key at all
 ARP_ACCEPTED_SIGNERS   comma-separated. Which receipt signers THIS server's reader accepts
 ARP_CHAIN_ID           which chain's catalogue apps/mcp/src/session-log.ts reads
-ARP_PROJECT_DIR        set by the launch through npx, which starts from /: the project that relative paths below mean
+ARP_PROJECT_DIR        set by the launch through npx, which starts from /: the project that relative paths below mean. The Claude Code plugin does not set it, as it starts in the project
 ARP_SESSION_LOG        where the hook writes. Default .arp/session.jsonl
 ARP_RECEIPTS           where fetches are recorded. Default .arp/receipts.jsonl
 ARP_PULSE_SEARCH       off: arp_pulse runs no package, and takes search_output only

@@ -1,6 +1,6 @@
 # 0089 — One installer: one npm package, a thin native manifest per runtime
 
-**Status:** Accepted
+**Status:** Accepted. Amended by ADR `0145`, 2026-11-06: the Claude Code plugin carries the CLI, so its manifest is no longer thin.
 **Date:** 2026-10-30
 **Triggered by:** user request — _« je veux un seul installer, pense friction et surtout pense comme
 une entreprise professionnelle »_, then _« installable en cli en npx (npm) et en plugin claude, codex
