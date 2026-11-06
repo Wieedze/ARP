@@ -43,7 +43,7 @@ Nothing is fetched and no `npx` runs the server, so the project stays the workin
 
 | | |
 | --- | --- |
-| Start, alone, 20 runs | 123 to 136 ms, median 127 |
+| Start, alone, 20 runs | 123 to 136 ms, median 126.5 |
 | 4 sessions at once, 20 rounds | **0 failures of 80** (Wilson 95%: 0% to 5%), 105 to 153 ms |
 | `bin/arp.js` | 2,023,282 bytes, 470,967 gzipped |
 | A later version in the repository | 21 KiB once packed: 448 KiB with one version, 469 with a second, from `fb07a89` of 2026-11-05, 3,449 lines apart. 573 KB until `git gc` |
@@ -52,7 +52,7 @@ So the 2 MB above was the file's size, not its cost. The cost comes with every c
 
 **Three things found on the way.** Node refused the file under a parent `package.json` with `"type": "commonjs"`, and under Node 22.0 with no `package.json`, so `bin/package.json` says the files are modules, the hook included. The bundle's path comments depend on the working directory, so the build runs from `apps/cli`, or `--check` reads as stale from elsewhere. A plugin installed from a local path is read from that path and not copied (`claude plugin list`: "Read from"), so moving the checkout breaks it.
 
-**Not tested:** Windows. The server's launch no longer needs `sh`, while the hook's command line and the search's `npx` have not been run there. Grok Build reading `${CLAUDE_PLUGIN_ROOT}` in `.mcp.json` has not been run either.
+**Not closed:** a planted `node_modules/.bin` in `$HOME` or a parent of it, or in a project holding `ARP_HOME`, still runs through the search's `npx`, reproduced 2026-11-06. A project in a subfolder of the home is not affected. **Not tested:** Windows. The server's launch no longer needs `sh`, while the hook's command line and the search's `npx` have not been run there. Grok Build reading `${CLAUDE_PLUGIN_ROOT}` in `.mcp.json` has not been run either.
 
 **Sharing from the plugin.** `/arp:share`, `/arp:share-on`, `/arp:share-off`, `/arp:share-send` and `/arp:line` carry `disable-model-invocation`, and each allows its exact command line. Asked to invoke `share-send`, a real session's model got a refusal from the Skill tool. What this does not stop: a model can try the same line through `Bash`, and that rests on the session's permissions.
 

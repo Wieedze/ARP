@@ -159,7 +159,7 @@ it runs `npx --yes skills@1.7.6 find <query>` with a short fetch limit, from its
 OS user, so it can read what that user can read. It gets four environment variables (`PATH`, `HOME` set to
 the private directory `skills-cli` in `ARP_HOME`, and two that turn off telemetry and colour), none of your secrets, and the query as
 one argument with no shell. **Your search words reach skills.sh**, and `npx` reaches the npm registry when the package is not in its cache.
-`ARP_PULSE_SEARCH=off` stops it, and it never runs in `desktop` or `sponsored`, which keep an agent key on
+A `node_modules/.bin` in your home folder or a parent of it, or in a project holding `ARP_HOME`, is **not** covered: a program there ran through this `npx`, tried 2026-11-06. `ARP_PULSE_SEARCH=off` stops it, and it never runs in `desktop` or `sponsored`, which keep an agent key on
 the machine. An agent can always pass the command's text as `search_output`, which runs nothing. Either way
 the tool asks `api.github.com` for each repository's listing and, with `GITHUB_TOKEN`, also its figures.
 

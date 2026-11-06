@@ -58,16 +58,16 @@ Testnet 13579, `claude -p`, `sonnet`, from a tarball of the CLI installed in a t
 
 ### The plugin carries the CLI, 2026-11-06
 
-Done on the user's request after a real test of the launch through `npx` (17 failures of 80 with four sessions together on an empty cache, a very slow first download failing, a launch that needs `sh`, and testers who would need npm). The reasons and the decision are ADR `0145`'s amendment. Commits `cd15081`, `562b98f`. Nothing was written on chain, and no key was used but a throwaway one the CLI generated.
+Done on the user's request after a real test of the launch through `npx` (17 failures of 80 with four sessions together on an empty cache, whose raw output is not committed, a very slow first download failing, a launch that needs `sh`, and testers who would need npm). The reasons and the decision are ADR `0145`'s amendment. Commits `cd15081`, `562b98f`, and `--force` for Codex after review. Nothing was written on chain, and no key was used but a throwaway one the CLI generated.
 
-Measured by `bash scripts/measure/plugin-start.sh HEAD~40 20`, raw output `data/measurements/plugin-start-2026-11-06.jsonl`, with no network and an empty `HOME`, at `562b98f`:
+Measured by `bash scripts/measure/plugin-start.sh fb07a89 20`, raw output `data/measurements/plugin-start-2026-11-06.jsonl`, with no network and an empty `HOME`, at `562b98f`:
 
 | | |
 | --- | --- |
-| Start, alone, 20 runs | 123 to 136 ms, median 127 |
+| Start, alone, 20 runs | 123 to 136 ms, median 126.5 |
 | 4 sessions at once, 20 rounds | 0 failures of 80 (Wilson 95%: 0% to 5%) |
 | `bin/arp.js` | 2,023,282 bytes, 470,967 gzipped |
-| A later version in the repository | 21 KiB once packed, 573 KB until `git gc`, for each commit that changes the bundled code |
+| A later version in the repository | One pair measured, `fb07a89` to `562b98f`, 3,449 lines apart, in a repository holding only that file: 21 KiB once packed, 573 KB until `git gc`. Every commit that changes the bundled code costs something, and a larger or smaller change packs differently |
 
 From a fresh `git clone` with no `node_modules` and no build, in a throwaway `CLAUDE_CONFIG_DIR`:
 
@@ -76,7 +76,7 @@ From a fresh `git clone` with no `node_modules` and no build, in a throwaway `CL
     claude mcp list
     plugin:arp:arp: node <clone>/packaging/claude/arp/bin/arp.js mcp - ✔ Connected
 
-So `.mcp.json` does expand `${CLAUDE_PLUGIN_ROOT}`. A real session then ran through `--plugin-dir`, since a throwaway config has no login: `haiku`, $0.004, in a project with `node_modules/.bin/{node,npx,arp,skills}` planted, the global `arp` server excluded. It called `mcp__plugin_arp_arp__arp_pulse`, the real search found 222 results, none of the planted programs ran, and the hook wrote in the project's `.arp/`. `check-node.sh` holds the same proof without a session, with a stub standing for `npx`, which shows the search did run.
+So `.mcp.json` does expand `${CLAUDE_PLUGIN_ROOT}`. A real session then ran through `--plugin-dir`, since a throwaway config has no login: `haiku`, $0.004, in a project with `node_modules/.bin/{node,npx,arp,skills}` planted, the global `arp` server excluded. It called `mcp__plugin_arp_arp__arp_pulse`, the real search found 222 results, none of the planted programs ran, and the hook wrote in the project's `.arp/`. `check-node.sh` proves less, with no session: a stub stands for `npx`, so it shows the search was invoked and that the CLI runs no planted program, and it would not catch a regression in the search's `cwd` or `--prefix`, which belongs to `searchInvocation`'s test in `apps/mcp`.
 
 The commands, in real sessions with a throwaway `ARP_HOME`, a stopped sponsor and no line written:
 
@@ -91,7 +91,7 @@ The commands, in real sessions with a throwaway `ARP_HOME`, a stopped sponsor an
 
 `claude plugin validate packaging/claude/arp` passes, with one warning about a missing icon, which only the plugin directory asks for. `packages --check` exits 1 after a change in the CLI's source, and after a change to the file itself. `arp init` over a foreign `arp`: exit 6, the entry left as it was, `--force` replaces it (`apps/cli/test/install.test.ts`).
 
-**Open:** Windows, and Grok Build with this `.mcp.json`, have not been run. `marketplace add` and `install` were run with a throwaway config and no session, so a logged-in clean `HOME` remains as step 1 of the walk. `/arp:share-send` and `/arp:line` have not written a real line through the plugin's commands. A model can still try `node .../arp.js share send` through `Bash`, and only the session's permissions stop that.
+**Open:** Windows, and Grok Build with this `.mcp.json`, have not been run. `marketplace add` and `install` were run with a throwaway config and no session, so a logged-in clean `HOME` remains as step 1 of the walk. `/arp:share-send` and `/arp:line` have not written a real line through the plugin's commands. A model can still try `node .../arp.js share send` through `Bash`, and only the session's permissions stop that. A planted `node_modules/.bin` in `$HOME` or a parent of it does run through the search's `npx`, reproduced with `HOME` set to the project: npm's own walk from the search's folder under `~/.arp` is the likely cause, not confirmed. `handlers/pulse.ts` is not changed by this work, so it is not new, though the old launch was not tried. It reaches a session whose home holds such a folder, not a project in a subfolder, and `ARP_HOME` inside a project does the same.
 
 ## After the checklist, not before
 
