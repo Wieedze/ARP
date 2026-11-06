@@ -560,12 +560,19 @@ function jsonMcpRuntime(options: {
   };
 }
 
-function codexStep(env: InstallEnv, entry: McpServer | null, project: boolean): Step {
+function codexStep(
+  env: InstallEnv,
+  entry: McpServer | null,
+  project: boolean,
+  force = false,
+): Step {
   const path = join(project ? env.cwd : env.home, '.codex', 'config.toml');
   const before = read(path);
-  const after = withCodexServer(before, entry);
-  if (after instanceof Error)
-    return { kind: 'skip', failed: true, summary: `${path}: ${after.message}; left as it is` };
+  const after = withCodexServer(before, entry, force);
+  if (after instanceof Error) {
+    const way = entry === null ? '' : '. Rename it, or run arp init --force to replace it';
+    return { kind: 'skip', failed: true, summary: `${path}: ${after.message}; left as it is${way}` };
+  }
   return {
     kind: 'file',
     path,
@@ -588,7 +595,7 @@ const codex: Runtime = {
   name: 'Codex',
   detect: (env) => env.which('codex') !== null || existsSync(join(env.home, '.codex')),
   install: (env, commands, project) => [
-    codexStep(env, commands.mcp, project),
+    codexStep(env, commands.mcp, project, commands.force),
     commands.capture
       ? hookStep(
           join(project ? env.cwd : env.home, '.codex', 'hooks.json'),

@@ -37841,15 +37841,28 @@ function hasHooks(settings, spec, marker) {
 function tomlString(value) {
   return JSON.stringify(value);
 }
-function withCodexServer(text2, entry) {
+function withoutCodexTable(text2) {
+  let inside = false;
+  return text2.split(`
+`).filter((line) => {
+    if (/^\s*\[\[?[^\]]+\]\]?\s*(#.*)?$/.test(line)) {
+      inside = /^\s*\[mcp_servers\.arp(\.[^\]]+)?\]/.test(line);
+    }
+    return !inside;
+  }).join(`
+`);
+}
+function withCodexServer(text2, entry, force = false) {
   const current = text2 ?? "";
   const begin = current.indexOf(TOML_BEGIN);
   const end = current.indexOf(TOML_END);
   const hasBlock = begin !== -1 && end > begin;
-  const outside = hasBlock ? current.slice(0, begin) + current.slice(end + TOML_END.length) : current;
-  if (/^\s*\[mcp_servers\.arp\]/m.test(outside)) {
+  const kept = hasBlock ? current.slice(0, begin) + current.slice(end + TOML_END.length) : current;
+  const foreign = /^\s*\[mcp_servers\.arp\]/m.test(kept);
+  if (foreign && !force) {
     return new Error("an [mcp_servers.arp] table exists that `arp init` did not write");
   }
+  const outside = foreign ? withoutCodexTable(kept) : kept;
   let base2 = outside.replace(/\n{3,}/g, `
 
 `).replace(/\s+$/, "");
@@ -38115,12 +38128,14 @@ function jsonMcpRuntime(options) {
     }
   };
 }
-function codexStep(env, entry, project) {
+function codexStep(env, entry, project, force = false) {
   const path = join14(project ? env.cwd : env.home, ".codex", "config.toml");
   const before = read2(path);
-  const after = withCodexServer(before, entry);
-  if (after instanceof Error)
-    return { kind: "skip", failed: true, summary: `${path}: ${after.message}; left as it is` };
+  const after = withCodexServer(before, entry, force);
+  if (after instanceof Error) {
+    const way = entry === null ? "" : ". Rename it, or run arp init --force to replace it";
+    return { kind: "skip", failed: true, summary: `${path}: ${after.message}; left as it is${way}` };
+  }
   return {
     kind: "file",
     path,
@@ -38208,7 +38223,7 @@ var init_targets = __esm(() => {
     name: "Codex",
     detect: (env) => env.which("codex") !== null || existsSync8(join14(env.home, ".codex")),
     install: (env, commands, project) => [
-      codexStep(env, commands.mcp, project),
+      codexStep(env, commands.mcp, project, commands.force),
       commands.capture ? hookStep(join14(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands, false) : noHook(join14(project ? env.cwd : env.home, ".codex", "hooks.json"), CODEX_HOOKS, commands)
     ],
     remove: (env, commands, project) => [

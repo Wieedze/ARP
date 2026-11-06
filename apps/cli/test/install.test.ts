@@ -473,6 +473,24 @@ describe('uninstall and doctor', () => {
     }
   });
 
+  test('init refuses a foreign Codex table, says how, and --force replaces only that table', async () => {
+    mkdirSync(join(home, '.codex'));
+    const path = join(home, '.codex', 'config.toml');
+    const mine = 'model = "o"\n\n[mcp_servers.arp]\ncommand = "python"\n\n[mcp_servers.arp.env]\nA = "1"\n\n[mcp_servers.other]\ncommand = "x"\n';
+    writeFileSync(path, mine);
+    expect(await init(env(), flags(['--yes', '--runtime', 'codex']), CLI)).toBe(EXIT.partly);
+    expect(readFileSync(path, 'utf8')).toBe(mine);
+    expect(lines.join('\n')).toContain('arp init --force');
+
+    expect(await init(env(), flags(['--yes', '--runtime', 'codex', '--force']), CLI)).toBe(EXIT.ok);
+    const after = readFileSync(path, 'utf8');
+    expect(after).toContain(CLI);
+    expect(after).not.toContain('python');
+    expect(after).not.toContain('A = "1"');
+    expect(after).toContain('model = "o"');
+    expect(after).toContain('[mcp_servers.other]');
+  });
+
   test('uninstall still takes an entry an older package wrote', async () => {
     mkdirSync(join(home, '.cursor'));
     const old = { command: 'npx', args: ['-y', '@arp-protocol/cli@0.0.0', 'mcp'] };

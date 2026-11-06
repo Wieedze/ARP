@@ -158,17 +158,38 @@ function tomlString(value: string): string {
  * replaced or removed without parsing TOML (clig.dev, "Configuration": delineate your additions).
  * Returns an `Error` when a table of that name exists outside the markers: it is not ours to change.
  */
-export function withCodexServer(text: string | null, entry: McpServer | null): string | Error {
+/** The text without a `[mcp_servers.arp]` table and its sub-tables, up to the next table's header. */
+function withoutCodexTable(text: string): string {
+  let inside = false;
+  return text
+    .split('\n')
+    .filter((line) => {
+      if (/^\s*\[\[?[^\]]+\]\]?\s*(#.*)?$/.test(line)) {
+        inside = /^\s*\[mcp_servers\.arp(\.[^\]]+)?\]/.test(line);
+      }
+      return !inside;
+    })
+    .join('\n');
+}
+
+/** `force`: `arp init --force`, which replaces a table `init` did not write. The caller keeps a backup. */
+export function withCodexServer(
+  text: string | null,
+  entry: McpServer | null,
+  force = false,
+): string | Error {
   const current = text ?? '';
   const begin = current.indexOf(TOML_BEGIN);
   const end = current.indexOf(TOML_END);
   const hasBlock = begin !== -1 && end > begin;
-  const outside = hasBlock
+  const kept = hasBlock
     ? current.slice(0, begin) + current.slice(end + TOML_END.length)
     : current;
-  if (/^\s*\[mcp_servers\.arp\]/m.test(outside)) {
+  const foreign = /^\s*\[mcp_servers\.arp\]/m.test(kept);
+  if (foreign && !force) {
     return new Error('an [mcp_servers.arp] table exists that `arp init` did not write');
   }
+  const outside = foreign ? withoutCodexTable(kept) : kept;
   let base = outside.replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '');
   if (entry === null) return base.length === 0 ? '' : `${base}\n`;
   const block = [
