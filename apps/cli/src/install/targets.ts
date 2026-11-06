@@ -273,7 +273,8 @@ function claudeMcpSteps(
       argv: ['claude', 'mcp', 'remove', SERVER_NAME, '--scope', 'user'],
       summary: 'claude mcp remove arp --scope user',
       // `claude` keeps no copy, unlike a file this tool edits, so what goes is printed before it goes.
-      diff: present ? got.stdout.trim().split('\n').map((line) => `- ${line}`) : [],
+      // A value may be a secret, and this output can land in an agent's transcript.
+      diff: present ? got.stdout.trim().split('\n').map((line) => `- ${line.replace(/=\S+/g, '=…')}`) : [],
     };
     const entry = mcpEntry(commands.mcp, true);
     const addStep: Step = {

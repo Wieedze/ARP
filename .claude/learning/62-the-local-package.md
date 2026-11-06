@@ -53,6 +53,46 @@ With real `claude mcp` 2.1.318 in a throwaway `HOME`, as user `max`, a second `a
 
 **Left as it is:** a relative `ARP_SESSION_LOG` agrees when the hook runs from the project. Run from `<project>/sub`, the hook wrote `sub/logs/s.jsonl`, which the server does not read. The default path follows the `cwd` the hook is given in the same way, so this is not new. Whether Claude Code runs a hook from a subdirectory was not tested.
 
+## The plugin carrying the CLI, verified 2026-11-06, at `21b9022`
+
+PASS, on the second verification of this work (ADR `0145`, amendment). `21b9022` landed during the run, so the gates ran again at it.
+
+**Planted project**, path with a space, holding `node`, `npx`, `arp`, `skills`, `npm`, `sh`, a `package.json` and a dead `.npmrc`, at its root and in `node_modules/.bin`. No planted program ran through any of: the real `.mcp.json` with the real `npx` and search; `claude mcp list` (2.1.318), which showed `plugin:arp:arp: node <clone>/packaging/claude/arp/bin/arp.js mcp - ✔ Connected`, so `claude` expands `${CLAUDE_PLUGIN_ROOT}`; one real `haiku` session, $0.005, `mcp__plugin_arp_arp__arp_pulse`, `results_found` 100, hook wrote `.arp/session.jsonl`. From a git URL over local smart HTTP, the plugin is copied to `plugins/cache/arp/arp/0.0.1/` and connects. The real `owner/repo` on GitHub was not run, as the branch is not pushed.
+
+**`plugin-start.sh` run again at `21b9022`:** alone 123 to 136 ms, median 126; together 0 of 80, 102 to 156 ms, Node 22.23.4. The committed raw file gives the quoted figures: median 126.5, 105 to 153 ms, 2,023,282 bytes at `562b98f`, 448 and 469 KiB, 572,759 bytes before `gc`, 3,449 lines. At `21b9022` the file is 2,023,954 bytes, 471,175 gzipped.
+
+**`bin/arp.js`:** no key, token or home path found by pattern scan. Local addresses are defaults and one catalogue fixture (`http://localhost:3002/mcp`, rig agent 3). `packages --check` exits 0 from a fresh clone, and 1 after an edit in `apps/cli/src`, `apps/mcp/src`, `packages/protocol/src`, and in the file itself.
+
+**What stops a public line.** Tried with `ARP_SPONSOR` dead, so no line was written:
+
+| Route | Result |
+| --- | --- |
+| Skill tool, `arp:share-send` | refused, `disable-model-invocation` |
+| `Bash`, default permissions | denied, "requires approval" |
+| `Bash`, allowed by the session | **ran the file**: "sharing is off: nothing was sent" |
+| `Bash`, allowed only as `... arp.js" share` | `share send` denied |
+| `Write` on `sharing.json`, default permissions | not written |
+| `/arp:line ...; touch X`, `$(touch X)`, inside the project | refused by the permission check, no file |
+| `/arp:line`, sponsor dead | names the service and `ARP_SPONSOR` |
+
+So a model is stopped by the session's permissions, not by ARP. Sharing off does not bind a model allowed `Bash`, as `share on` is the same file, and `line` does not read it at all. Past permissions, the last stop is a sponsoring service answering at `ARP_SPONSOR`, today only one the person runs. The write itself was not run with sharing on.
+
+**`arp init`, real `claude mcp`, throwaway `HOME` and config:** foreign `arp`: exit 6, entry unchanged, hook written. `--force`: replaced, old entry printed first. Then `Nothing to change`. `uninstall` leaves a foreign entry. File route (Cursor) and Codex: exit 6, then `--force` replaces; Codex keeps `[mcp_servers.other]` and drops the foreign sub-table.
+
+**`node_modules/.bin` in the home folder.** Reproduced, and the cause is now confirmed: `@npmcli/run-script/lib/set-path.js:19-28` (npm 10.9.4) puts `node_modules/.bin` of **every parent** of the search's folder on `PATH`, so the `node` that runs `skills` is the planted one. A planted `node` that calls the real one leaves the search working, with nothing to see. A planted `skills` alone did not run. A project in a subfolder of the home did not fire; `ARP_HOME` inside a project did, and a home that is the project did.
+
+Who can write there: that OS user or root, who can already run anything as that user. A repository reaches it only by sitting at or above `HOME` (a dotfiles checkout, a container or sandbox whose `HOME` is in the project), or through `ARP_HOME` set inside a project. Not new: `apps/mcp` and `packages` have no diff against `origin/main`, and `cwd: home` dates from `c5b65f2`; `origin/main` itself was not run. It does not block. `docs/22` and ADR `0145` state it.
+
+**Gates at `21b9022`, each exit 0:** `bun run test` in `apps/api` 16, `apps/cli` 62, `apps/hook` 67, `apps/mcp` 215, `apps/node` 60, `apps/probe` 14, `apps/sponsor` 124, `apps/web` 773 and 2 skipped, `packages/graphql` 21, `packages/protocol` 1155 and 4 skipped; `apps/web` tsc, lint, `check:tokens`; `check:scripts`; `test:scripts` 42; `packages --check`; `check:node`.
+
+**Not tested:** Windows and macOS. Linux under WSL2 and a Debian container only. Grok Build with this `.mcp.json`. A logged-in clean `HOME` (step 1 of the walk). A real line through `/arp:share-send` or `/arp:line`.
+
+**Left for a decision, none blocking:**
+
+- `arp init --force`, and `--dry-run --force`, print the foreign entry through `claude mcp get`, unredacted: `MY_SECRET=abc123` in the run. An agent running it gets the value in its transcript. The Cursor route printed it too. Needs a server named `arp` with an inline secret, and the flag.
+- `apps/cli/README.md:33` "the model cannot invoke them" is true of the commands and says nothing of `Bash`; `docs/31:44` "only if the person turned sharing on" is the design, not a limit on a session that allows `Bash`. ADR `0145` and `docs/tasks/70` have the accurate version.
+- The home-folder case has no fix short of a search folder with no writable parent, or running `skills` without `npx`.
+
 ## Evidence ladder
 
 **Which tier of the evidence ladder does this serve, and does it move ARP up it?**

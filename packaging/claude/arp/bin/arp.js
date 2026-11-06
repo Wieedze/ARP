@@ -38005,7 +38005,7 @@ function claudeMcpSteps(env, commands, project, remove, allowCli) {
       argv: ["claude", "mcp", "remove", SERVER_NAME, "--scope", "user"],
       summary: "claude mcp remove arp --scope user",
       diff: present ? got.stdout.trim().split(`
-`).map((line) => `- ${line}`) : []
+`).map((line) => `- ${line.replace(/=\S+/g, "=…")}`) : []
     };
     const entry = mcpEntry(commands.mcp, true);
     const addStep = {

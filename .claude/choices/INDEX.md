@@ -18,6 +18,7 @@ Read these before relying on them.
 - **0083** (Accepted; the v1 format is superseded for new receipts by v2 (ADR `0101`, task 44)) — The hire receipt is EIP-712, names the agent like ERC-8004, and uses the payment as its nonce
 - **0087** (Accepted, one point open (below)) — A tool is its package, and its repository is its source
 - **0088** (Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`,) — A label is one word, unless a compound is necessary
+- **0089** (Accepted. Amended by ADR `0145`, 2026-11-06: the Claude Code plugin carries the CLI, so its manifest is no longer thin.) — One installer: one npm package, a thin native manifest per runtime
 - **0090** (Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end.) — What the hook records: outcome and identity, never content or credentials
 - **0093** (Accepted. **Renumbered from `0089` on 2026-10-30**: it shared that number with `0089-one-installer-one-package-thin-manifests.md`, which was written first. Commits before the rename cite it as `0089`.) — The probe is not the pulse
 - **0094** (Accepted. **Amended 2026-10-30 for testnet**: everything is sponsored. User decision,) — ARP is the directory and the verifier, never the relay; a proof is the condition of a sponsored deposit
@@ -29,6 +30,7 @@ Read these before relying on them.
 - **0101** (Proposed; the v2 receipt itself is the user's decision (2026-10-30), the shape is this task's) — The hire receipt v2 names the one verifier it is for, and the hirer chooses it
 - **0113** (Deferred (mainnet port). The user's decision, 2026-11-02: « intéressant mais inutile en) — Who may speak for an agent's identity: trusted writers, the market, then ambiguity
 - **0137** (Accepted. Its design is open.) — ARP will compute a score
+- **0145** (Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`.) — The published CLI carries viem and has no dependency
 
 ## All
 
@@ -121,7 +123,7 @@ Read these before relying on them.
 | [0086](0086-the-repo-is-sorted-by-kind.md) | 2026-10-30 | Accepted | The repo is sorted by kind: code, data, docs, scripts |
 | [0087](0087-a-tool-is-its-package-and-its-repo-is-its-source.md) | 2026-10-30 | Accepted, one point open (below) | A tool is its package, and its repository is its source |
 | [0088](0088-a-label-is-one-word-unless-a-compound-is-necessary.md) | 2026-10-30 | Accepted. Amends the one-word rule of 2026-10-28 (`scripts/seed/seed-domain-tree.ts`, | A label is one word, unless a compound is necessary |
-| [0089](0089-one-installer-one-package-thin-manifests.md) | 2026-10-30 | Accepted | One installer: one npm package, a thin native manifest per runtime |
+| [0089](0089-one-installer-one-package-thin-manifests.md) | 2026-10-30 | Accepted. Amended by ADR `0145`, 2026-11-06: the Claude Code plugin carries the CLI, so its manifest is no longer thin. | One installer: one npm package, a thin native manifest per runtime |
 | [0090](0090-what-the-hook-records.md) | 2026-10-30 | Accepted. Extended 2026-10-30 by task 33i — see "Extension: captures" at the end. | What the hook records: outcome and identity, never content or credentials |
 | [0091](0091-the-agent-s-activity-reaches-the-browser-through-a-local-feed.md) | 2026-10-30 | Accepted | The agent's activity reaches the browser through a local, read-only feed |
 | [0092](0092-arp-sponsors-delegation-publication-on-testnet.md) | 2026-10-30 | Accepted | ARP sponsors the publication of delegations, on testnet, from its treasury |
@@ -176,4 +178,4 @@ Read these before relying on them.
 | [0143](0143-the-ranking-moves-from-three-wallets.md) | 2026-11-05 | Accepted | The ranking moves from three wallets, and a line below that is only shown |
 | [0143](0143-tools-page-unknown-is-not-dead-and-most-used.md) | 2026-11-05 | Accepted | /tools counts only what the sponsor deposited for an agent, as Signals |
 | [0144](0144-a-sponsored-line-asks-no-proof.md) | 2026-11-05 | Accepted | A sponsored line asks no proof of use, and its key stays out of the plugin's server |
-| [0145](0145-the-published-package-has-no-dependency.md) | 2026-11-05 | Accepted | The published CLI carries viem and has no dependency |
+| [0145](0145-the-published-package-has-no-dependency.md) | 2026-11-05 | Accepted. Amended 2026-11-06 for the Claude Code plugin, at the end: it no longer goes through `npx`. | The published CLI carries viem and has no dependency |

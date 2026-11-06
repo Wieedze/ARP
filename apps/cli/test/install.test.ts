@@ -449,7 +449,7 @@ describe('uninstall and doctor', () => {
       run: (argv): RunResult => {
         ran.push([...argv]);
         return argv[1] === 'mcp' && argv[2] === 'get'
-          ? { code: 0, stdout: 'arp:\n  Command: python\n  Args: /home/me/my-arp.py\n', stderr: '' }
+          ? { code: 0, stdout: 'arp:\n  Command: python\n  Args: /home/me/my-arp.py\n  Environment:\n    MY_SECRET=abc123\n', stderr: '' }
           : { code: 0, stdout: 'claude 2.1.318', stderr: '' };
       },
     });
@@ -460,6 +460,7 @@ describe('uninstall and doctor', () => {
     expect(wrote().map((argv) => argv[2])).toEqual(['remove', 'add-json']);
     // `claude` keeps no copy, so what goes is printed before it goes.
     expect(lines.join('\n')).toContain('/home/me/my-arp.py');
+    expect(lines.join('\n')).not.toContain('abc123');
   });
 
   test('init replaces its own entries with no --force: an older package, and the plugin file', async () => {

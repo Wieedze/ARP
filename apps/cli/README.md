@@ -32,6 +32,8 @@ claude plugin install arp@arp
 
 With no `arp` on `PATH`, its commands stand in for `arp share` and `arp line`. A person types them, and the model cannot invoke them:
 
+A session that allows `Bash` can still run the file itself: that rests on your permissions.
+
 ```
 /arp:share         what would be public, and what stays here. Sends nothing
 /arp:share-on      turn sharing on (off by default). Sends nothing
