@@ -36188,11 +36188,19 @@ async function searchServiceTrouble(get, timeoutMs) {
 function saysNothingFound(output) {
   return /No skills found/i.test(output);
 }
-function searchInvocation(query, path, home) {
+function searchInvocation(query, path, home, firstDownload = false) {
   return {
     file: "npx",
     cwd: home,
-    args: ["--prefix", home, "--yes", "--fetch-retries=0", "--fetch-timeout=5000", SKILLS_CLI, "find", query],
+    args: [
+      "--prefix",
+      home,
+      "--yes",
+      ...firstDownload ? [] : ["--fetch-retries=0", "--fetch-timeout=5000"],
+      SKILLS_CLI,
+      "find",
+      query
+    ],
     env: {
       ...path === undefined ? {} : { PATH: path.split(delimiter).filter((dir) => !/node_modules[\\/]\.bin[\\/]?$/.test(dir)).join(delimiter) },
       HOME: home,
@@ -36204,15 +36212,21 @@ function searchInvocation(query, path, home) {
 function canSearch(env) {
   return !env.holdsAgentKey && env.setting !== "off";
 }
-async function search(query, timeoutMs, stop) {
+function searchHome() {
+  return join10(arpHome(process.env, homedir4()), "skills-cli");
+}
+function searchIsCached() {
+  return existsSync6(join10(searchHome(), ".npm", "_npx"));
+}
+async function search(query, timeoutMs, stop, firstDownload = false) {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env["ARP_PULSE_SEARCH"] })) {
     return { error: "this server does not run the search package" };
   }
   try {
-    const home = join10(arpHome(process.env, homedir4()), "skills-cli");
+    const home = searchHome();
     mkdirSync7(home, { recursive: true, mode: 448 });
     chmodSync3(home, 448);
-    return { output: await runSearch(searchInvocation(query, process.env["PATH"], home), { timeoutMs, stop }) };
+    return { output: await runSearch(searchInvocation(query, process.env["PATH"], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? error.message.split(`
 `)[0] ?? "failed" : String(error)) };
@@ -36427,7 +36441,11 @@ async function answer(id, args, budget, cancelled) {
   if (typeof given === "string") {
     lists.push(parseSkillsFind(given));
   } else {
-    const found2 = await Promise.all(phrases.map((phrase) => search(phrase, budget.searchMs, stop)));
+    const firstDownload = !searchIsCached();
+    const [head, ...rest] = phrases;
+    const first = firstDownload && head !== undefined ? [await search(head, budget.searchMs, stop, true)] : [];
+    const others = await Promise.all((firstDownload ? rest : phrases).map((phrase) => search(phrase, budget.searchMs, stop)));
+    const found2 = [...first, ...others];
     found2.forEach((entry, at) => {
       const phrase = phrases[at] ?? "";
       if ("error" in entry) {

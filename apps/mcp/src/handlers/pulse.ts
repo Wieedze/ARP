@@ -124,14 +124,23 @@ export function saysNothingFound(output: string): boolean {
  * still runs as the same OS user, which is why a server holding an agent key does not run it (`canSearch`) and `docs/22`
  * says so.
  */
-export function searchInvocation(query: string, path: string | undefined, home: string) {
+export function searchInvocation(query: string, path: string | undefined, home: string, firstDownload = false) {
   return {
     file: 'npx',
     // Run away from the project, and with a prefix of our own: from the project, a planted
     // `node_modules/.bin/skills` or `.npmrc` would run instead of the package named here.
     cwd: home,
     // A short fetch limit: a dead registry falls back to the cache, and a new pinned version is still seen.
-    args: ['--prefix', home, '--yes', '--fetch-retries=0', '--fetch-timeout=5000', SKILLS_CLI, 'find', query],
+    // Not on a first download, which has no cache to fall back to and is what the limit would break.
+    args: [
+      '--prefix',
+      home,
+      '--yes',
+      ...(firstDownload ? [] : ['--fetch-retries=0', '--fetch-timeout=5000']),
+      SKILLS_CLI,
+      'find',
+      query,
+    ],
     env: {
       // npm put the project's `node_modules/.bin` here when it started the server. A planted `npx` would run.
       ...(path === undefined ? {} : { PATH: path.split(delimiter).filter((dir) => !/node_modules[\\/]\.bin[\\/]?$/.test(dir)).join(delimiter) }),
@@ -148,15 +157,24 @@ export function canSearch(env: { holdsAgentKey: boolean; setting: string | undef
 }
 
 /** A failure is a value, because a host without `npx` can still pass `search_output` itself. */
-async function search(query: string, timeoutMs: number, stop: AbortSignal): Promise<{ output: string } | { error: string }> {
+function searchHome(): string {
+  return join(arpHome(process.env, homedir()), 'skills-cli');
+}
+
+/** Whether npm has run the search package here, in which case a dead registry can fall back on it. */
+function searchIsCached(): boolean {
+  return existsSync(join(searchHome(), '.npm', '_npx'));
+}
+
+async function search(query: string, timeoutMs: number, stop: AbortSignal, firstDownload = false): Promise<{ output: string } | { error: string }> {
   if (!canSearch({ holdsAgentKey: DESKTOP, setting: process.env['ARP_PULSE_SEARCH'] })) {
     return { error: 'this server does not run the search package' };
   }
   try {
-    const home = join(arpHome(process.env, homedir()), 'skills-cli');
+    const home = searchHome();
     mkdirSync(home, { recursive: true, mode: 0o700 });
     chmodSync(home, 0o700); // `mode` above does not tighten a directory that already exists
-    return { output: await runSearch(searchInvocation(query, process.env['PATH'], home), { timeoutMs, stop }) };
+    return { output: await runSearch(searchInvocation(query, process.env['PATH'], home, firstDownload), { timeoutMs, stop }) };
   } catch (error) {
     return { error: withoutPaths(error instanceof Error ? (error.message.split('\n')[0] ?? 'failed') : String(error)) };
   }
@@ -424,7 +442,12 @@ async function answer(id: JsonRpcId, args: Record<string, unknown>, budget: Puls
   if (typeof given === 'string') {
     lists.push(parseSkillsFind(given));
   } else {
-    const found = await Promise.all(phrases.map((phrase) => search(phrase, budget.searchMs, stop)));
+    // A first download alone: `npx` runs started together on an empty cache can fail on each other (`EEXIST`).
+    const firstDownload = !searchIsCached();
+    const [head, ...rest] = phrases;
+    const first = firstDownload && head !== undefined ? [await search(head, budget.searchMs, stop, true)] : [];
+    const others = await Promise.all((firstDownload ? rest : phrases).map((phrase) => search(phrase, budget.searchMs, stop)));
+    const found = [...first, ...others];
     found.forEach((entry, at) => {
       const phrase = phrases[at] ?? '';
       if ('error' in entry) {

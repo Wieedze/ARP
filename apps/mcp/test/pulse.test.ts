@@ -43,6 +43,11 @@ describe("the search package", () => {
         expect(env.PATH).toBe("/usr/bin");
     });
 
+    it("leaves out the short fetch limit on a first download, which has no cache to fall back to", () => {
+        expect(searchInvocation("x", "/usr/bin", "/private/cli", true).args).not.toContain("--fetch-timeout=5000");
+        expect(searchInvocation("x", "/usr/bin", "/private/cli").args).toContain("--fetch-timeout=5000");
+    });
+
     it("runs away from the project, so a planted package or .npmrc is not read", () => {
         const {cwd, args} = searchInvocation("x", "/usr/bin", "/private/cli");
         expect(cwd).toBe("/private/cli");
