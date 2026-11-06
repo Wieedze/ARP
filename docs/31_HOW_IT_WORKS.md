@@ -142,7 +142,7 @@ Beside the score, each result shows what its files name: commands, keys, a login
 
 | Piece | Where it runs today |
 | --- | --- |
-| The MCP server and the hook | The person's machine. The plugin passes `claude plugin validate`. The plugin carries the program, so it installs from a checkout or `owner/repo`. The package is not on npm, so other runtimes install it from a tarball or a local folder |
+| The MCP server and the hook | The person's machine. The plugin passes `claude plugin validate`. The plugin carries the program, so it installs from a checkout or `owner/repo`. Other runtimes install `@arp-protocol/cli` from npm |
 | `arp share`, `arp line` | The person's machine, one call at a time. They load `~/.arp/agent-key` |
 | `apps/sponsor`, the sponsoring service | **Local only**, on our machine, port 3200. Testnet 13579 only. Without it, `arp share send` names the service and fails |
 | `arp mcp --http`, the content server | **Local only**, port 3002. Used by the sponsored setup, not by the plugin |

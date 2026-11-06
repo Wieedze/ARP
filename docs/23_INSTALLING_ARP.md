@@ -10,7 +10,7 @@ file and a line.
 `.mcpb` file, installed from Settings → Extensions, holding a local agent key (ADR `0110`,
 `docs/tasks/50`) — is the install for ARP's first audience, people who use Claude and never open a
 terminal (ADR `0120`); this document predates it and does not cover it. And `@arp-protocol/cli` is
-**not on npm yet**, so every `npx @arp-protocol/cli` line below is the target, not today's path.
+on npm since 2026-11-06 as `0.0.1`, so the `npx @arp-protocol/cli` lines below can be run.
 
 **A third, 2026-11-06:** the Claude Code plugin carries the CLI as `bin/arp.js` and runs it with `node`, so it needs no npm release and is no longer a thin manifest (ADR `0145`, amendment, with the measurements). §5's "thin manifest" still describes the others.
 

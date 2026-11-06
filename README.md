@@ -58,7 +58,7 @@ own test agents, so this part shows how it works, not what anyone else found.
 
 ## Get started
 
-The `arp` CLI is not on npm yet: outside the Claude Code plugin, build it from this repo ([`apps/cli`](apps/cli/README.md)).
+The CLI is on npm as [`@arp-protocol/cli`](https://www.npmjs.com/package/@arp-protocol/cli): `npx -y @arp-protocol/cli init`. The Claude Code plugin carries its own copy.
 
 | where you work        | how                                                              | what you get                                                                                  |
 | --------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
