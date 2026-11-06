@@ -62,6 +62,29 @@ done
 [[ ! -e "$work/PWNED" ]] || fail "a planted program ran through the launch line"
 pass "a project's planted node, npx and arp do not run"
 
+# The plugin carries the CLI (ADR `0145`, amended 2026-11-06): no install, no `npx` for the server, and the
+# project is the working directory. A copy outside the repo, as nothing above it may help. The search is the
+# one thing that still runs `npx`, so a stub stands in for it and says it ran, and none of the planted ones may.
+plugin="$work/plugin"; cp -r "$here/../../packaging/claude/arp" "$plugin"
+stub_npx="$work/stub-bin"; mkdir -p "$stub_npx"
+printf '#!/bin/sh\ntouch "%s/SEARCH_RAN"\nexit 0\n' "$work" > "$stub_npx/npx"; chmod +x "$stub_npx/npx"
+(cd "$planted" && env -i PATH="$stub_npx:$node_bin:/usr/bin:/bin" HOME="$work/home" ARP_HOME="$work/home/.arp-plugin" \
+  INTUITION_GRAPHQL_URL=http://127.0.0.1:9/ INTUITION_RPC_URL=http://127.0.0.1:9/ GITHUB_API_URL=http://127.0.0.1:9/ \
+  node "$here/scripts/plugin-session.mjs" "$plugin" --search "video editing") > "$work/plugin-session.json" \
+  || fail "the plugin's server did not answer: $(cat "$work/plugin-session.json")"
+grep -q '"arp_pulse"' "$work/plugin-session.json" || fail "the plugin's server listed no arp_pulse"
+pass "the plugin's bin/arp.js answers from a copy, with nothing installed"
+[[ -e "$work/SEARCH_RAN" ]] || fail "the search did not run: the check below would prove nothing"
+[[ ! -e "$work/PWNED" ]] || fail "a planted program ran through the plugin"
+pass "from a project with planted node, npx, arp and skills: the search ran, and none of them did"
+(cd "$planted" && echo '{"tool_name":"mcp__x__y","tool_use_id":"t2","tool_response":"ok"}' | clean node "$plugin/bin/hook.js")
+grep -q '"call":"t2"' "$planted/.arp/session.jsonl" || fail "the plugin's hook wrote no line in the project"
+pass "the plugin's hook writes in the project, its working directory"
+echo '{"type":"commonjs"}' > "$work/package.json"
+clean node "$plugin/bin/arp.js" --version >/dev/null 2>&1 || fail "bin/arp.js refused under a commonjs package.json"
+rm "$work/package.json"
+pass "bin/arp.js runs under a parent package.json that says commonjs"
+
 # The node over a real socket, against a local stub RPC that answers eth_chainId and nothing else.
 # The key is a throwaway constant, never funded; the node signs receipts and sends nothing.
 clean node -e '

@@ -18,7 +18,7 @@
     "test": "bun run build && bun test",
     "lint": "bun run --cwd ../../packages/protocol build && tsc --noEmit -p tsconfig.json",
     "check:node": "bun run build && bash scripts/check-node.sh",
-    "packages": "bun scripts/packages.ts"
+    "packages": "bun run build && bun scripts/packages.ts"
   },
   "devDependencies": {
     "@arp-protocol/core": "workspace:*",

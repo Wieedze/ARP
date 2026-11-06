@@ -93,6 +93,31 @@ test('the packaged hook imports no dependency, as it has to start with none inst
   expect(imported.filter((name) => !name.startsWith('node:'))).toEqual([]);
 });
 
+const PLUGIN = join(import.meta.dir, '..', '..', '..', 'packaging', 'claude', 'arp');
+
+test('the plugin carries the CLI: one file, no dependency imported at load, and no npx in its launch', () => {
+  const cli = readFileSync(join(PLUGIN, 'bin', 'arp.js'), 'utf8');
+  const imported = [...cli.matchAll(/^import [^;]*? from "([^"]+)";?$/gm)].map((match) => match[1] ?? '');
+  expect(imported.length).toBeGreaterThan(0);
+  expect(imported.filter((name) => !name.startsWith('node:'))).toEqual([]);
+  const mcp = JSON.parse(readFileSync(join(PLUGIN, '.mcp.json'), 'utf8')).mcpServers.arp;
+  expect(mcp.command).toBe('node');
+  expect(mcp.args).toEqual(['${CLAUDE_PLUGIN_ROOT}/bin/arp.js', 'mcp']);
+  expect(mcp.env.ARP_PROJECT_DIR).toBeUndefined();
+});
+
+test("the plugin's commands run only when a person types them, and name their exact command line", () => {
+  for (const name of ['share', 'share-on', 'share-off', 'share-send', 'line']) {
+    const text = readFileSync(join(PLUGIN, 'commands', `${name}.md`), 'utf8');
+    expect(text).toContain('disable-model-invocation: true');
+    const run = /^!`(.+)`$/m.exec(text)?.[1] ?? '';
+    expect(run.startsWith('node "${CLAUDE_PLUGIN_ROOT}/bin/arp.js" ')).toBe(true);
+    // Only `line` takes words, so a turn of `share` cannot be used to reach `share send`.
+    if (name !== 'line') expect(text).toContain(`allowed-tools: Bash(${run})`);
+  }
+  expect(readFileSync(join(PLUGIN, 'commands', 'share-send.md'), 'utf8')).toContain('" share send`');
+});
+
 test('packaging/ is what `bun run packages` writes from this build: nothing stale is committed', () => {
   const proc = Bun.spawnSync([
     'bun',
